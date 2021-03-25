@@ -26,6 +26,10 @@ limitations under the License.
       <artifactId>junit</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>com.graphicsfuzz</groupId>
+      <artifactId>ast</artifactId>
+    </dependency>
   </dependencies>
   <packaging>jar</packaging>
 
