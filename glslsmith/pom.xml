@@ -20,6 +20,18 @@ limitations under the License.
   <modelVersion>4.0.0</modelVersion>
   <artifactId>glslsmith</artifactId>
   <name>glslsmith</name>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>9</source>
+          <target>9</target>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
@@ -29,6 +41,10 @@ limitations under the License.
     <dependency>
       <groupId>com.graphicsfuzz</groupId>
       <artifactId>ast</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.graphicsfuzz</groupId>
+      <artifactId>common</artifactId>
     </dependency>
   </dependencies>
   <packaging>jar</packaging>

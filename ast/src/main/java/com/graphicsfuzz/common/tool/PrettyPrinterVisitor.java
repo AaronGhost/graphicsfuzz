@@ -767,29 +767,27 @@ public class PrettyPrinterVisitor extends StandardVisitor {
     }
     out.append(interfaceBlock.getInterfaceQualifier().toString())
         .append(" ")
-        .append(interfaceBlock.getStructName());
-    if(!interfaceBlock.getMemberTypes().isEmpty()) {
-      out.append(" {");
+        .append(interfaceBlock.getStructName())
+        .append(" {");
+    newLine();
+
+    increaseIndent();
+
+    for (String memberName : interfaceBlock.getMemberNames()) {
+      indent();
+      final Type memberType = interfaceBlock.getMemberType(memberName).get();
+      visit(memberType);
+      out.append(" ").append(memberName);
+      processArrayInfo(memberType);
+      out.append(";");
       newLine();
+    }
 
-      increaseIndent();
+    decreaseIndent();
 
-      for (String memberName : interfaceBlock.getMemberNames()) {
-        indent();
-        final Type memberType = interfaceBlock.getMemberType(memberName).get();
-        visit(memberType);
-        out.append(" ").append(memberName);
-        processArrayInfo(memberType);
-        out.append(";");
-        newLine();
-      }
-
-      decreaseIndent();
-
-      out.append("}");
-      if (interfaceBlock.hasIdentifierName()) {
-        out.append(" ").append(interfaceBlock.getInstanceName());
-      }
+    out.append("}");
+    if (interfaceBlock.hasIdentifierName()) {
+      out.append(" ").append(interfaceBlock.getInstanceName());
     }
     out.append(";");
     newLine();
