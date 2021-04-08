@@ -6,14 +6,35 @@ import com.graphicsfuzz.common.util.ShaderKind;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 
 public class ProgramState {
   private TranslationUnit translationUnit;
   private ShaderKind shaderKind;
-  private List<Buffer> inputBuffers;
-  private List<Buffer> outputBuffers;
+  private Map<String, Symbol> symbolTable = new LinkedHashMap<>();
+  private int bindingOffset = 0;
+  private int variableOffset = 0;
+
+  public int getBindingOffset() {
+    return bindingOffset;
+  }
+
+  public int getVariableOffset() {
+    return variableOffset;
+  }
+
+  public void addVariableOffset(int offset) {
+    variableOffset += offset;
+  }
+
+  public void addBindingOffset(int offset) {
+    bindingOffset += offset;
+  }
 
   public ShaderKind getShaderKind() {
     return shaderKind;
@@ -37,19 +58,24 @@ public class ProgramState {
     this.shaderKind = shaderKind;
   }
 
-  public List<Buffer> getInputBuffers() {
-    return inputBuffers;
+  //Symbol table functions
+  public void addSymbol(Symbol symbol) {
+    symbolTable.put(symbol.getName(), symbol);
   }
 
-  public void setInputBuffers(List<Buffer> inputBuffers) {
-    this.inputBuffers = inputBuffers;
+  public Symbol getSymbol(String name) {
+    return symbolTable.get(name);
   }
 
-  public List<Buffer> getOutputBuffers() {
-    return outputBuffers;
+  public List<Symbol> getSymbolByType(String symbolType) {
+    Predicate<Map.Entry<String, Symbol>> predicate =
+        (t -> t.getValue().getType().equals(symbolType));
+    return getSymbolMatchingPredicate(predicate);
   }
 
-  public void setOutputBuffers(List<Buffer> outputBuffers) {
-    this.outputBuffers = outputBuffers;
+  public List<Symbol> getSymbolMatchingPredicate(Predicate<Map.Entry<String, Symbol>>
+                                                          symbolPredicate) {
+    return symbolTable.entrySet().stream().filter(symbolPredicate).map(
+        Map.Entry::getValue).collect(Collectors.toList());
   }
 }

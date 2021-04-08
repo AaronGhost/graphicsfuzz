@@ -1,17 +1,21 @@
 package org.graphicsfuzz;
 
 
+import com.graphicsfuzz.common.ast.decl.ArrayInfo;
+import com.graphicsfuzz.common.ast.decl.InterfaceBlock;
+import com.graphicsfuzz.common.ast.type.ArrayType;
+import com.graphicsfuzz.common.ast.type.BasicType;
+import com.graphicsfuzz.common.ast.type.Type;
 import com.graphicsfuzz.common.util.IRandom;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 
 public class ProgramGenerator {
-  private ProgramState programState;
   private ShaderGenerator shaderGenerator;
   private IRandom randomGenerator;
 
 
   public ProgramGenerator(IRandom randomGenerator) {
     this.randomGenerator = randomGenerator;
-    programState = new ProgramState();
     //We only generate Compute shaders for now
     if (randomGenerator.nextInt(1) == 0) {
       shaderGenerator = new ComputeShaderGenerator(randomGenerator);
@@ -21,7 +25,9 @@ public class ProgramGenerator {
   }
 
   public String generateProgram(StatePrinter printer) {
+    ProgramState programState = new ProgramState();
     shaderGenerator.generateShader(programState);
     return printer.printWrapper(programState);
   }
+
 }
