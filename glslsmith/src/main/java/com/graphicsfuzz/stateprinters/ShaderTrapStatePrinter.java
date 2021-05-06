@@ -1,5 +1,7 @@
-package org.graphicsfuzz;
+package com.graphicsfuzz.stateprinters;
 
+import com.graphicsfuzz.Buffer;
+import com.graphicsfuzz.ProgramState;
 import com.graphicsfuzz.common.ast.type.ArrayType;
 import com.graphicsfuzz.common.ast.type.BasicType;
 import com.graphicsfuzz.common.ast.type.Type;
@@ -14,16 +16,16 @@ public class ShaderTrapStatePrinter implements StatePrinter {
     if (programState.getShaderKind() == ShaderKind.COMPUTE) {
       StringBuilder shaderTrapPrefix = new StringBuilder();
       //Generate the buffers declaration and the buffers binding
-      for (Symbol buffer : programState.getSymbolByType("Buffer")) {
+      for (Buffer buffer : programState.getBuffers()) {
         shaderTrapPrefix.append(printBufferWrapper(buffer));
       }
-      shaderTrapPrefix.append("DECLARE_SHADER shader KIND COMPUTE\n\n");
+      shaderTrapPrefix.append("DECLARE_SHADER shader KIND COMPUTE\n");
 
       StringBuilder shaderTrapSuffix = new StringBuilder("END\n\n"
           + "COMPILE_SHADER shader_compiled SHADER shader\n"
           + "CREATE_PROGRAM compute_prog SHADERS shader_compiled\n"
           + "RUN_COMPUTE PROGRAM compute_prog NUM_GROUPS 1 1 1\n");
-      for (Symbol buffer : programState.getSymbolByType("Buffer")) {
+      for (Buffer buffer : programState.getBuffers()) {
         shaderTrapSuffix.append(printDumpBuffer(buffer));
       }
       return shaderTrapPrefix + programState.getShaderCode() + shaderTrapSuffix;
@@ -32,9 +34,7 @@ public class ShaderTrapStatePrinter implements StatePrinter {
     }
   }
 
-  private String printBufferWrapper(Symbol symbol) {
-    assert (symbol instanceof Buffer);
-    Buffer buffer = (Buffer) symbol;
+  public String printBufferWrapper(Buffer buffer) {
     List<? extends Number> values = buffer.getValues();
     StringBuilder createInstruction = new StringBuilder("CREATE_BUFFER " + buffer.getName() + " "
         + "SIZE_BYTES "
@@ -54,21 +54,21 @@ public class ShaderTrapStatePrinter implements StatePrinter {
         offset++;
       }
     }
-    createInstruction.append("\n");
     String bindingInstruction =
-        "BIND_SHADER_STORAGE_BUFFER " + buffer.getName() + " BINDING " + buffer.getBinding()
+        "BIND_SHADER_STORAGE_BUFFER BUFFER " + buffer.getName() + " BINDING " + buffer.getBinding()
             + "\n\n";
-    return  createInstruction + bindingInstruction;
+    return createInstruction.toString().trim() + ("\n") + bindingInstruction;
   }
 
-  private String printDumpBuffer(Symbol symbol) {
-    assert (symbol instanceof Buffer);
-    Buffer buffer = (Buffer) symbol;
+  public String printDumpBuffer(Buffer buffer) {
+    return "";
+    /* neutralized as the function does not exist yet
     if (buffer.isInput()) {
       return "";
     } else {
-      return "DUMP " + buffer.getName() + "\n";
+      return "DUMP_BUFFER " + buffer.getName() + "\n";
     }
+     */
   }
 
 }

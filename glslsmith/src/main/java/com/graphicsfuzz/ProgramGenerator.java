@@ -1,17 +1,18 @@
-package org.graphicsfuzz;
+package com.graphicsfuzz;
 
 
-import com.graphicsfuzz.common.ast.decl.ArrayInfo;
-import com.graphicsfuzz.common.ast.decl.InterfaceBlock;
-import com.graphicsfuzz.common.ast.type.ArrayType;
-import com.graphicsfuzz.common.ast.type.BasicType;
-import com.graphicsfuzz.common.ast.type.Type;
 import com.graphicsfuzz.common.util.IRandom;
-import org.apache.commons.lang3.tuple.ImmutablePair;
+import com.graphicsfuzz.shadergenerators.ComputeShaderGenerator;
+import com.graphicsfuzz.shadergenerators.ShaderGenerator;
+import com.graphicsfuzz.stateprinters.StatePrinter;
 
 public class ProgramGenerator {
-  private ShaderGenerator shaderGenerator;
-  private IRandom randomGenerator;
+  private final ShaderGenerator shaderGenerator;
+  private final IRandom randomGenerator;
+
+  public ShaderGenerator getShaderGenerator() {
+    return shaderGenerator;
+  }
 
 
   public ProgramGenerator(IRandom randomGenerator) {
@@ -25,8 +26,8 @@ public class ProgramGenerator {
   }
 
   public String generateProgram(StatePrinter printer) {
-    ProgramState programState = new ProgramState();
-    shaderGenerator.generateShader(programState);
+    shaderGenerator.generateShader();
+    ProgramState programState = shaderGenerator.getProgramState();
     return printer.printWrapper(programState);
   }
 

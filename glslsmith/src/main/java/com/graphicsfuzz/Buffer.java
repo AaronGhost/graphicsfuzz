@@ -1,22 +1,24 @@
-package org.graphicsfuzz;
+package com.graphicsfuzz;
 
 import com.graphicsfuzz.common.ast.type.LayoutQualifierSequence;
 import com.graphicsfuzz.common.ast.type.Type;
 import com.graphicsfuzz.common.ast.type.TypeQualifier;
 import java.util.List;
 
-public class Buffer implements Symbol {
-  private String bufferName;
-  private LayoutQualifierSequence layoutQualifiers;
-  private List<? extends Number> values;
-  private TypeQualifier interfaceQualifier;
-  private List<String> memberNames;
-  private List<Type> memberTypes;
-  private String instanceName;
-  private boolean input;
-  private int binding;
+public class Buffer {
+  //Buffer elements to generate the interface block
+  private final String bufferName;
+  private final LayoutQualifierSequence layoutQualifiers;
+  private final TypeQualifier interfaceQualifier;
+  private final List<String> memberNames;
+  private final List<Type> memberTypes;
+  private final String instanceName;
+  private final int binding;
+  //Wrapper related variables
+  private final List<? extends Number> values;
+  private final boolean input;
 
-  //TODO check if the constructor is correct
+
   public Buffer(String bufferName, LayoutQualifierSequence layoutQualifiers,
                 List<? extends Number> values, TypeQualifier interfaceQualifier,
                 List<String> memberNames, List<Type> memberTypes, String instanceName,
@@ -32,14 +34,8 @@ public class Buffer implements Symbol {
     this.binding = binding;
   }
 
-  @Override
   public String getName() {
     return bufferName;
-  }
-
-  @Override
-  public String getType() {
-    return "Buffer";
   }
 
   public TypeQualifier getInterfaceQualifier() {
