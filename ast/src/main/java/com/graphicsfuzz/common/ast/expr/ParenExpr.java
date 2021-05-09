@@ -68,4 +68,11 @@ public class ParenExpr extends Expr {
     return 1;
   }
 
+  @Override
+  public boolean equals(Object obj) {
+    if (! (obj instanceof ParenExpr)) {
+      return false;
+    }
+    return expr.equals(((ParenExpr) obj).getExpr());
+  }
 }

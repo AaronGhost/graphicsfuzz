@@ -104,4 +104,13 @@ public class TernaryExpr extends Expr {
     return 3;
   }
 
+  @Override
+  public boolean equals(Object obj) {
+    if (!(obj instanceof TernaryExpr)) {
+      return false;
+    }
+    TernaryExpr other = (TernaryExpr) obj;
+    return test.equals(other.getTest()) && thenExpr.equals(other.getThenExpr())
+        && elseExpr.equals(other.getElseExpr());
+  }
 }

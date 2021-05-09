@@ -27,10 +27,14 @@ import com.graphicsfuzz.common.ast.expr.UnOp;
 import com.graphicsfuzz.common.ast.expr.UnaryExpr;
 import com.graphicsfuzz.common.ast.expr.VariableIdentifierExpr;
 import com.graphicsfuzz.common.ast.stmt.BlockStmt;
+import com.graphicsfuzz.common.ast.stmt.BreakStmt;
 import com.graphicsfuzz.common.ast.stmt.DeclarationStmt;
+import com.graphicsfuzz.common.ast.stmt.DefaultCaseLabel;
+import com.graphicsfuzz.common.ast.stmt.ExprCaseLabel;
 import com.graphicsfuzz.common.ast.stmt.ExprStmt;
 import com.graphicsfuzz.common.ast.stmt.IfStmt;
 import com.graphicsfuzz.common.ast.stmt.Stmt;
+import com.graphicsfuzz.common.ast.stmt.SwitchStmt;
 import com.graphicsfuzz.common.ast.type.ArrayType;
 import com.graphicsfuzz.common.ast.type.BasicType;
 import com.graphicsfuzz.common.ast.type.QualifiedType;
@@ -407,18 +411,54 @@ public abstract class ShaderGenerator {
     return new IfStmt(ifExpr, ifStmt, elseStmt);
   }
 
+  protected Stmt generateSwitchStmt() {
+    BasicType switchType = randomTypeGenerator.getRandomBaseType();
+    Expr switchExpr = generateBaseExpr(switchType);
+    List<Stmt> switchBody = new ArrayList<>();
+    List<Expr> existingCases = new ArrayList<>();
+    int switchLength = randGen.nextInt(FuzzerConstants.MAX_SWITCH_CASES);
+    for (int i = 0; i < switchLength; i++) {
+      Expr possibleBaseConstantExpr = generateBaseConstantExpr(switchType);
+      while (existingCases.contains(possibleBaseConstantExpr)) {
+        possibleBaseConstantExpr = generateBaseConstantExpr(switchType);
+      }
+      switchBody.add(new ExprCaseLabel(possibleBaseConstantExpr));
+      switchBody.add(new BlockStmt(generateScope(i == switchLength - 1 ? 1 : 0,
+          FuzzerConstants.MAX_SWITCH_SCOPE_LENGTH),
+          false));
+      if (randGen.nextBoolean()) {
+        switchBody.add(new BreakStmt());
+      }
+      existingCases.add(possibleBaseConstantExpr);
+    }
+    if (randGen.nextBoolean()) {
+      if (switchBody.isEmpty()) {
+        switchBody.add(new DefaultCaseLabel());
+      } else {
+        switchBody.add(randGen.nextInt(switchLength), new DefaultCaseLabel());
+      }
+    }
+    return new SwitchStmt(switchExpr, new BlockStmt(switchBody, true));
+  }
+
   protected List<Stmt> generateScope() {
+    return generateScope(1, FuzzerConstants.MAX_MAIN_LENGTH);
+  }
+
+  protected List<Stmt> generateScope(int minScopeLength, int maxScopeLength) {
     programState.addScope();
     List<Stmt> stmts = new ArrayList<>();
-    int randomActionBound = randGen.nextPositiveInt(FuzzerConstants.MAX_MAIN_LENGTH);
+    int randomActionBound = randGen.nextInt(minScopeLength, maxScopeLength);
     for (int i = 0; i < randomActionBound; i++) {
       Stmt stmt;
       int actionIndex =
-          randGen.nextInt(programState.getScopeDepth() < FuzzerConstants.MAX_SCOPE_DEPTH ? 7 : 5);
+          randGen.nextInt(programState.getScopeDepth() < FuzzerConstants.MAX_SCOPE_DEPTH ? 8 : 5);
       if (actionIndex < 3) {
         stmt = new ExprStmt(generateProgramAssignmentLine());
       } else if (actionIndex == 6) {
         stmt = generateIfStmt();
+      } else if (actionIndex == 7) {
+        stmt = generateSwitchStmt();
       } else {
         stmt = new DeclarationStmt(generateRandomTypedVarDecls(
             randGen.nextPositiveInt(FuzzerConstants.MAX_VARDECL_ELEMENTS),

@@ -51,4 +51,11 @@ public class BoolConstantExpr extends ConstantExpr {
     return isTrue;
   }
 
+  @Override
+  public boolean equals(Object obj) {
+    if (! (obj instanceof BoolConstantExpr)) {
+      return false;
+    }
+    return isTrue == ((BoolConstantExpr) obj).getIsTrue();
+  }
 }

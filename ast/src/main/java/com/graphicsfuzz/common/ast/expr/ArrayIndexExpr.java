@@ -94,4 +94,12 @@ public class ArrayIndexExpr extends Expr {
     return 2;
   }
 
+  @Override
+  public boolean equals(Object obj) {
+    if (! (obj instanceof ArrayIndexExpr)) {
+      return false;
+    }
+    ArrayIndexExpr other = (ArrayIndexExpr) obj;
+    return array.equals(other.getArray()) && index.equals(other.getIndex());
+  }
 }

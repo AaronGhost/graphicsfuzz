@@ -65,4 +65,11 @@ public class VariableIdentifierExpr extends Expr {
     return 0;
   }
 
+  @Override
+  public boolean equals(Object obj) {
+    if (!(obj instanceof VariableIdentifierExpr)) {
+      return false;
+    }
+    return name.equals(((VariableIdentifierExpr)obj).getName());
+  }
 }

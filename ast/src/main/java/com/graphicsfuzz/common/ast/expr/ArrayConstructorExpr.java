@@ -80,4 +80,12 @@ public class ArrayConstructorExpr extends Expr {
     }
   }
 
+  @Override
+  public boolean equals(Object obj) {
+    if (!(obj instanceof ArrayConstructorExpr)) {
+      return false;
+    }
+    ArrayConstructorExpr other = (ArrayConstructorExpr) obj;
+    return arrayType.equals(other.getArrayType()) && args.equals(other.getArgs());
+  }
 }

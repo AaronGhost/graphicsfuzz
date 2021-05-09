@@ -105,4 +105,12 @@ public class FunctionCallExpr extends Expr {
     return getNumArgs();
   }
 
+  @Override
+  public boolean equals(Object obj) {
+    if (!(obj instanceof FunctionCallExpr)) {
+      return false;
+    }
+    FunctionCallExpr other = (FunctionCallExpr) obj;
+    return callee.equals(other.getCallee()) && args.equals(other.getArgs());
+  }
 }

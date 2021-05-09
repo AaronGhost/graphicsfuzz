@@ -20,9 +20,11 @@ public class FuzzerConstants {
 
   public static final int MAX_VARDECL_ELEMENTS = 2;
 
-
   public static final int MAX_EXPR_DEPTH = 3;
   public static final int MAX_SWIZZLE_DEPTH = 2;
+
+  public static final int MAX_SWITCH_SCOPE_LENGTH = 5;
+  public static final int MAX_SWITCH_CASES = 10;
 
   //Max and Min integer values (happily they are 32 bytes on Java as well as in Glsl)
   public static final int MAX_INT_VALUE = Integer.MAX_VALUE;
@@ -34,5 +36,6 @@ public class FuzzerConstants {
   public static final int MIN_SMALL = -128;
   public static final int MIN_HIGH = MAX_INT_VALUE - (MAX_INT_VALUE >> 3);
   public static final int MAX_HIGH = MIN_INT_VALUE - (MIN_INT_VALUE >> 3);
+
 
 }
