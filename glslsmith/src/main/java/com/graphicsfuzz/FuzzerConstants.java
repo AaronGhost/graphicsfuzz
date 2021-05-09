@@ -13,8 +13,14 @@ public class FuzzerConstants {
 
   //Arrays parameters
   public static final int MAX_ARRAY_LENGTH = 10;
-  public static final int MAX_MAIN_LENGTH = 50;
+
+  //General program parameters
+  public static final int MAX_MAIN_LENGTH = 15;
+  public static final int MAX_SCOPE_DEPTH = 3;
+
   public static final int MAX_VARDECL_ELEMENTS = 2;
+
+
   public static final int MAX_EXPR_DEPTH = 3;
   public static final int MAX_SWIZZLE_DEPTH = 2;
 
@@ -28,4 +34,5 @@ public class FuzzerConstants {
   public static final int MIN_SMALL = -128;
   public static final int MIN_HIGH = MAX_INT_VALUE - (MAX_INT_VALUE >> 3);
   public static final int MAX_HIGH = MIN_INT_VALUE - (MIN_INT_VALUE >> 3);
+
 }

@@ -26,8 +26,15 @@ import com.graphicsfuzz.common.ast.expr.UIntConstantExpr;
 import com.graphicsfuzz.common.ast.expr.UnOp;
 import com.graphicsfuzz.common.ast.expr.UnaryExpr;
 import com.graphicsfuzz.common.ast.expr.VariableIdentifierExpr;
+import com.graphicsfuzz.common.ast.stmt.BlockStmt;
+import com.graphicsfuzz.common.ast.stmt.DeclarationStmt;
+import com.graphicsfuzz.common.ast.stmt.ExprStmt;
+import com.graphicsfuzz.common.ast.stmt.IfStmt;
+import com.graphicsfuzz.common.ast.stmt.Stmt;
 import com.graphicsfuzz.common.ast.type.ArrayType;
 import com.graphicsfuzz.common.ast.type.BasicType;
+import com.graphicsfuzz.common.ast.type.QualifiedType;
+import com.graphicsfuzz.common.ast.type.TypeQualifier;
 import com.graphicsfuzz.common.util.IRandom;
 import com.graphicsfuzz.random.IRandomType;
 import com.graphicsfuzz.random.RandomTypeGenerator;
@@ -35,6 +42,7 @@ import com.graphicsfuzz.scope.FuzzerScopeEntry;
 import com.graphicsfuzz.scope.UnifiedTypeInterface;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -76,6 +84,7 @@ public abstract class ShaderGenerator {
         Optional.of("")
     );
   }
+
 
   //TODO fill a test for ArrayType correct management (real BasicType as left BaseType)
   //TODO explore generate random constructor instead of those ones
@@ -243,13 +252,13 @@ public abstract class ShaderGenerator {
       case 0:
         return generateBaseBinaryExpr(type);
       case 1:
-        return generateBaseUnaryExpr(type);
-      case 2:
         return new ParenExpr(generateBaseBinaryExpr(type));
-      case 3:
-        return new ParenExpr(generateBaseUnaryExpr(type));
-      default:
+      case 2:
         return generateTernaryExpr(type);
+      case 3:
+        return generateBaseUnaryExpr(type);
+      default:
+        return new ParenExpr(generateBaseUnaryExpr(type));
     }
   }
 
@@ -263,9 +272,11 @@ public abstract class ShaderGenerator {
   }
 
   protected Expr generateBaseExpr(BasicType type) {
-    if (programState.getExprDepth() < FuzzerConstants.MAX_EXPR_DEPTH) {
+    if (programState.getExprDepth() < FuzzerConstants.MAX_EXPR_DEPTH
+        && !(type.isVector() && type.getElementType().isBoolean())) {
       programState.incrementExprDepth();
-      Expr expr = randGen.nextBoolean() ? generateBaseNonTerminalExpr(type) :
+      int nextAction = randGen.nextInt(4 - programState.getExprDepth());
+      Expr expr = nextAction >= 1 ? generateBaseNonTerminalExpr(type) :
           generateTerminalExpr(type);
       programState.decrementExprDepth();
       return expr;
@@ -282,7 +293,7 @@ public abstract class ShaderGenerator {
     FuzzerScopeEntry var = scopeEntries.get(randGen.nextInt(scopeEntries.size()));
     BasicType returnType = randomTypeGenerator.getRandomTargetType(var.getBaseType());
     BinOp op;
-    if (var.getBaseType().equals(BasicType.BOOL)) {
+    if (var.getBaseType().getElementType().equals(BasicType.BOOL)) {
       op = BinOp.ASSIGN;
     } else {
       op = randomTypeGenerator.getRandomBaseIntAssignOp();
@@ -387,5 +398,35 @@ public abstract class ShaderGenerator {
     }
     return new MemberLookupExpr(randGen.nextBoolean() ? new ParenExpr(childExpr) : childExpr,
         swizzleBuilder.toString());
+  }
+
+  protected Stmt generateIfStmt() {
+    Expr ifExpr = generateBaseExpr(BasicType.BOOL);
+    Stmt ifStmt = new BlockStmt(generateScope(), true);
+    Stmt elseStmt = randGen.nextBoolean() ? new BlockStmt(generateScope(), true) : null;
+    return new IfStmt(ifExpr, ifStmt, elseStmt);
+  }
+
+  protected List<Stmt> generateScope() {
+    programState.addScope();
+    List<Stmt> stmts = new ArrayList<>();
+    int randomActionBound = randGen.nextPositiveInt(FuzzerConstants.MAX_MAIN_LENGTH);
+    for (int i = 0; i < randomActionBound; i++) {
+      Stmt stmt;
+      int actionIndex =
+          randGen.nextInt(programState.getScopeDepth() < FuzzerConstants.MAX_SCOPE_DEPTH ? 7 : 5);
+      if (actionIndex < 3) {
+        stmt = new ExprStmt(generateProgramAssignmentLine());
+      } else if (actionIndex == 6) {
+        stmt = generateIfStmt();
+      } else {
+        stmt = new DeclarationStmt(generateRandomTypedVarDecls(
+            randGen.nextPositiveInt(FuzzerConstants.MAX_VARDECL_ELEMENTS),
+            true));
+      }
+      stmts.add(stmt);
+    }
+    programState.exitScope();
+    return stmts;
   }
 }

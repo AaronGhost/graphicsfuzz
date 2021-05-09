@@ -3,6 +3,7 @@ package com.graphicsfuzz;
 import com.graphicsfuzz.common.util.RandomWrapper;
 import com.graphicsfuzz.random.MultipleRangeRandomWrapper;
 import com.graphicsfuzz.stateprinters.ShaderTrapStatePrinter;
+import com.graphicsfuzz.stateprinters.StatePrinter;
 import java.io.FileWriter;
 import java.io.IOException;
 import net.sourceforge.argparse4j.ArgumentParsers;
@@ -38,17 +39,17 @@ public class GeneratorHandler {
 
     //Instantiate main class with the selected random Generator
     ProgramGenerator generator;
-    if (ns.getString("randomGenerator").equals("multiplerange")) {
-      generator = new ProgramGenerator(new MultipleRangeRandomWrapper(ns.getLong("seed")));
-    } else {
-      generator = new ProgramGenerator(new RandomWrapper(ns.getLong("seed")));
-    }
-
+    StatePrinter shadertrapWrapper = new ShaderTrapStatePrinter();
     try {
       //Generates the number of program given in argument of the program
       for (int i = 0; i < ns.getInt("count"); i++) {
         System.out.println("Generating shader " + i);
-        String program = generator.generateProgram(new ShaderTrapStatePrinter());
+        if (ns.getString("randomGenerator").equals("multiplerange")) {
+          generator = new ProgramGenerator(new MultipleRangeRandomWrapper(ns.getLong("seed") + i));
+        } else {
+          generator = new ProgramGenerator(new RandomWrapper(ns.getLong("seed") + i));
+        }
+        String program = generator.generateProgram(shadertrapWrapper);
         FileWriter outputfile = new FileWriter("test_" + i + ".shadertrap");
         outputfile.write(program);
         outputfile.close();

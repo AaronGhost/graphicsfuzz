@@ -77,6 +77,10 @@ public class ProgramState {
   }
 
   //Scope management
+  public int getScopeDepth() {
+    return scopeDepth;
+  }
+
   public void addScope() {
     scopeDepth += 1;
     currentScope = new FuzzerScope(currentScope);

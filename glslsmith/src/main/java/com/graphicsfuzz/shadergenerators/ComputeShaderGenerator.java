@@ -7,9 +7,12 @@ import com.graphicsfuzz.common.ast.decl.Declaration;
 import com.graphicsfuzz.common.ast.decl.DefaultLayout;
 import com.graphicsfuzz.common.ast.decl.FunctionDefinition;
 import com.graphicsfuzz.common.ast.decl.FunctionPrototype;
+import com.graphicsfuzz.common.ast.expr.BinOp;
+import com.graphicsfuzz.common.ast.expr.Expr;
 import com.graphicsfuzz.common.ast.stmt.BlockStmt;
 import com.graphicsfuzz.common.ast.stmt.DeclarationStmt;
 import com.graphicsfuzz.common.ast.stmt.ExprStmt;
+import com.graphicsfuzz.common.ast.stmt.IfStmt;
 import com.graphicsfuzz.common.ast.stmt.Stmt;
 import com.graphicsfuzz.common.ast.type.BasicType;
 import com.graphicsfuzz.common.ast.type.BindingLayoutQualifier;
@@ -95,28 +98,7 @@ public class ComputeShaderGenerator extends ShaderGenerator {
 
 
   protected List<Stmt> generateShaderMain() {
-    programState.addScope();
-
-    List<Stmt> stmts = new ArrayList<>();
-    int randomActionBound = randGen.nextPositiveInt(FuzzerConstants.MAX_MAIN_LENGTH);
-
-    for (int randomAction = 0; randomAction < randomActionBound; randomAction++) {
-      Stmt stmt = null;
-      switch (randGen.nextInt(2)) {
-        case 0:
-          stmt = new ExprStmt(generateProgramAssignmentLine());
-          break;
-        default:
-          stmt = new DeclarationStmt(generateRandomTypedVarDecls(
-              randGen.nextPositiveInt(FuzzerConstants.MAX_VARDECL_ELEMENTS),
-              true));
-          break;
-      }
-      stmts.add(stmt);
-    }
-
-    programState.exitScope();
-    return stmts;
+    return generateScope();
   }
 
   protected void generateShaderSkeleton(List<Stmt> mainStatements) {

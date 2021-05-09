@@ -191,7 +191,7 @@ public class RandomTypeGenerator implements IRandomType {
     if (restrictToInteger) {
       return randGen.nextInt(2) == 1 ? BasicType.UINT : BasicType.INT;
     }
-    switch (randGen.nextInt(9)) {
+    switch (randGen.nextInt(12)) {
       case 0:
         return BasicType.INT;
       case 1:
@@ -208,10 +208,17 @@ public class RandomTypeGenerator implements IRandomType {
         return BasicType.UVEC2;
       case 7:
         return BasicType.UVEC3;
-      default:
+      case 8:
         return BasicType.UVEC4;
+      case 9:
+        return BasicType.BVEC2;
+      case 10:
+        return BasicType.BVEC3;
+      default:
+        return BasicType.BVEC4;
     }
   }
+
 
   @Override
   public UnOp getRandomBaseIntUnaryOp(boolean canGenerateIncrDec) {
