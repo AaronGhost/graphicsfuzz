@@ -103,13 +103,13 @@ public abstract class ShaderGenerator {
       if (proxy.isArray()) {
         List<Expr> initializerExprs = new ArrayList<>();
         for (int i = 0; i < proxy.getBaseTypeSize(); i++) {
-          initializerExprs.add(generateBaseConstantExpr(proxy.getBaseType()));
+          initializerExprs.add(generateBaseExpr(proxy.getBaseType()));
         }
         initializer = new Initializer(new ArrayConstructorExpr(new ArrayType(proxy.getBaseType(),
             new ArrayInfo(new IntConstantExpr(String.valueOf(proxy.getBaseTypeSize())))),
             initializerExprs));
       } else {
-        initializer = new Initializer(generateBaseConstantExpr(baseType));
+        initializer = new Initializer(generateBaseExpr(baseType));
       }
     }
     ArrayInfo info = proxy.isArray()
@@ -224,7 +224,6 @@ public abstract class ShaderGenerator {
 
   //Generate a variable access for the given type or crash if none is available
   protected Expr generateBaseVarExpr(BasicType type) {
-    //TODO modify to give a suitable type for which the correct type can be extracted
     List<FuzzerScopeEntry> availableEntries =
         programState.getReadEntriesOfCompatibleType(type);
     assert !availableEntries.isEmpty();
@@ -338,8 +337,20 @@ public abstract class ShaderGenerator {
                                           boolean lvalue) {
     Expr childExpr = new VariableIdentifierExpr(var.getName());
     if (var.isArray()) {
+      boolean previousLvalue = programState.isLValue();
+      Expr indexExpr = generateBaseExpr(BasicType.INT);
+      programState.setLvalue(previousLvalue);
+      if (randGen.nextBoolean()) {
+        indexExpr = new FunctionCallExpr("clamp",
+            indexExpr, new IntConstantExpr("0"),
+            new IntConstantExpr(String.valueOf(var.getCurrentTypeSize() - 1)));
+      } else {
+        programState.registerWrapper(Wrapper.Operation.SAFE_ABS, BasicType.INT, null);
+        indexExpr = new BinaryExpr(new FunctionCallExpr("SAFE_ABS", indexExpr),
+            new IntConstantExpr(String.valueOf(var.getCurrentTypeSize())), BinOp.MOD);
+      }
       childExpr = new ArrayIndexExpr(new VariableIdentifierExpr(var.getName()),
-          new IntConstantExpr(String.valueOf(randGen.nextInt(var.getCurrentTypeSize()))));
+          indexExpr);
     }
     if (var.getBaseType().isVector()) {
       if (var.getBaseType().getNumElements() == targetType.getNumElements()) {
@@ -411,31 +422,48 @@ public abstract class ShaderGenerator {
     return new IfStmt(ifExpr, ifStmt, elseStmt);
   }
 
+  //TODO generate special switch statement with consecutive expression and clamping
   protected Stmt generateSwitchStmt() {
     BasicType switchType = randomTypeGenerator.getRandomBaseType();
     Expr switchExpr = generateBaseExpr(switchType);
     List<Stmt> switchBody = new ArrayList<>();
     List<Expr> existingCases = new ArrayList<>();
+    List<Integer> casePositions = new ArrayList<>();
+    int currentPos = 0;
     int switchLength = randGen.nextInt(FuzzerConstants.MAX_SWITCH_CASES);
     for (int i = 0; i < switchLength; i++) {
       Expr possibleBaseConstantExpr = generateBaseConstantExpr(switchType);
       while (existingCases.contains(possibleBaseConstantExpr)) {
         possibleBaseConstantExpr = generateBaseConstantExpr(switchType);
       }
+      casePositions.add(currentPos);
       switchBody.add(new ExprCaseLabel(possibleBaseConstantExpr));
       switchBody.add(new BlockStmt(generateScope(i == switchLength - 1 ? 1 : 0,
           FuzzerConstants.MAX_SWITCH_SCOPE_LENGTH),
           false));
+      currentPos += 2;
       if (randGen.nextBoolean()) {
         switchBody.add(new BreakStmt());
+        currentPos++;
       }
       existingCases.add(possibleBaseConstantExpr);
     }
     if (randGen.nextBoolean()) {
       if (switchBody.isEmpty()) {
         switchBody.add(new DefaultCaseLabel());
+        switchBody.add(new BlockStmt(generateScope(1, FuzzerConstants.MAX_SWITCH_SCOPE_LENGTH),
+            false));
+        if (randGen.nextBoolean()) {
+          switchBody.add(new BreakStmt());
+        }
       } else {
-        switchBody.add(randGen.nextInt(switchLength), new DefaultCaseLabel());
+        int defaultIndex = randGen.nextInt(casePositions.size());
+        switchBody.add(casePositions.get(defaultIndex), new DefaultCaseLabel());
+        switchBody.add(new BlockStmt(generateScope(defaultIndex == casePositions.size() - 1 ? 1
+                : 0, FuzzerConstants.MAX_SWITCH_SCOPE_LENGTH), false));
+        if (randGen.nextBoolean()) {
+          switchBody.add(new BreakStmt());
+        }
       }
     }
     return new SwitchStmt(switchExpr, new BlockStmt(switchBody, true));

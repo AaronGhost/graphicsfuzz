@@ -120,11 +120,20 @@ public class ComputeShaderGenerator extends ShaderGenerator {
       declList.add(generateInterfaceBlockFromBuffer(bufferSymbol));
     }
 
-    //Generate safe math wrappers
-    for (ImmutableTriple<Wrapper.Operation, BasicType, BasicType> wrapper :
+    //Generate safe math wrappers prototypes
+    for (ImmutableTriple<Wrapper.Operation, BasicType, BasicType> wrapperFunction :
         programState.getWrappers()) {
-      declList.add(wrapper.left.generator.apply(wrapper.middle, wrapper.right));
+      declList.add(Wrapper.generateDeclaration(wrapperFunction.left,
+          wrapperFunction.middle, wrapperFunction.right));
     }
+    //Generate safe math wrappers functions
+    for (ImmutableTriple<Wrapper.Operation, BasicType, BasicType> wrapperFunction :
+        programState.getWrappers()) {
+      declList.add(wrapperFunction.left.generator.apply(wrapperFunction.middle,
+          wrapperFunction.right));
+    }
+
+
 
     //Generate an empty main function
     FunctionDefinition mainFunction = new FunctionDefinition(new FunctionPrototype("main",

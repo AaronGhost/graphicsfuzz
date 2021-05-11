@@ -5,6 +5,7 @@ import com.graphicsfuzz.common.ast.decl.Declaration;
 import com.graphicsfuzz.common.ast.decl.FunctionDefinition;
 import com.graphicsfuzz.common.ast.decl.FunctionPrototype;
 import com.graphicsfuzz.common.ast.decl.ParameterDecl;
+import com.graphicsfuzz.common.ast.expr.ArrayIndexExpr;
 import com.graphicsfuzz.common.ast.expr.BinOp;
 import com.graphicsfuzz.common.ast.expr.BinaryExpr;
 import com.graphicsfuzz.common.ast.expr.Expr;
@@ -21,28 +22,51 @@ import com.graphicsfuzz.common.ast.stmt.ReturnStmt;
 import com.graphicsfuzz.common.ast.stmt.Stmt;
 import com.graphicsfuzz.common.ast.type.BasicType;
 import com.graphicsfuzz.common.ast.type.QualifiedType;
+import com.graphicsfuzz.common.ast.type.Type;
 import com.graphicsfuzz.common.ast.type.TypeQualifier;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.BiFunction;
 
+
 public abstract class Wrapper {
   public enum Operation {
-    SAFE_DIV(Wrapper::generateDivWrapper),
-    SAFE_DIV_ASSIGN(Wrapper::generateDivAssignWrapper),
-    SAFE_LSHIFT(Wrapper::generateLShiftWrapper),
-    SAFE_LSHIFT_ASSIGN(Wrapper::generateLShiftAssignWrapper),
-    SAFE_RSHIFT(Wrapper::generateRShiftWrapper),
-    SAFE_RSHIFT_ASSIGN(Wrapper::generateRShiftAssignWrapper),
-    SAFE_MOD(Wrapper::generateModWrapper),
-    SAFE_MOD_ASSIGN(Wrapper::generateModAssignWrapper);
+    SAFE_ABS(Wrapper::generateAbsWrapper, "SAFE_ABS",false),
+    SAFE_DIV(Wrapper::generateDivWrapper, "SAFE_DIV",false),
+    SAFE_DIV_ASSIGN(Wrapper::generateDivAssignWrapper, "SAFE_DIV_ASSIGN", true),
+    SAFE_LSHIFT(Wrapper::generateLShiftWrapper, "SAFE_LSHIFT", false),
+    SAFE_LSHIFT_ASSIGN(Wrapper::generateLShiftAssignWrapper, "SAFE_LSHIFT_ASSIGN", true),
+    SAFE_RSHIFT(Wrapper::generateRShiftWrapper, "SAFE_RSHIFT", false),
+    SAFE_RSHIFT_ASSIGN(Wrapper::generateRShiftAssignWrapper, "SAFE_RSHIFT_ASSIGN", true),
+    SAFE_MOD(Wrapper::generateModWrapper,"SAFE_MOD", false),
+    SAFE_MOD_ASSIGN(Wrapper::generateModAssignWrapper, "SAFE_MOD_ASSIGN", true);
 
     public final BiFunction<BasicType, BasicType, Declaration> generator;
+    public final String name;
+    public final boolean inoutA;
 
-    Operation(BiFunction<BasicType, BasicType, Declaration> generator) {
+    Operation(BiFunction<BasicType, BasicType, Declaration> generator, String name,
+              boolean inoutA) {
       this.generator = generator;
+      this.name = name;
+      this.inoutA = inoutA;
     }
+  }
+
+  public static Declaration generateDeclaration(Operation op, BasicType typeA, BasicType typeB) {
+    Type parArgA = typeA;
+    if (op.inoutA) {
+      parArgA = new QualifiedType(typeA, Collections.singletonList(TypeQualifier.INOUT_PARAM));
+    }
+    if (typeB == null) {
+      return new FunctionPrototype(op.name, typeA, parArgA);
+    }
+    if (! typeA.isVector() && typeB.isVector()) {
+      return new FunctionPrototype(op.name, typeB, parArgA, typeB);
+    }
+    return new FunctionPrototype(op.name, typeA, parArgA, typeB);
   }
 
   public static Expr generateConstant(BasicType type, String constant) {
@@ -136,7 +160,7 @@ public abstract class Wrapper {
             op));
     return new FunctionDefinition(new FunctionPrototype(funName,
         typeA, Arrays.asList(new ParameterDecl("A", typeA, null),
-        new ParameterDecl("B", typeB, null))),
+          new ParameterDecl("B", typeB, null))),
         new BlockStmt(Collections.singletonList(new ReturnStmt(shiftExpr)), true));
   }
 
@@ -152,7 +176,7 @@ public abstract class Wrapper {
     return new FunctionDefinition(new FunctionPrototype(funName,
         typeA, Arrays.asList(new ParameterDecl("A", new QualifiedType(typeA,
             Collections.singletonList(TypeQualifier.INOUT_PARAM)), null),
-        new ParameterDecl("B", typeB, null))),
+          new ParameterDecl("B", typeB, null))),
         new BlockStmt(Collections.singletonList(new ReturnStmt(shiftAssignExpr)), true));
   }
 
@@ -188,11 +212,11 @@ public abstract class Wrapper {
     BasicType functionReturnType = typeB.isVector() ? typeB : typeA;
     if (typeA.getElementType() == BasicType.INT) {
       modExpr = new TernaryExpr(generateModTestExpr(typeB),
-          new BinaryExpr(new FunctionCallExpr("abs", new VariableIdentifierExpr("A")),
+          new BinaryExpr(new FunctionCallExpr("SAFE_ABS", new VariableIdentifierExpr("A")),
               generateConstant(typeB, String.valueOf(FuzzerConstants.MAX_INT_VALUE - 1)),
               BinOp.MOD),
-          new BinaryExpr(new FunctionCallExpr("abs", new VariableIdentifierExpr("A")),
-              new FunctionCallExpr("abs", new VariableIdentifierExpr("B")), BinOp.MOD));
+          new BinaryExpr(new FunctionCallExpr("SAFE_ABS", new VariableIdentifierExpr("A")),
+              new FunctionCallExpr("SAFE_ABS", new VariableIdentifierExpr("B")), BinOp.MOD));
     } else {
       modExpr = new TernaryExpr(generateModTestExpr(typeB),
           new BinaryExpr(new VariableIdentifierExpr("A"), generateConstant(typeB,
@@ -210,13 +234,13 @@ public abstract class Wrapper {
     if (typeA.getElementType() == BasicType.INT) {
       stmts = Arrays.asList(
           new ExprStmt(new BinaryExpr(new VariableIdentifierExpr("A"),
-              new FunctionCallExpr("abs", new VariableIdentifierExpr("A")), BinOp.ASSIGN)),
+              new FunctionCallExpr("SAFE_ABS", new VariableIdentifierExpr("A")), BinOp.ASSIGN)),
           new ReturnStmt(new TernaryExpr(generateModTestExpr(typeB),
               new ParenExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
                   generateConstant(typeB, String.valueOf(FuzzerConstants.MAX_INT_VALUE - 1)),
                   BinOp.MOD_ASSIGN)),
               new ParenExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
-                  new FunctionCallExpr("abs", new VariableIdentifierExpr("B")),
+                  new FunctionCallExpr("SAFE_ABS", new VariableIdentifierExpr("B")),
                   BinOp.MOD_ASSIGN)))));
     } else {
       stmts = Collections.singletonList(new ReturnStmt(new TernaryExpr(
@@ -230,6 +254,33 @@ public abstract class Wrapper {
         Arrays.asList(new ParameterDecl("A", new QualifiedType(typeA,
                 Collections.singletonList(TypeQualifier.INOUT_PARAM)), null),
             new ParameterDecl("B", typeB, null))),
+        new BlockStmt(stmts, true));
+  }
+
+  public static Declaration generateAbsWrapper(BasicType type, BasicType useless) {
+    List<Stmt> stmts = new ArrayList<>();
+    assert type.getElementType() == BasicType.INT;
+    if (type.isScalar()) {
+      stmts.add((new ReturnStmt(new TernaryExpr(new BinaryExpr(
+          new VariableIdentifierExpr("A"),
+          new IntConstantExpr(String.valueOf(FuzzerConstants.MIN_INT_VALUE)), BinOp.EQ),
+          new IntConstantExpr(String.valueOf(FuzzerConstants.MAX_INT_VALUE)),
+          new FunctionCallExpr("abs", new VariableIdentifierExpr(
+              "A"))))));
+    } else {
+      for (int i = 0; i < type.getNumElements(); i++) {
+        stmts.add(new ExprStmt(new TernaryExpr(new BinaryExpr(
+            new ArrayIndexExpr(new VariableIdentifierExpr("A"),
+                new IntConstantExpr(String.valueOf(i))),
+            new IntConstantExpr(String.valueOf(FuzzerConstants.MIN_INT_VALUE)), BinOp.EQ),
+            new IntConstantExpr(String.valueOf(FuzzerConstants.MAX_INT_VALUE)),
+            new FunctionCallExpr("abs",  new ArrayIndexExpr(new VariableIdentifierExpr("A"),
+                new IntConstantExpr(String.valueOf(i)))))));
+      }
+      stmts.add(new ReturnStmt(new VariableIdentifierExpr("A")));
+    }
+    return new FunctionDefinition(new FunctionPrototype("SAFE_ABS", type,
+        Collections.singletonList(new ParameterDecl("A", type, null))),
         new BlockStmt(stmts, true));
   }
 }

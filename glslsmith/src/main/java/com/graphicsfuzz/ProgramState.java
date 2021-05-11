@@ -185,6 +185,14 @@ public class ProgramState {
   //Wrappers management
   public void registerWrapper(Wrapper.Operation op, BasicType typeA, BasicType typeB) {
     necessaryWrappers.add(new ImmutableTriple<>(op, typeA, typeB));
+    if (op == Wrapper.Operation.SAFE_MOD || op == Wrapper.Operation.SAFE_MOD_ASSIGN) {
+      if (typeA.getElementType() == BasicType.INT) {
+        registerWrapper(Wrapper.Operation.SAFE_ABS, typeA, null);
+      }
+      if (typeB != null && typeB.getElementType() == BasicType.INT) {
+        registerWrapper(Wrapper.Operation.SAFE_ABS, typeB, null);
+      }
+    }
   }
 
   public Set<ImmutableTriple<Wrapper.Operation, BasicType, BasicType>> getWrappers() {
