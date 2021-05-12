@@ -2,9 +2,12 @@ package com.graphicsfuzz.scope;
 
 import com.graphicsfuzz.common.ast.type.BasicType;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class FuzzerScope {
@@ -23,7 +26,7 @@ public class FuzzerScope {
 
   public FuzzerScope(FuzzerScope parent) {
     parentScope = parent;
-    availableOffset = parent.getAvailableOffset();
+    availableOffset = 0;
   }
 
   public FuzzerScope getParent() {
@@ -32,6 +35,10 @@ public class FuzzerScope {
 
   public int getAvailableOffset() {
     return availableOffset;
+  }
+
+  public void incrementOffset() {
+    availableOffset++;
   }
 
   public void addVariable(String name, UnifiedTypeInterface type) {
@@ -43,21 +50,23 @@ public class FuzzerScope {
   }
 
   public List<String> getNameOfDeclaredVariables() {
-    if (parentScope == null) {
-      return new ArrayList<>(variableMapping.keySet());
+    Set<String> names = new HashSet<>(variableMapping.keySet());
+    FuzzerScope nextScope = this.parentScope;
+    while (nextScope != null) {
+      names.addAll(nextScope.variableMapping.keySet());
+      nextScope = nextScope.parentScope;
     }
-    List<String> parentVariables = parentScope.getNameOfDeclaredVariables();
-    parentVariables.addAll(variableMapping.keySet());
-    return parentVariables;
+    return Collections.unmodifiableList(new ArrayList<>(names));
   }
 
   public List<FuzzerScopeEntry> getAllDeclaredVariables() {
-    if (parentScope == null) {
-      return new ArrayList<>(variableMapping.values());
+    Set<FuzzerScopeEntry> declaredVariables = new HashSet<>(variableMapping.values());
+    FuzzerScope nextScope = this.parentScope;
+    while (nextScope != null) {
+      declaredVariables.addAll(nextScope.variableMapping.values());
+      nextScope = nextScope.parentScope;
     }
-    List<FuzzerScopeEntry> parentVariables = parentScope.getAllDeclaredVariables();
-    parentVariables.addAll(variableMapping.values());
-    return parentVariables;
+    return Collections.unmodifiableList(new ArrayList<>(declaredVariables));
   }
 
   //TODO add readonly and const support

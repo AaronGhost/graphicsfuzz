@@ -34,7 +34,6 @@ public class ProgramState {
   //Indices management for variables
   private int bindingOffset = 0;
   private int bufferAndUniformOffset = 0;
-  private int shadowAvailableVariableOffset = 0;
   private int nonShadowAvailableVariableOffset = 0;
 
   //Variable to query the shader generation states
@@ -112,7 +111,7 @@ public class ProgramState {
 
   public void addVariable(String name, UnifiedTypeInterface variable, boolean canBeHidden) {
     if (canBeHidden) {
-      shadowAvailableVariableOffset += 1;
+      currentScope.incrementOffset();
     } else {
       nonShadowAvailableVariableOffset += 1;
     }
@@ -130,7 +129,7 @@ public class ProgramState {
 
   public String getAvailableShadowName() {
     //TODO shadowing problems
-    return "var_" + shadowAvailableVariableOffset;
+    return "var_" + currentScope.getAvailableOffset();
   }
 
   //Querying the shader generation states
