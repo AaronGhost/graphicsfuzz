@@ -11,6 +11,8 @@ import com.graphicsfuzz.common.ast.type.Type;
 import com.graphicsfuzz.common.util.IRandom;
 import com.graphicsfuzz.scope.UnifiedTypeInterface;
 import com.graphicsfuzz.scope.UnifiedTypeProxy;
+import java.util.Collections;
+import java.util.Optional;
 
 public class RandomTypeGenerator implements IRandomType {
   private final IRandom randGen;
@@ -28,8 +30,10 @@ public class RandomTypeGenerator implements IRandomType {
     if (randGen.nextBoolean()) {
       int arrayLength = randGen.nextPositiveInt(FuzzerConstants.MAX_ARRAY_LENGTH);
       //Create an empty array info with only the size to generate a size access later
-      ArrayInfo arrayInfo = new ArrayInfo(new IntConstantExpr(String.valueOf(arrayLength)));
-      arrayInfo.setConstantSizeExpr(arrayLength);
+      ArrayInfo arrayInfo =
+          new ArrayInfo(Collections.singletonList(Optional.of(
+              new IntConstantExpr(String.valueOf(arrayLength)))));
+      arrayInfo.setConstantSizeExpr(0, arrayLength);
       return new UnifiedTypeProxy(new ArrayType(basicType, arrayInfo));
     } else {
       return new UnifiedTypeProxy(basicType);

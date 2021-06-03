@@ -18,6 +18,8 @@ public class GeneratorHandler {
     ArgumentParser parser = ArgumentParsers.newArgumentParser("GLSLsmith")
         .defaultHelp(true).description("Generates random shaders");
 
+    //TODO add argument for ESSL version (3.2 providing input and output interface blocks)
+
     parser.addArgument("--seed")
         .dest("seed")
         .type(Long.class)

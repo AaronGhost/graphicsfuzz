@@ -22,11 +22,11 @@ import com.graphicsfuzz.common.glslversion.ShadingLanguageVersion;
 import com.graphicsfuzz.common.util.ShaderKind;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class ShaderTrapStatePrinterTest {
@@ -38,7 +38,9 @@ public class ShaderTrapStatePrinterTest {
   String buffer4Text = "CREATE_BUFFER buffer_4 SIZE_BYTES 36 INIT_VALUES int 72 48 uint 78 32 26 "
       + "21 24 121 110\n"
       + "BIND_SHADER_STORAGE_BUFFER BUFFER buffer_4 BINDING 4\n\n";
-  String minimalProgramText = "DECLARE_SHADER shader KIND COMPUTE\n"
+  //TODO tests when the GLES version will be varying
+  String minimalProgramText = "GLES 3.1\n"
+      + "DECLARE_SHADER shader KIND COMPUTE\n"
       + "#version 320 es\n"
       + "layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;\n"
       + "void main()\n"
@@ -56,10 +58,12 @@ public class ShaderTrapStatePrinterTest {
         valueList2, TypeQualifier.BUFFER, Arrays.asList("uint1", "int1", "int2"),
         Arrays.asList(BasicType.UINT, BasicType.INT, BasicType.INT), "", true, 2);
     List<? extends Number> valueList4 = Arrays.asList(72, 48, 78, 32, 26, 21, 24, 121, 110);
-    ArrayInfo arrayInfo1 = new ArrayInfo(new IntConstantExpr(String.valueOf(2)));
-    arrayInfo1.setConstantSizeExpr(2);
-    ArrayInfo arrayInfo2 = new ArrayInfo(new IntConstantExpr(String.valueOf(7)));
-    arrayInfo2.setConstantSizeExpr(7);
+    ArrayInfo arrayInfo1 = new ArrayInfo(Collections.singletonList(Optional.of(
+        new IntConstantExpr(String.valueOf(2)))));
+    arrayInfo1.setConstantSizeExpr(0, 2);
+    ArrayInfo arrayInfo2 = new ArrayInfo(Collections.singletonList(Optional.of(
+        new IntConstantExpr(String.valueOf(7)))));
+    arrayInfo2.setConstantSizeExpr(0, 7);
     List<Type> memberTypes = Arrays.asList(new ArrayType(BasicType.INT, arrayInfo1),
         new ArrayType(BasicType.UINT, arrayInfo2));
     buffer4 = new Buffer("buffer_4", new LayoutQualifierSequence(new BindingLayoutQualifier(4)),
@@ -95,16 +99,15 @@ public class ShaderTrapStatePrinterTest {
   }
 
   @Test
-  @Ignore
   public void testDumpBufferWithInputBuffer() {
     Assert.assertEquals(new ShaderTrapStatePrinter().printDumpBuffer(buffer2), "");
   }
 
   @Test
-  @Ignore
   public void testDumBufferWithOutputBuffer() {
-    Assert.assertEquals(new ShaderTrapStatePrinter().printDumpBuffer(buffer4), "DUMP_BUFFER "
-        + "buffer_4\n");
+    Assert.assertEquals(new ShaderTrapStatePrinter().printDumpBuffer(buffer4),
+        "DUMP_BUFFER_TEXT BUFFER buffer_4 FILE \"buffer_4.txt\" FORMAT \"buffer_4 \" int 2 \" \" "
+            + "uint 7\n");
   }
 
 }

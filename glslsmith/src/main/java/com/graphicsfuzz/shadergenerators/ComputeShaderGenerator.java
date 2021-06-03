@@ -7,18 +7,14 @@ import com.graphicsfuzz.common.ast.decl.Declaration;
 import com.graphicsfuzz.common.ast.decl.DefaultLayout;
 import com.graphicsfuzz.common.ast.decl.FunctionDefinition;
 import com.graphicsfuzz.common.ast.decl.FunctionPrototype;
-import com.graphicsfuzz.common.ast.expr.BinOp;
-import com.graphicsfuzz.common.ast.expr.Expr;
 import com.graphicsfuzz.common.ast.stmt.BlockStmt;
-import com.graphicsfuzz.common.ast.stmt.DeclarationStmt;
-import com.graphicsfuzz.common.ast.stmt.ExprStmt;
-import com.graphicsfuzz.common.ast.stmt.IfStmt;
 import com.graphicsfuzz.common.ast.stmt.Stmt;
 import com.graphicsfuzz.common.ast.type.BasicType;
 import com.graphicsfuzz.common.ast.type.BindingLayoutQualifier;
 import com.graphicsfuzz.common.ast.type.LayoutQualifier;
 import com.graphicsfuzz.common.ast.type.LayoutQualifierSequence;
 import com.graphicsfuzz.common.ast.type.LocalSizeLayoutQualifier;
+import com.graphicsfuzz.common.ast.type.Std430LayoutQualifier;
 import com.graphicsfuzz.common.ast.type.Type;
 import com.graphicsfuzz.common.ast.type.TypeQualifier;
 import com.graphicsfuzz.common.ast.type.VoidType;
@@ -90,7 +86,8 @@ public class ComputeShaderGenerator extends ShaderGenerator {
 
     //Create the correct buffer object
     Buffer inputBuffer = new Buffer("buffer_" + programState.getBindingOffset(),
-        new LayoutQualifierSequence(new BindingLayoutQualifier(programState.getBindingOffset())),
+        new LayoutQualifierSequence(new Std430LayoutQualifier(),
+            new BindingLayoutQualifier(programState.getBindingOffset())),
         values, TypeQualifier.BUFFER, memberNames, memberTypes, "",
         inOut, programState.getBindingOffset());
     programState.addBuffer(inputBuffer);
@@ -142,7 +139,8 @@ public class ComputeShaderGenerator extends ShaderGenerator {
 
     //Generate the translation unit and add it to the programState
     TranslationUnit translationUnit = new TranslationUnit(ShaderKind.COMPUTE,
-        Optional.of(ShadingLanguageVersion.ESSL_320), declList);
+        //TODO pick correct version from handler
+        Optional.of(ShadingLanguageVersion.ESSL_310), declList);
     programState.programInitialization(translationUnit, ShaderKind.COMPUTE);
   }
 }

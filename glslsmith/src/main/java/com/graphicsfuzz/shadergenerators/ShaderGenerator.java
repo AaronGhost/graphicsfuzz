@@ -37,8 +37,6 @@ import com.graphicsfuzz.common.ast.stmt.Stmt;
 import com.graphicsfuzz.common.ast.stmt.SwitchStmt;
 import com.graphicsfuzz.common.ast.type.ArrayType;
 import com.graphicsfuzz.common.ast.type.BasicType;
-import com.graphicsfuzz.common.ast.type.QualifiedType;
-import com.graphicsfuzz.common.ast.type.TypeQualifier;
 import com.graphicsfuzz.common.util.IRandom;
 import com.graphicsfuzz.random.IRandomType;
 import com.graphicsfuzz.random.RandomTypeGenerator;
@@ -106,14 +104,16 @@ public abstract class ShaderGenerator {
           initializerExprs.add(generateBaseExpr(proxy.getBaseType()));
         }
         initializer = new Initializer(new ArrayConstructorExpr(new ArrayType(proxy.getBaseType(),
-            new ArrayInfo(new IntConstantExpr(String.valueOf(proxy.getBaseTypeSize())))),
+            new ArrayInfo(Collections.singletonList(Optional.of(
+                new IntConstantExpr(String.valueOf(proxy.getBaseTypeSize())))))),
             initializerExprs));
       } else {
         initializer = new Initializer(generateBaseExpr(baseType));
       }
     }
-    ArrayInfo info = proxy.isArray()
-        ? new ArrayInfo(new IntConstantExpr(String.valueOf(proxy.getBaseTypeSize()))) : null;
+    ArrayInfo info = proxy.isArray() ? new ArrayInfo(
+        Collections.singletonList(Optional.of(
+            new IntConstantExpr(String.valueOf(proxy.getBaseTypeSize()))))) : null;
     for (int i = 0; i < varDeclNumber; i++) {
       String name = programState.getAvailableShadowName();
       programState.addVariable(name, proxy);

@@ -231,7 +231,7 @@ public class WrapperTest {
   public void testGenerateModWrapper() {
     String intModText = "int SAFE_MOD(int A, int B)\n"
         + "{\n"
-        + " return B == 0 ? abs(A) % 2147483646 : abs(A) % abs(B);\n"
+        + " return B == 0 ? SAFE_ABS(A) % 2147483646 : SAFE_ABS(A) % SAFE_ABS(B);\n"
         + "}\n";
     String uintModText = "uint SAFE_MOD(uint A, uint B)\n"
         + "{\n"
@@ -243,7 +243,8 @@ public class WrapperTest {
         + "}\n";
     String intivec4ModText = "ivec4 SAFE_MOD(int A, ivec4 B)\n"
         + "{\n"
-        + " return any(equal(B, ivec4(0))) ? abs(A) % ivec4(2147483646) : abs(A) % abs(B);\n"
+        + " return any(equal(B, ivec4(0))) ? SAFE_ABS(A) % ivec4(2147483646)"
+        + " : SAFE_ABS(A) % SAFE_ABS(B);\n"
         + "}\n";
     Assert.assertEquals(TestHelper.getText(Wrapper.generateModWrapper(BasicType.INT,
         BasicType.INT)), intModText);
@@ -259,8 +260,8 @@ public class WrapperTest {
   public void testGenerateModAssignWrapper() {
     String intModAssignText = "int SAFE_MOD_ASSIGN(inout int A, int B)\n"
         + "{\n"
-        + " A = abs(A);\n"
-        + " return B == 0 ? (A %= 2147483646) : (A %= abs(B));\n"
+        + " A = SAFE_ABS(A);\n"
+        + " return B == 0 ? (A %= 2147483646) : (A %= SAFE_ABS(B));\n"
         + "}\n";
     String uintModAssignText = "uint SAFE_MOD_ASSIGN(inout uint A, uint B)\n"
         + "{\n"

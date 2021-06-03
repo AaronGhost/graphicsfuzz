@@ -47,6 +47,11 @@ limitations under the License.
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+      <version>3.11</version>
+    </dependency>
+    <dependency>
       <groupId>com.graphicsfuzz</groupId>
       <artifactId>ast</artifactId>
     </dependency>

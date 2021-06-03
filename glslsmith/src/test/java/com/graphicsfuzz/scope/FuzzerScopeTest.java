@@ -7,6 +7,7 @@ import com.graphicsfuzz.common.ast.type.BasicType;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Before;
@@ -23,16 +24,18 @@ public class FuzzerScopeTest {
   @Before
   public void setup() {
     globalScope.addVariable("int1", new UnifiedTypeProxy(BasicType.INT));
-    ArrayInfo arrayInfo1 = new ArrayInfo(new IntConstantExpr(String.valueOf(3)));
-    arrayInfo1.setConstantSizeExpr(3);
+    ArrayInfo arrayInfo1 = new ArrayInfo(Collections.singletonList(Optional.of(
+        new IntConstantExpr(String.valueOf(3)))));
+    arrayInfo1.setConstantSizeExpr(0, 3);
     globalScope.addVariable("int2",
         new UnifiedTypeProxy(new ArrayType(BasicType.INT, arrayInfo1)), false);
     globalScope.addVariable("uint1", new UnifiedTypeProxy(BasicType.UINT), true);
     globalScope.addVariable("uint2", new UnifiedTypeProxy(BasicType.UINT), false);
     notGlobalScope.addVariable("n_int1", new UnifiedTypeProxy(BasicType.INT));
     notGlobalScope.addVariable("n_int2", new UnifiedTypeProxy(BasicType.INT), false);
-    ArrayInfo arrayInfo2 = new ArrayInfo(new IntConstantExpr(String.valueOf(5)));
-    arrayInfo2.setConstantSizeExpr(5);
+    ArrayInfo arrayInfo2 = new ArrayInfo(Collections.singletonList(Optional.of(
+            new IntConstantExpr(String.valueOf(5)))));
+    arrayInfo2.setConstantSizeExpr(0, 5);
     notGlobalScope.addVariable("n_uint1", new UnifiedTypeProxy(new ArrayType(BasicType.UINT,
         arrayInfo2)));
     notGlobalScope.addVariable("n_uint2", new UnifiedTypeProxy(BasicType.UINT), false);

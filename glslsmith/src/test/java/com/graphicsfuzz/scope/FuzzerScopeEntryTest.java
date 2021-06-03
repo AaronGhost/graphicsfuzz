@@ -4,6 +4,8 @@ import com.graphicsfuzz.common.ast.decl.ArrayInfo;
 import com.graphicsfuzz.common.ast.expr.IntConstantExpr;
 import com.graphicsfuzz.common.ast.type.ArrayType;
 import com.graphicsfuzz.common.ast.type.BasicType;
+import java.util.Collections;
+import java.util.Optional;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -21,8 +23,9 @@ public class FuzzerScopeEntryTest {
 
   @Test
   public void testFuzzerScopeEntryForArrayType() {
-    ArrayInfo arrayInfo = new ArrayInfo(new IntConstantExpr(String.valueOf(5)));
-    arrayInfo.setConstantSizeExpr(5);
+    ArrayInfo arrayInfo = new ArrayInfo(Collections.singletonList(Optional.of(
+        new IntConstantExpr(String.valueOf(5)))));
+    arrayInfo.setConstantSizeExpr(0, 5);
     FuzzerScopeEntry entry = new FuzzerScopeEntry("int1",
         new UnifiedTypeProxy(new ArrayType(BasicType.UINT, arrayInfo)), true);
     Assert.assertEquals(entry.getRealType().getClass(), ArrayType.class);

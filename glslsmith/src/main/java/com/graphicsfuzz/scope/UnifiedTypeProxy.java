@@ -26,6 +26,7 @@ public class UnifiedTypeProxy extends Type implements UnifiedTypeInterface {
     this.isArray = false;
   }
 
+  //TODO support multi dimensional arrays
   public UnifiedTypeProxy(ArrayType realType) {
     this.realType = realType;
     if (realType.getBaseType() instanceof BasicType) {
@@ -36,9 +37,9 @@ public class UnifiedTypeProxy extends Type implements UnifiedTypeInterface {
       throw new RuntimeException("Currently unsupported type sent to the proxy");
     }
     baseType = childType.getBaseType();
-    if (realType.getArrayInfo().hasConstantSize()) {
-      currentTypeSize = realType.getArrayInfo().getConstantSize();
-      baseTypeSize = childType.getBaseTypeSize() * realType.getArrayInfo().getConstantSize();
+    if (realType.getArrayInfo().hasConstantSize(0)) {
+      currentTypeSize = realType.getArrayInfo().getConstantSize(0);
+      baseTypeSize = childType.getBaseTypeSize() * realType.getArrayInfo().getConstantSize(0);
     } else {
       baseTypeSize = 0;
       currentTypeSize = 0;

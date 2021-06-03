@@ -16,6 +16,8 @@ import com.graphicsfuzz.common.util.SameValueRandom;
 import com.graphicsfuzz.common.util.ZeroCannedRandom;
 import com.graphicsfuzz.random.MokeRandomTypeGenerator;
 import com.graphicsfuzz.scope.UnifiedTypeProxy;
+import java.util.Collections;
+import java.util.Optional;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -43,8 +45,9 @@ public class ShaderGeneratorTest {
   @Test
   public void testGenerateRandomTypedVarDeclsForArray() {
     MokeRandomTypeGenerator randomTypeGenerator = new MokeRandomTypeGenerator();
-    ArrayInfo arrayInfo = new ArrayInfo(new IntConstantExpr("3"));
-    arrayInfo.setConstantSizeExpr(3);
+    ArrayInfo arrayInfo = new ArrayInfo(Collections.singletonList(Optional.of(
+        new IntConstantExpr("3"))));
+    arrayInfo.setConstantSizeExpr(0, 3);
     randomTypeGenerator.setRandomNewType(new UnifiedTypeProxy(
         new ArrayType(BasicType.UINT, arrayInfo)));
     ShaderGenerator generator = new ConcreteShaderGenerator(new ZeroCannedRandom(),
@@ -74,8 +77,9 @@ public class ShaderGeneratorTest {
   @Test
   public void testGenerateRandomTypedVarDeclsForVectArray() {
     MokeRandomTypeGenerator randomTypeGenerator = new MokeRandomTypeGenerator();
-    ArrayInfo arrayInfo = new ArrayInfo(new IntConstantExpr("5"));
-    arrayInfo.setConstantSizeExpr(5);
+    ArrayInfo arrayInfo = new ArrayInfo(Collections.singletonList(Optional.of(
+        new IntConstantExpr("5"))));
+    arrayInfo.setConstantSizeExpr(0, 5);
     randomTypeGenerator.setRandomNewType(new UnifiedTypeProxy(new ArrayType(BasicType.IVEC4,
         arrayInfo)));
     ShaderGenerator generator = new ConcreteShaderGenerator(new ZeroCannedRandom(),
@@ -123,8 +127,11 @@ public class ShaderGeneratorTest {
   @Test
   public void testGenerateSwizzleWithMultipleLevels() {
     MokeRandomTypeGenerator randomTypeGenerator = new MokeRandomTypeGenerator();
-    ShaderGenerator generator = new ConcreteShaderGenerator(new CannedRandom(0, 0, 0, true, 3, 1, 0,
-        1, 0, false, true, false), randomTypeGenerator);
+    ShaderGenerator generator = new ConcreteShaderGenerator(new CannedRandom(
+        true, 3, 0, 0, 0, //outer expression
+        false, 1, 0, 1, 0, //inner expression
+        true, false, false //parenthesis
+    ), randomTypeGenerator);
     Assert.assertEquals("(var_0).rbg.xy",
         TestHelper.getText(generator.generateRandomSwizzle(new VariableIdentifierExpr(
         "var_0"), BasicType.IVEC3, BasicType.IVEC2, true)));
