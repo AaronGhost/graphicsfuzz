@@ -269,13 +269,14 @@ public abstract class Wrapper {
               "A"))))));
     } else {
       for (int i = 0; i < type.getNumElements(); i++) {
-        stmts.add(new ExprStmt(new TernaryExpr(new BinaryExpr(
-            new ArrayIndexExpr(new VariableIdentifierExpr("A"),
-                new IntConstantExpr(String.valueOf(i))),
-            new IntConstantExpr(String.valueOf(FuzzerConstants.MIN_INT_VALUE)), BinOp.EQ),
-            new IntConstantExpr(String.valueOf(FuzzerConstants.MAX_INT_VALUE)),
-            new FunctionCallExpr("abs",  new ArrayIndexExpr(new VariableIdentifierExpr("A"),
-                new IntConstantExpr(String.valueOf(i)))))));
+        stmts.add(new ExprStmt(new BinaryExpr(new ArrayIndexExpr(new VariableIdentifierExpr("A"),
+            new IntConstantExpr(String.valueOf(i))), new TernaryExpr(new BinaryExpr(
+                new ArrayIndexExpr(new VariableIdentifierExpr("A"),
+                    new IntConstantExpr(String.valueOf(i))),
+                new IntConstantExpr(String.valueOf(FuzzerConstants.MIN_INT_VALUE)), BinOp.EQ),
+                new IntConstantExpr(String.valueOf(FuzzerConstants.MAX_INT_VALUE)),
+                new FunctionCallExpr("abs",  new ArrayIndexExpr(new VariableIdentifierExpr("A"),
+                    new IntConstantExpr(String.valueOf(i))))), BinOp.ASSIGN)));
       }
       stmts.add(new ReturnStmt(new VariableIdentifierExpr("A")));
     }

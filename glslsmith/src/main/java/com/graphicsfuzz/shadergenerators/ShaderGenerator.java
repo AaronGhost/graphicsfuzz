@@ -96,7 +96,6 @@ public abstract class ShaderGenerator {
     UnifiedTypeInterface proxy = randomTypeGenerator.getRandomNewType(false);
     BasicType baseType = proxy.getBaseType();
     Initializer initializer = null;
-    //TODO expand initializer possibilities
     if (hasInitializer) {
       if (proxy.isArray()) {
         List<Expr> initializerExprs = new ArrayList<>();
@@ -236,9 +235,10 @@ public abstract class ShaderGenerator {
         lvalue = randGen.nextBoolean();
       }
     }
+    Expr randomAccessExpr = generateRandomAccessExpr(var, type, lvalue);
     programState.setLvalue(lvalue);
     programState.setConstant(false);
-    return generateRandomAccessExpr(var, type, lvalue);
+    return randomAccessExpr;
   }
 
   protected Expr generateTerminalExpr(BasicType type) {
