@@ -8,15 +8,15 @@ import com.graphicsfuzz.common.ast.type.Type;
 import com.graphicsfuzz.common.util.ShaderKind;
 import java.util.List;
 
-//TODO check support for vector types withing shadertrap
+//TODO check support for vector types within shadertrap
 public class ShaderTrapStatePrinter implements StatePrinter {
 
   @Override
   public String printWrapper(ProgramState programState) {
     if (programState.getShaderKind() == ShaderKind.COMPUTE) {
       StringBuilder shaderTrapPrefix = new StringBuilder();
-      //TODO pick correct GLES version
-      shaderTrapPrefix.append("GLES 3.1\n");
+      String version = parseVersion(programState.getShadingLanguageVersion());
+      shaderTrapPrefix.append(version).append("\n");
       //Generate the buffers declaration and the buffers binding
       for (Buffer buffer : programState.getBuffers()) {
         shaderTrapPrefix.append(printBufferWrapper(buffer));
@@ -33,6 +33,16 @@ public class ShaderTrapStatePrinter implements StatePrinter {
       return shaderTrapPrefix + programState.getShaderCode() + shaderTrapSuffix;
     } else {
       throw new UnsupportedOperationException("Not implemented yet");
+    }
+  }
+
+  public String parseVersion(String shaderVersion) {
+    String[] versioning = shaderVersion.split(" ");
+    String versionNumber = String.format("%.1f", (Integer.parseInt(versioning[0]) / 100.));
+    if (versioning.length == 2) {
+      return "GLES " + versionNumber;
+    } else {
+      return "GL " + versionNumber;
     }
   }
 

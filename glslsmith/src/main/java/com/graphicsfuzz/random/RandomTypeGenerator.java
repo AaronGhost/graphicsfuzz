@@ -1,6 +1,7 @@
 package com.graphicsfuzz.random;
 
-import com.graphicsfuzz.FuzzerConstants;
+import com.graphicsfuzz.config.ConfigInterface;
+import com.graphicsfuzz.config.FuzzerConstants;
 import com.graphicsfuzz.common.ast.decl.ArrayInfo;
 import com.graphicsfuzz.common.ast.expr.BinOp;
 import com.graphicsfuzz.common.ast.expr.IntConstantExpr;
@@ -16,9 +17,11 @@ import java.util.Optional;
 
 public class RandomTypeGenerator implements IRandomType {
   private final IRandom randGen;
+  private final ConfigInterface configuration;
 
-  public RandomTypeGenerator(IRandom randGen) {
+  public RandomTypeGenerator(IRandom randGen, ConfigInterface configuration) {
     this.randGen = randGen;
+    this.configuration = configuration;
   }
 
 
@@ -28,7 +31,7 @@ public class RandomTypeGenerator implements IRandomType {
   public UnifiedTypeInterface getRandomNewType(boolean restrictToInteger) {
     BasicType basicType = this.getRandomBaseType(restrictToInteger);
     if (randGen.nextBoolean()) {
-      int arrayLength = randGen.nextPositiveInt(FuzzerConstants.MAX_ARRAY_LENGTH);
+      int arrayLength = randGen.nextPositiveInt(configuration.getMaxArrayLength());
       //Create an empty array info with only the size to generate a size access later
       ArrayInfo arrayInfo =
           new ArrayInfo(Collections.singletonList(Optional.of(

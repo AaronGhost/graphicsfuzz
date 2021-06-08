@@ -56,6 +56,15 @@ public class FuzzerScopeTest {
   }
 
   @Test
+  public void testGetScopeEntryByName() {
+    Assert.assertEquals(notGlobalScope.getScopeEntryByName("uint1").getBaseType(),
+        BasicType.UINT);
+    Assert.assertNull(globalScope.getScopeEntryByName("n_int2"));
+    Assert.assertEquals(globalScope.getScopeEntryByName("int1").getBaseType(), BasicType.INT);
+
+  }
+
+  @Test
   public void testGetNameOfDeclaredVariables() {
     List<String> globalScopeEntries = globalScope.getNameOfDeclaredVariables();
     List<String> notGlobalScopeEntries = notGlobalScope.getNameOfDeclaredVariables();

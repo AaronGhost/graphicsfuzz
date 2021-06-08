@@ -20,6 +20,7 @@ import com.graphicsfuzz.common.ast.type.TypeQualifier;
 import com.graphicsfuzz.common.ast.type.VoidType;
 import com.graphicsfuzz.common.glslversion.ShadingLanguageVersion;
 import com.graphicsfuzz.common.util.ShaderKind;
+import com.graphicsfuzz.config.DefaultConfig;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,10 +39,9 @@ public class ShaderTrapStatePrinterTest {
   String buffer4Text = "CREATE_BUFFER buffer_4 SIZE_BYTES 36 INIT_VALUES int 72 48 uint 78 32 26 "
       + "21 24 121 110\n"
       + "BIND_SHADER_STORAGE_BUFFER BUFFER buffer_4 BINDING 4\n\n";
-  //TODO tests when the GLES version will be varying
   String minimalProgramText = "GLES 3.1\n"
       + "DECLARE_SHADER shader KIND COMPUTE\n"
-      + "#version 320 es\n"
+      + "#version 310 es\n"
       + "layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;\n"
       + "void main()\n"
       + "{\n"
@@ -84,12 +84,20 @@ public class ShaderTrapStatePrinterTest {
     FunctionDefinition mainFunction = new FunctionDefinition(new FunctionPrototype("main",
         VoidType.VOID, new ArrayList<>()), new BlockStmt(new ArrayList<>(), true));
 
-    ProgramState programState = new ProgramState();
+    ProgramState programState = new ProgramState(new DefaultConfig());
     programState.programInitialization(new TranslationUnit(ShaderKind.COMPUTE,
-        Optional.of(ShadingLanguageVersion.ESSL_320), Arrays.asList(inVariable, mainFunction)),
+        Optional.of(ShadingLanguageVersion.ESSL_310), Arrays.asList(inVariable, mainFunction)),
         ShaderKind.COMPUTE);
     Assert.assertEquals(new ShaderTrapStatePrinter().printWrapper(programState),
         minimalProgramText);
+  }
+
+  @Test
+  public void testParseVersion() {
+    ShaderTrapStatePrinter printer = new ShaderTrapStatePrinter();
+    Assert.assertEquals("GLES 3.1", printer.parseVersion("310 es"));
+    Assert.assertEquals("GLES 3.2", printer.parseVersion("320 es"));
+    Assert.assertEquals("GL 4.5", printer.parseVersion("450"));
   }
 
   @Test

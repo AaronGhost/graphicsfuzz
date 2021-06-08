@@ -1,6 +1,7 @@
 package com.graphicsfuzz;
 
 import com.graphicsfuzz.common.util.RandomWrapper;
+import com.graphicsfuzz.config.DefaultConfig;
 import com.graphicsfuzz.stateprinters.ShaderTrapStatePrinter;
 import java.util.List;
 import org.junit.Assert;
@@ -10,7 +11,7 @@ public class ProgramGeneratorTest {
 
   @Test
   public void testGenerateProgramProducesIndependentProgram() {
-    ProgramGenerator generator = new ProgramGenerator(new RandomWrapper(0));
+    ProgramGenerator generator = new ProgramGenerator(new RandomWrapper(0), new DefaultConfig());
     generator.generateProgram(new ShaderTrapStatePrinter());
     List<Buffer> bufferList1 = generator.getShaderGenerator().getProgramState().getBuffers();
     generator.generateProgram(new ShaderTrapStatePrinter());

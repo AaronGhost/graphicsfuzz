@@ -1,9 +1,8 @@
 package com.graphicsfuzz.random;
 
-import com.graphicsfuzz.FuzzerConstants;
+import com.graphicsfuzz.config.FuzzerConstants;
 import com.graphicsfuzz.common.util.RandomWrapper;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 
@@ -26,11 +25,7 @@ public class MultipleRangeRandomWrapper extends RandomWrapper {
 
   public MultipleRangeRandomWrapper(long seed, GeneratorType... types) {
     super(seed);
-    if (types.length == 0) {
-      generatorList = Collections.singletonList(GeneratorType.FULL);
-    } else {
-      generatorList = Arrays.asList(types);
-    }
+    generatorList = Arrays.asList(types);
   }
 
   public MultipleRangeRandomWrapper(long seed) {

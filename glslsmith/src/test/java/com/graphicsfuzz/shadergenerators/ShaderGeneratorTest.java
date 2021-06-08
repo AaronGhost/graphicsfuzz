@@ -14,6 +14,7 @@ import com.graphicsfuzz.common.util.CannedRandom;
 import com.graphicsfuzz.common.util.IRandom;
 import com.graphicsfuzz.common.util.SameValueRandom;
 import com.graphicsfuzz.common.util.ZeroCannedRandom;
+import com.graphicsfuzz.config.DefaultConfig;
 import com.graphicsfuzz.random.MokeRandomTypeGenerator;
 import com.graphicsfuzz.scope.UnifiedTypeProxy;
 import java.util.Collections;
@@ -23,9 +24,9 @@ import org.junit.Test;
 
 public class ShaderGeneratorTest {
 
-  class ConcreteShaderGenerator extends ShaderGenerator {
-    public ConcreteShaderGenerator(IRandom random, MokeRandomTypeGenerator randomTypeGenerator) {
-      super(random, randomTypeGenerator);
+  class MokeShaderGenerator extends ShaderGenerator {
+    public MokeShaderGenerator(IRandom random, MokeRandomTypeGenerator randomTypeGenerator) {
+      super(random, randomTypeGenerator, new DefaultConfig());
       resetProgramState();
     }
   }
@@ -34,7 +35,7 @@ public class ShaderGeneratorTest {
   public void testGenerateRandomTypedVarDeclsForInt() {
     MokeRandomTypeGenerator randomTypeGenerator = new MokeRandomTypeGenerator();
     randomTypeGenerator.setRandomNewType(new UnifiedTypeProxy(BasicType.INT));
-    ShaderGenerator generator = new ConcreteShaderGenerator(new ZeroCannedRandom(),
+    ShaderGenerator generator = new MokeShaderGenerator(new ZeroCannedRandom(),
         randomTypeGenerator);
     Assert.assertEquals("int var_0 = 0",
         TestHelper.getText(generator.generateRandomTypedVarDecls(1, true)));
@@ -50,7 +51,7 @@ public class ShaderGeneratorTest {
     arrayInfo.setConstantSizeExpr(0, 3);
     randomTypeGenerator.setRandomNewType(new UnifiedTypeProxy(
         new ArrayType(BasicType.UINT, arrayInfo)));
-    ShaderGenerator generator = new ConcreteShaderGenerator(new ZeroCannedRandom(),
+    ShaderGenerator generator = new MokeShaderGenerator(new ZeroCannedRandom(),
         randomTypeGenerator);
     Assert.assertEquals("uint var_0[3] = uint[3](0u, 0u, 0u)",
         TestHelper.getText(generator.generateRandomTypedVarDecls(1, true)));
@@ -62,13 +63,13 @@ public class ShaderGeneratorTest {
   public void testGenerateRandomTypedVarDeclsForVect() {
     MokeRandomTypeGenerator randomTypeGenerator = new MokeRandomTypeGenerator();
     randomTypeGenerator.setRandomNewType(new UnifiedTypeProxy(BasicType.UVEC3));
-    ShaderGenerator generator = new ConcreteShaderGenerator(new ZeroCannedRandom(),
+    ShaderGenerator generator = new MokeShaderGenerator(new ZeroCannedRandom(),
         randomTypeGenerator);
     Assert.assertEquals("uvec3 var_0 = uvec3(0u, 0u, 0u)",
         TestHelper.getText(generator.generateRandomTypedVarDecls(1, true)));
     MokeRandomTypeGenerator randomTypeGenerator2 = new MokeRandomTypeGenerator();
     randomTypeGenerator2.setRandomNewType(new UnifiedTypeProxy(BasicType.BVEC2));
-    ShaderGenerator generator2 = new ConcreteShaderGenerator(new ZeroCannedRandom(),
+    ShaderGenerator generator2 = new MokeShaderGenerator(new ZeroCannedRandom(),
         randomTypeGenerator2);
     Assert.assertEquals("bvec2 var_0 = bvec2(false, false)",
         TestHelper.getText(generator2.generateRandomTypedVarDecls(1, true)));
@@ -82,7 +83,7 @@ public class ShaderGeneratorTest {
     arrayInfo.setConstantSizeExpr(0, 5);
     randomTypeGenerator.setRandomNewType(new UnifiedTypeProxy(new ArrayType(BasicType.IVEC4,
         arrayInfo)));
-    ShaderGenerator generator = new ConcreteShaderGenerator(new ZeroCannedRandom(),
+    ShaderGenerator generator = new MokeShaderGenerator(new ZeroCannedRandom(),
         randomTypeGenerator);
     Assert.assertEquals("ivec4 var_0[5] = ivec4[5](ivec4(0, 0, 0, 0), ivec4(0, 0, 0, 0), "
         + "ivec4(0, 0, 0, 0), ivec4(0, 0, 0, 0), ivec4(0, 0, 0, 0))",
@@ -93,7 +94,7 @@ public class ShaderGeneratorTest {
 
   @Test
   public void testGenerateBaseConstantExpr() {
-    ShaderGenerator generator = new ConcreteShaderGenerator(new ZeroCannedRandom(),
+    ShaderGenerator generator = new MokeShaderGenerator(new ZeroCannedRandom(),
         new MokeRandomTypeGenerator());
     Assert.assertTrue(generator.generateBaseConstantExpr(BasicType.INT) instanceof IntConstantExpr);
     Assert.assertTrue(generator.generateBaseConstantExpr(BasicType.UINT)
@@ -110,7 +111,7 @@ public class ShaderGeneratorTest {
   @Test
   public void testGenerateSwizzleWithOneLevel() {
     MokeRandomTypeGenerator randomTypeGenerator = new MokeRandomTypeGenerator();
-    ShaderGenerator generator = new ConcreteShaderGenerator(new SameValueRandom(false, 1),
+    ShaderGenerator generator = new MokeShaderGenerator(new SameValueRandom(false, 1),
         randomTypeGenerator);
     Assert.assertEquals("var_0.gb",
         TestHelper.getText(generator.generateRandomSwizzle(new VariableIdentifierExpr("var_0"),
@@ -127,7 +128,7 @@ public class ShaderGeneratorTest {
   @Test
   public void testGenerateSwizzleWithMultipleLevels() {
     MokeRandomTypeGenerator randomTypeGenerator = new MokeRandomTypeGenerator();
-    ShaderGenerator generator = new ConcreteShaderGenerator(new CannedRandom(
+    ShaderGenerator generator = new MokeShaderGenerator(new CannedRandom(
         true, 3, 0, 0, 0, //outer expression
         false, 1, 0, 1, 0, //inner expression
         true, false, false //parenthesis

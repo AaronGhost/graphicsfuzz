@@ -1,6 +1,8 @@
 package com.graphicsfuzz;
 
 import com.graphicsfuzz.common.util.RandomWrapper;
+import com.graphicsfuzz.config.ConfigInterface;
+import com.graphicsfuzz.config.DefaultConfig;
 import com.graphicsfuzz.random.MultipleRangeRandomWrapper;
 import com.graphicsfuzz.stateprinters.ShaderTrapStatePrinter;
 import com.graphicsfuzz.stateprinters.StatePrinter;
@@ -18,8 +20,6 @@ public class GeneratorHandler {
     ArgumentParser parser = ArgumentParsers.newArgumentParser("GLSLsmith")
         .defaultHelp(true).description("Generates random shaders");
 
-    //TODO add argument for ESSL version (3.2 providing input and output interface blocks)
-
     parser.addArgument("--seed")
         .dest("seed")
         .type(Long.class)
@@ -35,22 +35,42 @@ public class GeneratorHandler {
         .type(String.class)
         .setDefault("multiplerange")
         .help("Specify the type of random generator");
+    parser.addArgument("--config")
+        .dest("configFile")
+        .type(String.class)
+        .setDefault("default")
+        .help("Specify a config type for the generator");
 
     Namespace ns = parser.parseArgs(args);
     System.out.println("Seed:" + ns.getLong("seed"));
 
     //Instantiate main class with the selected random Generator
-    ProgramGenerator generator;
     StatePrinter shadertrapWrapper = new ShaderTrapStatePrinter();
     try {
       //Generates the number of program given in argument of the program
       for (int i = 0; i < ns.getInt("count"); i++) {
         System.out.println("Generating shader " + i);
+        RandomWrapper randomWrapper;
+        ConfigInterface configuration;
         if (ns.getString("randomGenerator").equals("multiplerange")) {
-          generator = new ProgramGenerator(new MultipleRangeRandomWrapper(ns.getLong("seed") + i));
+          randomWrapper = new MultipleRangeRandomWrapper(ns.getLong("seed") + i);
+        } else if (ns.getString("randomGenerator").equals("nospecial")) {
+          randomWrapper = new MultipleRangeRandomWrapper(ns.getLong("seed") + i,
+              MultipleRangeRandomWrapper.GeneratorType.SMALL,
+              MultipleRangeRandomWrapper.GeneratorType.HIGH,
+              MultipleRangeRandomWrapper.GeneratorType.FULL);
+        } else if (ns.getString("randomGenerator").equals("uniform")) {
+          randomWrapper = new RandomWrapper(ns.getLong("seed") + i);
         } else {
-          generator = new ProgramGenerator(new RandomWrapper(ns.getLong("seed") + i));
+          throw new UnsupportedOperationException("Random generator not recognized");
         }
+        if (ns.getString("configFile").equals("default")) {
+          configuration = new DefaultConfig();
+        } else {
+          throw new UnsupportedOperationException("Only default configuration are supported at "
+              + "the moment");
+        }
+        ProgramGenerator generator = new ProgramGenerator(randomWrapper, configuration);
         String program = generator.generateProgram(shadertrapWrapper);
         FileWriter outputfile = new FileWriter("test_" + i + ".shadertrap");
         outputfile.write(program);

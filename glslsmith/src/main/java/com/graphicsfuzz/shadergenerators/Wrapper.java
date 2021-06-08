@@ -1,6 +1,6 @@
 package com.graphicsfuzz.shadergenerators;
 
-import com.graphicsfuzz.FuzzerConstants;
+import com.graphicsfuzz.config.FuzzerConstants;
 import com.graphicsfuzz.common.ast.decl.Declaration;
 import com.graphicsfuzz.common.ast.decl.FunctionDefinition;
 import com.graphicsfuzz.common.ast.decl.FunctionPrototype;

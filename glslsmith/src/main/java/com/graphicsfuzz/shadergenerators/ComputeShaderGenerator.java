@@ -1,7 +1,8 @@
 package com.graphicsfuzz.shadergenerators;
 
 import com.graphicsfuzz.Buffer;
-import com.graphicsfuzz.FuzzerConstants;
+import com.graphicsfuzz.config.ConfigInterface;
+import com.graphicsfuzz.config.FuzzerConstants;
 import com.graphicsfuzz.common.ast.TranslationUnit;
 import com.graphicsfuzz.common.ast.decl.Declaration;
 import com.graphicsfuzz.common.ast.decl.DefaultLayout;
@@ -30,8 +31,8 @@ import org.apache.commons.lang3.tuple.ImmutableTriple;
 
 public class ComputeShaderGenerator extends ShaderGenerator {
 
-  public ComputeShaderGenerator(IRandom randomGenerator) {
-    super(randomGenerator);
+  public ComputeShaderGenerator(IRandom randomGenerator, ConfigInterface configuration) {
+    super(randomGenerator, configuration);
   }
 
   @Override
@@ -45,21 +46,22 @@ public class ComputeShaderGenerator extends ShaderGenerator {
   }
 
   public void generateInputBuffers() {
-    for (int bindIndex = 0; bindIndex < randGen.nextPositiveInt(FuzzerConstants.MAX_INPUT_BUFFERS);
+    for (int bindIndex = 0; bindIndex < randGen.nextPositiveInt(configuration.getMaxInputBuffers());
          bindIndex++) {
       internalGenerateBuffer(true);
     }
   }
 
   public void generateOutputBuffers() {
-    for (int bindIndex = 0; bindIndex < randGen.nextPositiveInt(FuzzerConstants.MAX_OUTPUT_BUFFERS);
+    for (int bindIndex = 0; bindIndex < randGen.nextPositiveInt(
+        configuration.getMaxOutputBuffers());
          bindIndex++) {
       internalGenerateBuffer(false);
     }
   }
 
   private void internalGenerateBuffer(boolean inOut) {
-    int newMembers = randGen.nextPositiveInt(FuzzerConstants.MAX_BUFFER_ELEMENTS);
+    int newMembers = randGen.nextPositiveInt(configuration.getMaxBufferElements());
 
     //Buffer internal values holders
     List<Number> values = new ArrayList<>();
@@ -102,11 +104,11 @@ public class ComputeShaderGenerator extends ShaderGenerator {
     //Generate the mandatory local_size parameters for the defaultLayoutInput
     List<LayoutQualifier> localSizes = Arrays.asList(
         new LocalSizeLayoutQualifier("x",
-            randGen.nextPositiveInt(FuzzerConstants.MAX_LOCAL_SIZE_X)),
+            randGen.nextPositiveInt(configuration.getMaxLocalSizeX())),
         new LocalSizeLayoutQualifier("y",
-            randGen.nextPositiveInt(FuzzerConstants.MAX_LOCAL_SIZE_Y)),
+            randGen.nextPositiveInt(configuration.getMaxLocalSizeY())),
         new LocalSizeLayoutQualifier("z",
-            randGen.nextPositiveInt(FuzzerConstants.MAX_LOCAL_SIZE_Z)));
+            randGen.nextPositiveInt(configuration.getMaxLocalSizeZ())));
     DefaultLayout inVariable = new DefaultLayout(new LayoutQualifierSequence(localSizes),
         TypeQualifier.SHADER_INPUT);
 
@@ -139,8 +141,7 @@ public class ComputeShaderGenerator extends ShaderGenerator {
 
     //Generate the translation unit and add it to the programState
     TranslationUnit translationUnit = new TranslationUnit(ShaderKind.COMPUTE,
-        //TODO pick correct version from handler
-        Optional.of(ShadingLanguageVersion.ESSL_310), declList);
+        Optional.of(configuration.getShadingLanguageVersion()), declList);
     programState.programInitialization(translationUnit, ShaderKind.COMPUTE);
   }
 }

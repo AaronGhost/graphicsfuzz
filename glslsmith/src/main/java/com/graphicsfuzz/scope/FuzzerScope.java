@@ -69,6 +69,20 @@ public class FuzzerScope {
     return Collections.unmodifiableList(new ArrayList<>(declaredVariables));
   }
 
+  public FuzzerScopeEntry getScopeEntryByName(String name) {
+    if (variableMapping.containsKey(name)) {
+      return variableMapping.get(name);
+    }
+    FuzzerScope nextScope = this.parentScope;
+    while (nextScope != null) {
+      if (nextScope.variableMapping.containsKey(name)) {
+        return nextScope.variableMapping.get(name);
+      }
+      nextScope = nextScope.parentScope;
+    }
+    return null;
+  }
+
   //TODO add readonly and const support
   public List<FuzzerScopeEntry> getWriteAvailableEntries() {
     return getAllDeclaredVariables();

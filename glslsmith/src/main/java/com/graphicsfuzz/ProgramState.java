@@ -4,6 +4,7 @@ import com.graphicsfuzz.common.ast.TranslationUnit;
 import com.graphicsfuzz.common.ast.type.BasicType;
 import com.graphicsfuzz.common.tool.PrettyPrinterVisitor;
 import com.graphicsfuzz.common.util.ShaderKind;
+import com.graphicsfuzz.config.ConfigInterface;
 import com.graphicsfuzz.scope.FuzzerScope;
 import com.graphicsfuzz.scope.FuzzerScopeEntry;
 import com.graphicsfuzz.scope.UnifiedTypeInterface;
@@ -26,6 +27,7 @@ public class ProgramState {
   //General attributes
   private TranslationUnit translationUnit;
   private ShaderKind shaderKind;
+  private ConfigInterface configInterface;
 
   //Scope management
   private FuzzerScope currentScope = new FuzzerScope();
@@ -41,7 +43,11 @@ public class ProgramState {
   private boolean lvalue = false;
   private boolean constant = true;
   private boolean shiftOperation = false;
+  private boolean initializer = false;
   private int swizzleDepth = 0;
+  private FuzzerScopeEntry currentLValueVariable = null;
+  private List<FuzzerScopeEntry> seenReadEntries = new ArrayList<>();
+  private List<FuzzerScopeEntry> seenWrittenEntries = new ArrayList<>();
 
   //Referencing the necessary safe wrappers for later generation
   private final Set<ImmutableTriple<Wrapper.Operation, BasicType, BasicType>> necessaryWrappers =
@@ -49,6 +55,10 @@ public class ProgramState {
 
   //API populated uniforms and buffer
   private final Map<String, Buffer> bufferTable = new LinkedHashMap<>();
+
+  public ProgramState(ConfigInterface configInterface) {
+    this.configInterface = configInterface;
+  }
 
   //TODO add support for uniforms
 
@@ -68,6 +78,10 @@ public class ProgramState {
       e.printStackTrace();
     }
     return innerStream.toString();
+  }
+
+  public String getShadingLanguageVersion() {
+    return translationUnit.getShadingLanguageVersion().getVersionString();
   }
 
   public void programInitialization(TranslationUnit translationUnit, ShaderKind shaderKind) {
@@ -90,12 +104,32 @@ public class ProgramState {
     currentScope = currentScope.getParent();
   }
 
+  public void setEntryHasBeenRead(FuzzerScopeEntry entry) {
+    if (!configInterface.allowMultipleWriteAccessInInitializers() && initializer) {
+      seenReadEntries.add(entry);
+    }
+  }
+
+  public void setEntryHasBeenWritten(FuzzerScopeEntry entry) {
+    if (!configInterface.allowMultipleWriteAccessInInitializers() && initializer) {
+      seenWrittenEntries.add(entry);
+    }
+  }
+
+  public FuzzerScopeEntry getScopeEntryByName(String variableName) {
+    return currentScope.getScopeEntryByName(variableName);
+  }
+
   public List<FuzzerScopeEntry> getReadEntriesOfCompatibleType(BasicType type) {
-    return currentScope.getReadEntriesOfCompatibleType(type);
+    return currentScope.getReadEntriesOfCompatibleType(type).stream().filter(
+        t -> ! seenWrittenEntries.contains(t)
+    ).collect(Collectors.toList());
   }
 
   public List<FuzzerScopeEntry> getWriteAvailableEntries() {
-    return currentScope.getWriteAvailableEntries();
+    return currentScope.getWriteAvailableEntries().stream().filter(
+        t -> (! seenReadEntries.contains(t)) && (! seenWrittenEntries.contains(t)))
+        .collect(Collectors.toList());
   }
 
   //Functions to add variable to the current scope
@@ -137,7 +171,22 @@ public class ProgramState {
     return lvalue;
   }
 
-  public void setLvalue(boolean lvalue) {
+  public void setIsInitializer(boolean initializer) {
+    seenReadEntries.clear();
+    seenWrittenEntries.clear();
+    this.initializer = initializer;
+  }
+
+  public boolean isInitializer() {
+    return initializer;
+  }
+
+  public FuzzerScopeEntry getCurrentLValueVariable() {
+    return currentLValueVariable;
+  }
+
+  public void setLvalue(boolean lvalue, FuzzerScopeEntry variable) {
+    this.currentLValueVariable = variable;
     this.lvalue = lvalue;
   }
 
