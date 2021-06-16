@@ -1,7 +1,5 @@
 package com.graphicsfuzz.random;
 
-import com.graphicsfuzz.config.ConfigInterface;
-import com.graphicsfuzz.config.FuzzerConstants;
 import com.graphicsfuzz.common.ast.decl.ArrayInfo;
 import com.graphicsfuzz.common.ast.expr.BinOp;
 import com.graphicsfuzz.common.ast.expr.IntConstantExpr;
@@ -10,6 +8,7 @@ import com.graphicsfuzz.common.ast.type.ArrayType;
 import com.graphicsfuzz.common.ast.type.BasicType;
 import com.graphicsfuzz.common.ast.type.Type;
 import com.graphicsfuzz.common.util.IRandom;
+import com.graphicsfuzz.config.ConfigInterface;
 import com.graphicsfuzz.scope.UnifiedTypeInterface;
 import com.graphicsfuzz.scope.UnifiedTypeProxy;
 import java.util.Collections;

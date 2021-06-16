@@ -40,6 +40,12 @@ public class GeneratorHandler {
         .type(String.class)
         .setDefault("default")
         .help("Specify a config type for the generator");
+    parser.addArgument("--output-directory")
+        .dest("directory")
+        .type(String.class)
+        .setDefault("./")
+        .help("Specify an output directory for the generated files");
+
 
     Namespace ns = parser.parseArgs(args);
     System.out.println("Seed:" + ns.getLong("seed"));
@@ -72,7 +78,8 @@ public class GeneratorHandler {
         }
         ProgramGenerator generator = new ProgramGenerator(randomWrapper, configuration);
         String program = generator.generateProgram(shadertrapWrapper);
-        FileWriter outputfile = new FileWriter("test_" + i + ".shadertrap");
+        FileWriter outputfile = new FileWriter(ns.getString("directory") + "test_" + i
+            + ".shadertrap");
         outputfile.write(program);
         outputfile.close();
       }

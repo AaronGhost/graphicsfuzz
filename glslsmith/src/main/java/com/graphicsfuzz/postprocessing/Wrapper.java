@@ -1,6 +1,5 @@
-package com.graphicsfuzz.shadergenerators;
+package com.graphicsfuzz.postprocessing;
 
-import com.graphicsfuzz.config.FuzzerConstants;
 import com.graphicsfuzz.common.ast.decl.Declaration;
 import com.graphicsfuzz.common.ast.decl.FunctionDefinition;
 import com.graphicsfuzz.common.ast.decl.FunctionPrototype;
@@ -24,6 +23,7 @@ import com.graphicsfuzz.common.ast.type.BasicType;
 import com.graphicsfuzz.common.ast.type.QualifiedType;
 import com.graphicsfuzz.common.ast.type.Type;
 import com.graphicsfuzz.common.ast.type.TypeQualifier;
+import com.graphicsfuzz.config.FuzzerConstants;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;

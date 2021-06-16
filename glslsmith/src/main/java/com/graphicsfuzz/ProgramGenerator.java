@@ -3,6 +3,8 @@ package com.graphicsfuzz;
 
 import com.graphicsfuzz.common.util.IRandom;
 import com.graphicsfuzz.config.ConfigInterface;
+import com.graphicsfuzz.postprocessing.LoopLimiter;
+import com.graphicsfuzz.postprocessing.WrapperBuilder;
 import com.graphicsfuzz.shadergenerators.ComputeShaderGenerator;
 import com.graphicsfuzz.shadergenerators.ShaderGenerator;
 import com.graphicsfuzz.stateprinters.StatePrinter;
@@ -31,6 +33,10 @@ public class ProgramGenerator {
   public String generateProgram(StatePrinter printer) {
     shaderGenerator.generateShader();
     ProgramState programState = shaderGenerator.getProgramState();
+    WrapperBuilder builder = new WrapperBuilder();
+    programState = builder.process(programState);
+    LoopLimiter limiter = new LoopLimiter(true, 100);
+    programState = limiter.process(programState);
     return printer.printWrapper(programState);
   }
 

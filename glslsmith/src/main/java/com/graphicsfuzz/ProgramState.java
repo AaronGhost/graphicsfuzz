@@ -5,10 +5,10 @@ import com.graphicsfuzz.common.ast.type.BasicType;
 import com.graphicsfuzz.common.tool.PrettyPrinterVisitor;
 import com.graphicsfuzz.common.util.ShaderKind;
 import com.graphicsfuzz.config.ConfigInterface;
+import com.graphicsfuzz.postprocessing.Wrapper;
 import com.graphicsfuzz.scope.FuzzerScope;
 import com.graphicsfuzz.scope.FuzzerScopeEntry;
 import com.graphicsfuzz.scope.UnifiedTypeInterface;
-import com.graphicsfuzz.shadergenerators.Wrapper;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
@@ -61,6 +61,14 @@ public class ProgramState {
   }
 
   //TODO add support for uniforms
+
+  public ConfigInterface getConfigInterface() {
+    return configInterface;
+  }
+
+  public TranslationUnit getTranslationUnit() {
+    return translationUnit;
+  }
 
   //General attributes management
   public ShaderKind getShaderKind() {

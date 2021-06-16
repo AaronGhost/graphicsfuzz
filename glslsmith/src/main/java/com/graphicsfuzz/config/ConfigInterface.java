@@ -9,6 +9,8 @@ public interface ConfigInterface {
 
   boolean enforceDefaultCase();
 
+  boolean allowArrayAbsAccess();
+
   int getMaxArrayLength();
 
   int getMaxBufferElements();
@@ -36,6 +38,8 @@ public interface ConfigInterface {
   int getMaxSwizzleDepth();
 
   int getMaxVardeclElements();
+
+  int getMaxWhileScopeLength();
 
   ShadingLanguageVersion getShadingLanguageVersion();
 }

@@ -53,6 +53,11 @@ public class DefaultConfig implements ConfigInterface {
     return false;
   }
 
+  @Override
+  public boolean allowArrayAbsAccess() {
+    return true;
+  }
+
   //Program size parameters
   @Override
   public int getMaxMainLength() {
@@ -66,7 +71,7 @@ public class DefaultConfig implements ConfigInterface {
 
   @Override
   public int getMaxExprDepth() {
-    return 3;
+    return 4;
   }
 
   @Override
@@ -98,5 +103,11 @@ public class DefaultConfig implements ConfigInterface {
   @Override
   public boolean enforceDefaultCase() {
     return false;
+  }
+
+  //Loop parameters
+  @Override
+  public int getMaxWhileScopeLength() {
+    return 10;
   }
 }

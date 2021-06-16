@@ -1,7 +1,7 @@
 package com.graphicsfuzz.random;
 
-import com.graphicsfuzz.config.FuzzerConstants;
 import com.graphicsfuzz.common.util.RandomWrapper;
+import com.graphicsfuzz.config.FuzzerConstants;
 import java.util.Arrays;
 import java.util.List;
 

@@ -1,6 +1,7 @@
 package com.graphicsfuzz.shadergenerators;
 
 import com.graphicsfuzz.common.ast.type.BasicType;
+import com.graphicsfuzz.postprocessing.Wrapper;
 import org.junit.Assert;
 import org.junit.Test;
 

@@ -1,8 +1,6 @@
 package com.graphicsfuzz.shadergenerators;
 
 import com.graphicsfuzz.Buffer;
-import com.graphicsfuzz.config.ConfigInterface;
-import com.graphicsfuzz.config.FuzzerConstants;
 import com.graphicsfuzz.common.ast.TranslationUnit;
 import com.graphicsfuzz.common.ast.decl.Declaration;
 import com.graphicsfuzz.common.ast.decl.DefaultLayout;
@@ -19,15 +17,15 @@ import com.graphicsfuzz.common.ast.type.Std430LayoutQualifier;
 import com.graphicsfuzz.common.ast.type.Type;
 import com.graphicsfuzz.common.ast.type.TypeQualifier;
 import com.graphicsfuzz.common.ast.type.VoidType;
-import com.graphicsfuzz.common.glslversion.ShadingLanguageVersion;
 import com.graphicsfuzz.common.util.IRandom;
 import com.graphicsfuzz.common.util.ShaderKind;
+import com.graphicsfuzz.config.ConfigInterface;
+import com.graphicsfuzz.config.FuzzerConstants;
 import com.graphicsfuzz.scope.UnifiedTypeInterface;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import org.apache.commons.lang3.tuple.ImmutableTriple;
 
 public class ComputeShaderGenerator extends ShaderGenerator {
 
@@ -118,21 +116,6 @@ public class ComputeShaderGenerator extends ShaderGenerator {
     for (Buffer bufferSymbol : programState.getBuffers()) {
       declList.add(generateInterfaceBlockFromBuffer(bufferSymbol));
     }
-
-    //Generate safe math wrappers prototypes
-    for (ImmutableTriple<Wrapper.Operation, BasicType, BasicType> wrapperFunction :
-        programState.getWrappers()) {
-      declList.add(Wrapper.generateDeclaration(wrapperFunction.left,
-          wrapperFunction.middle, wrapperFunction.right));
-    }
-    //Generate safe math wrappers functions
-    for (ImmutableTriple<Wrapper.Operation, BasicType, BasicType> wrapperFunction :
-        programState.getWrappers()) {
-      declList.add(wrapperFunction.left.generator.apply(wrapperFunction.middle,
-          wrapperFunction.right));
-    }
-
-
 
     //Generate an empty main function
     FunctionDefinition mainFunction = new FunctionDefinition(new FunctionPrototype("main",

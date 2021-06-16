@@ -3,8 +3,6 @@ package com.graphicsfuzz.shadergenerators;
 import static java.lang.Math.max;
 
 import com.graphicsfuzz.Buffer;
-import com.graphicsfuzz.config.ConfigInterface;
-import com.graphicsfuzz.config.FuzzerConstants;
 import com.graphicsfuzz.ProgramState;
 import com.graphicsfuzz.common.ast.decl.ArrayInfo;
 import com.graphicsfuzz.common.ast.decl.Initializer;
@@ -34,11 +32,15 @@ import com.graphicsfuzz.common.ast.stmt.DefaultCaseLabel;
 import com.graphicsfuzz.common.ast.stmt.ExprCaseLabel;
 import com.graphicsfuzz.common.ast.stmt.ExprStmt;
 import com.graphicsfuzz.common.ast.stmt.IfStmt;
+import com.graphicsfuzz.common.ast.stmt.LoopStmt;
 import com.graphicsfuzz.common.ast.stmt.Stmt;
 import com.graphicsfuzz.common.ast.stmt.SwitchStmt;
+import com.graphicsfuzz.common.ast.stmt.WhileStmt;
 import com.graphicsfuzz.common.ast.type.ArrayType;
 import com.graphicsfuzz.common.ast.type.BasicType;
 import com.graphicsfuzz.common.util.IRandom;
+import com.graphicsfuzz.config.ConfigInterface;
+import com.graphicsfuzz.config.FuzzerConstants;
 import com.graphicsfuzz.random.IRandomType;
 import com.graphicsfuzz.random.RandomTypeGenerator;
 import com.graphicsfuzz.scope.FuzzerScopeEntry;
@@ -48,6 +50,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+
 
 public abstract class ShaderGenerator {
   protected IRandom randGen;
@@ -194,31 +197,6 @@ public abstract class ShaderGenerator {
     programState.setShiftOperation(false);
     boolean wasConstant = programState.isConstant();
     programState.setConstant(false);
-    if (op == BinOp.DIV) {
-      programState.registerWrapper(Wrapper.Operation.SAFE_DIV, leftType, rightType);
-      return new FunctionCallExpr("SAFE_DIV", leftExpr, rightExpr);
-    } else if (op == BinOp.DIV_ASSIGN) {
-      programState.registerWrapper(Wrapper.Operation.SAFE_DIV_ASSIGN, leftType, rightType);
-      return new FunctionCallExpr("SAFE_DIV_ASSIGN", leftExpr, rightExpr);
-    } else if (op == BinOp.SHR && !wasConstant) {
-      programState.registerWrapper(Wrapper.Operation.SAFE_RSHIFT, leftType, rightType);
-      return new FunctionCallExpr("SAFE_RSHIFT", leftExpr, rightExpr);
-    } else if (op == BinOp.SHL && !wasConstant) {
-      programState.registerWrapper(Wrapper.Operation.SAFE_LSHIFT, leftType, rightType);
-      return new FunctionCallExpr("SAFE_LSHIFT", leftExpr, rightExpr);
-    } else if (op == BinOp.SHR_ASSIGN && !wasConstant) {
-      programState.registerWrapper(Wrapper.Operation.SAFE_RSHIFT_ASSIGN, leftType, rightType);
-      return new FunctionCallExpr("SAFE_RSHIFT_ASSIGN", leftExpr, rightExpr);
-    } else if (op == BinOp.SHL_ASSIGN && !wasConstant) {
-      programState.registerWrapper(Wrapper.Operation.SAFE_LSHIFT_ASSIGN, leftType, rightType);
-      return new FunctionCallExpr("SAFE_LSHIFT_ASSIGN", leftExpr, rightExpr);
-    } else if (op == BinOp.MOD) {
-      programState.registerWrapper(Wrapper.Operation.SAFE_MOD, leftType, rightType);
-      return new FunctionCallExpr("SAFE_MOD", leftExpr, rightExpr);
-    } else if (op == BinOp.MOD_ASSIGN) {
-      programState.registerWrapper(Wrapper.Operation.SAFE_MOD_ASSIGN, leftType, rightType);
-      return new FunctionCallExpr("SAFE_MOD_ASSIGN", leftExpr, rightExpr);
-    }
     if (returnType.equals(BasicType.BOOL)) {
       List<BinOp> lessPriorityOp = Arrays.asList(BinOp.EQ, BinOp.NE, BinOp.BOR, BinOp.BXOR,
           BinOp.BAND);
@@ -229,6 +207,10 @@ public abstract class ShaderGenerator {
     }
     if (op.isSideEffecting() || wasConstant) {
       return new ParenExpr(new BinaryExpr(leftExpr, rightExpr, op));
+    }
+    if (op == BinOp.SHL || op == BinOp.SHR || op == BinOp.SHL_ASSIGN || op == BinOp.SHR_ASSIGN
+        && leftType != rightType) {
+      return new BinaryExpr(leftExpr, new ParenExpr(rightExpr), op);
     }
     return new BinaryExpr(leftExpr, rightExpr, op);
   }
@@ -249,7 +231,7 @@ public abstract class ShaderGenerator {
       }
     }
     Expr randomAccessExpr = generateRandomAccessExpr(var, type, lvalue);
-    programState.setLvalue(lvalue, lvalue? var : null);
+    programState.setLvalue(lvalue, lvalue ? var : null);
     programState.setConstant(false);
     return randomAccessExpr;
   }
@@ -290,7 +272,8 @@ public abstract class ShaderGenerator {
     if (programState.getExprDepth() < configuration.getMaxExprDepth()
         && !(type.isVector() && type.getElementType().isBoolean())) {
       programState.incrementExprDepth();
-      int nextAction = randGen.nextInt(4 - programState.getExprDepth());
+      int nextAction =
+          randGen.nextInt(configuration.getMaxExprDepth() + 1 - programState.getExprDepth());
       Expr expr = nextAction >= 1 ? generateBaseNonTerminalExpr(type) :
           generateTerminalExpr(type);
       programState.decrementExprDepth();
@@ -319,28 +302,6 @@ public abstract class ShaderGenerator {
     BasicType returnType = randomTypeGenerator.getRandomTargetType(var.getBaseType());
     BasicType rightType = randomTypeGenerator.getAvailableTypeFromOp(returnType, op, returnType);
     Expr rightExpr = generateBaseExpr(rightType);
-    if (op == BinOp.DIV_ASSIGN) {
-      programState.registerWrapper(Wrapper.Operation.SAFE_DIV_ASSIGN, returnType,
-          rightType);
-      return new FunctionCallExpr("SAFE_DIV_ASSIGN", generateRandomAccessExpr(var,
-          returnType), rightExpr);
-    } else if (op == BinOp.SHL_ASSIGN && !programState.isConstant()) {
-      programState.registerWrapper(Wrapper.Operation.SAFE_LSHIFT_ASSIGN, returnType,
-          rightType);
-      return new FunctionCallExpr("SAFE_LSHIFT_ASSIGN", generateRandomAccessExpr(var,
-          returnType), rightExpr);
-    } else if (op == BinOp.SHR_ASSIGN && !programState.isConstant()) {
-      programState.registerWrapper(Wrapper.Operation.SAFE_RSHIFT_ASSIGN, returnType,
-          rightType);
-      return new FunctionCallExpr("SAFE_RSHIFT_ASSIGN", generateRandomAccessExpr(var,
-          returnType), rightExpr);
-    } else if (op == BinOp.MOD_ASSIGN) {
-      programState.registerWrapper(Wrapper.Operation.SAFE_MOD_ASSIGN, returnType,
-          rightType);
-      return new FunctionCallExpr("SAFE_MOD_ASSIGN",
-          generateRandomAccessExpr(var, returnType),
-          rightExpr);
-    }
     return new BinaryExpr(generateRandomAccessExpr(var, returnType), rightExpr, op);
   }
 
@@ -356,14 +317,13 @@ public abstract class ShaderGenerator {
       FuzzerScopeEntry previousVar = programState.getCurrentLValueVariable();
       Expr indexExpr = generateBaseExpr(BasicType.INT);
       programState.setLvalue(previousLvalue, previousVar);
-      if (randGen.nextBoolean()) {
+      if (!configuration.allowArrayAbsAccess() || randGen.nextBoolean()) {
         indexExpr = new FunctionCallExpr("clamp",
             indexExpr, new IntConstantExpr("0"),
             new IntConstantExpr(String.valueOf(var.getCurrentTypeSize() - 1)));
       } else {
-        programState.registerWrapper(Wrapper.Operation.SAFE_ABS, BasicType.INT, null);
-        indexExpr = new BinaryExpr(new FunctionCallExpr("SAFE_ABS", indexExpr),
-            new IntConstantExpr(String.valueOf(var.getCurrentTypeSize())), BinOp.MOD);
+        indexExpr = new FunctionCallExpr("abs", new BinaryExpr(indexExpr,
+            new IntConstantExpr(String.valueOf(var.getCurrentTypeSize())), BinOp.MOD));
       }
       childExpr = new ArrayIndexExpr(new VariableIdentifierExpr(var.getName()),
           indexExpr);
@@ -439,6 +399,7 @@ public abstract class ShaderGenerator {
   }
 
   //TODO generate special switch statement with consecutive expression and clamping
+  //TODO optional switch cases not introducing a new scope (needs changes in prettyprinter)
   protected Stmt generateSwitchStmt() {
     BasicType switchType = randomTypeGenerator.getRandomBaseType();
     Expr switchExpr = generateBaseExpr(switchType);
@@ -457,7 +418,7 @@ public abstract class ShaderGenerator {
       switchBody.add(new ExprCaseLabel(possibleBaseConstantExpr));
       switchBody.add(new BlockStmt(generateScope(i == switchLength - 1 ? 1 : 0,
           configuration.getMaxSwitchScopeLength()),
-          false));
+          true));
       currentPos += 2;
       if (randGen.nextBoolean()) {
         switchBody.add(new BreakStmt());
@@ -469,7 +430,7 @@ public abstract class ShaderGenerator {
       if (switchBody.isEmpty()) {
         switchBody.add(new DefaultCaseLabel());
         switchBody.add(new BlockStmt(generateScope(1, configuration.getMaxSwitchScopeLength()),
-            false));
+            true));
         if (randGen.nextBoolean()) {
           switchBody.add(new BreakStmt());
         }
@@ -477,13 +438,20 @@ public abstract class ShaderGenerator {
         int defaultIndex = randGen.nextInt(casePositions.size());
         switchBody.add(casePositions.get(defaultIndex), new DefaultCaseLabel());
         switchBody.add(new BlockStmt(generateScope(defaultIndex == casePositions.size() - 1 ? 1
-                : 0, configuration.getMaxSwitchScopeLength()), false));
+                : 0, configuration.getMaxSwitchScopeLength()), true));
         if (randGen.nextBoolean()) {
           switchBody.add(new BreakStmt());
         }
       }
     }
     return new SwitchStmt(switchExpr, new BlockStmt(switchBody, true));
+  }
+
+  //TODO generate variable declaration with boolean type
+  protected LoopStmt generateWhileLoop() {
+    Expr condExpr = generateBaseExpr(BasicType.BOOL);
+    Stmt bodyStmt = new BlockStmt(generateScope(1, configuration.getMaxWhileScopeLength()), true);
+    return new WhileStmt(condExpr, bodyStmt);
   }
 
   protected List<Stmt> generateScope() {
@@ -497,13 +465,15 @@ public abstract class ShaderGenerator {
     for (int i = 0; i < randomActionBound; i++) {
       Stmt stmt;
       int actionIndex =
-          randGen.nextInt(programState.getScopeDepth() < configuration.getMaxScopeDepth() ? 8 : 5);
+          randGen.nextInt(programState.getScopeDepth() < configuration.getMaxScopeDepth() ? 9 : 5);
       if (actionIndex < 3) {
         stmt = new ExprStmt(generateProgramAssignmentLine());
       } else if (actionIndex == 6) {
         stmt = generateIfStmt();
       } else if (actionIndex == 7) {
         stmt = generateSwitchStmt();
+      } else if (actionIndex == 8) {
+        stmt = generateWhileLoop();
       } else {
         stmt = new DeclarationStmt(generateRandomTypedVarDecls(
             randGen.nextPositiveInt(configuration.getMaxVardeclElements()),

@@ -60,13 +60,14 @@ public final class TyperHelper {
 
     // If one side is scalar and the other side is basic, the result has to be that of the other
     // side
-    if (lhsType == BasicType.FLOAT || lhsType == BasicType.INT || lhsType == BasicType.UINT) {
-      assert rhsType instanceof BasicType;
-      return rhsType;
-    }
+    // As permitted on shift operands the t
     if (rhsType == BasicType.FLOAT || rhsType == BasicType.INT || rhsType == BasicType.UINT) {
       assert lhsType instanceof BasicType;
       return lhsType;
+    }
+    if (lhsType == BasicType.FLOAT || lhsType == BasicType.INT || lhsType == BasicType.UINT) {
+      assert rhsType instanceof BasicType;
+      return rhsType;
     }
     // Now we are in a position where if we know that one type is vector
     // or matrix, the other side must be also
