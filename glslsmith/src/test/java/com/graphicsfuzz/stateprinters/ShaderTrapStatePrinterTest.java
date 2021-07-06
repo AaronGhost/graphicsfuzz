@@ -39,13 +39,14 @@ public class ShaderTrapStatePrinterTest {
   String buffer4Text = "CREATE_BUFFER buffer_4 SIZE_BYTES 36 INIT_VALUES int 72 48 uint 78 32 26 "
       + "21 24 121 110\n"
       + "BIND_SHADER_STORAGE_BUFFER BUFFER buffer_4 BINDING 4\n\n";
-  String minimalProgramText = "GLES 3.1\n"
-      + "DECLARE_SHADER shader KIND COMPUTE\n"
-      + "#version 310 es\n"
+  String minimalShaderText = "#version 310 es\n"
       + "layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;\n"
       + "void main()\n"
       + "{\n"
-      + "}\n"
+      + "}\n";
+  String minimalProgramText = "GLES 3.1\n"
+      + "DECLARE_SHADER shader KIND COMPUTE\n"
+      + minimalShaderText
       + "END\n\n"
       + "COMPILE_SHADER shader_compiled SHADER shader\n"
       + "CREATE_PROGRAM compute_prog SHADERS shader_compiled\n"
@@ -116,6 +117,12 @@ public class ShaderTrapStatePrinterTest {
     Assert.assertEquals(new ShaderTrapStatePrinter().printDumpBuffer(buffer4),
         "DUMP_BUFFER_TEXT BUFFER buffer_4 FILE \"buffer_4.txt\" FORMAT \"buffer_4 \" int 2 \" \" "
             + "uint 7\n");
+  }
+
+  @Test
+  public void testGetShaderCodeFromHarness() {
+    Assert.assertEquals(new ShaderTrapStatePrinter().getShaderCodeFromHarness(minimalProgramText),
+        minimalShaderText);
   }
 
 }

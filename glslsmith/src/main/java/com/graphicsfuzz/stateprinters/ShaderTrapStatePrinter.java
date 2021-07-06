@@ -7,9 +7,28 @@ import com.graphicsfuzz.common.ast.type.BasicType;
 import com.graphicsfuzz.common.ast.type.Type;
 import com.graphicsfuzz.common.util.ShaderKind;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 //TODO check support for vector types within shadertrap
 public class ShaderTrapStatePrinter implements StatePrinter {
+
+  @Override
+  public String changeShaderFromHarness(String harnessText, String newGlslCode) {
+    String oldCode = getShaderCodeFromHarness(harnessText);
+    return harnessText.replace(oldCode, newGlslCode);
+  }
+
+  @Override
+  public String getShaderCodeFromHarness(String fileContent) {
+    Pattern pattern = Pattern.compile("KIND (COMPUTE|FRAG|VERT)\n(.*?)END", Pattern.DOTALL);
+    Matcher matcher = pattern.matcher(fileContent);
+    if (matcher.find()) {
+      return matcher.group(2);
+    } else {
+      throw new UnsupportedOperationException("Given file is not a shadertrap code");
+    }
+  }
 
   @Override
   public String printWrapper(ProgramState programState) {
@@ -35,6 +54,8 @@ public class ShaderTrapStatePrinter implements StatePrinter {
       throw new UnsupportedOperationException("Not implemented yet");
     }
   }
+
+
 
   public String parseVersion(String shaderVersion) {
     String[] versioning = shaderVersion.split(" ");

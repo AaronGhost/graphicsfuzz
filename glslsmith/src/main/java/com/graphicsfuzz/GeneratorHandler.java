@@ -51,6 +51,7 @@ public class GeneratorHandler {
     System.out.println("Seed:" + ns.getLong("seed"));
 
     //Instantiate main class with the selected random Generator
+    //TODO adapt to other stateprinters
     StatePrinter shadertrapWrapper = new ShaderTrapStatePrinter();
     try {
       //Generates the number of program given in argument of the program
