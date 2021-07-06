@@ -71,7 +71,7 @@ public abstract class Wrapper {
 
   public static Expr generateConstant(BasicType type, String constant) {
     Expr constantExpr = type.getElementType() == BasicType.INT ? new IntConstantExpr(constant) :
-        new UIntConstantExpr(constant+"u");
+        new UIntConstantExpr(constant + "u");
     return type.isScalar() ? constantExpr : new TypeConstructorExpr(type.getText(), constantExpr);
   }
 
@@ -137,7 +137,8 @@ public abstract class Wrapper {
   }
 
   private static Expr generateShiftTestExpr(BasicType typeB) {
-    Expr noMoreThan32 = typeB.isVector() ? generateVectorComparison(typeB, "B", "32", "greaterThan") :
+    Expr noMoreThan32 = typeB.isVector() ? generateVectorComparison(typeB, "B", "32",
+        "greaterThan") :
         new BinaryExpr(new VariableIdentifierExpr("B"), generateConstant(typeB, "32"),
             BinOp.GE);
     if (typeB.getElementType() == BasicType.INT) {
