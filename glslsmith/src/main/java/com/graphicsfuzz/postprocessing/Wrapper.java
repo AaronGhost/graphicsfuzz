@@ -71,7 +71,7 @@ public abstract class Wrapper {
 
   public static Expr generateConstant(BasicType type, String constant) {
     Expr constantExpr = type.getElementType() == BasicType.INT ? new IntConstantExpr(constant) :
-        new UIntConstantExpr(constant);
+        new UIntConstantExpr(constant+"u");
     return type.isScalar() ? constantExpr : new TypeConstructorExpr(type.getText(), constantExpr);
   }
 
@@ -99,15 +99,15 @@ public abstract class Wrapper {
       return new BinaryExpr(btest0Expr, new BinaryExpr(atestExpr, btest1Expr,
           BinOp.LAND), BinOp.LOR);
     }
-    return typeB.isVector() ? generateVectorComparison(typeB, "B", "0u") :
-        new BinaryExpr(new VariableIdentifierExpr("B"), new UIntConstantExpr("0u"), BinOp.EQ);
+    return typeB.isVector() ? generateVectorComparison(typeB, "B", "0") :
+        new BinaryExpr(new VariableIdentifierExpr("B"), generateConstant(typeB, "0"), BinOp.EQ);
   }
 
 
   //Arithmetic Wrapper Function declaration generator
   public static Declaration generateDivWrapper(BasicType typeA, BasicType typeB) {
     BasicType functionReturnType = typeB.isVector() ? typeB : typeA;
-    String intText = typeB.getElementType() == BasicType.INT ? "2" : "2u";
+    String intText = "2";
     Expr divExpr = new TernaryExpr(
         generateDivTestExpr(typeA, typeB),
         new BinaryExpr(new VariableIdentifierExpr("A"), generateConstant(typeB, intText),
@@ -122,7 +122,7 @@ public abstract class Wrapper {
   }
 
   public static Declaration generateDivAssignWrapper(BasicType typeA, BasicType typeB) {
-    String intText = typeB == BasicType.INT ? "2" : "2u";
+    String intText = "2";
     Expr divAssignExpr = new TernaryExpr(
         generateDivTestExpr(typeA, typeB),
         new ParenExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
@@ -137,25 +137,25 @@ public abstract class Wrapper {
   }
 
   private static Expr generateShiftTestExpr(BasicType typeB) {
+    Expr noMoreThan32 = typeB.isVector() ? generateVectorComparison(typeB, "B", "32", "greaterThan") :
+        new BinaryExpr(new VariableIdentifierExpr("B"), generateConstant(typeB, "32"),
+            BinOp.GE);
     if (typeB.getElementType() == BasicType.INT) {
       return new BinaryExpr(
-          typeB.isVector() ? generateVectorComparison(typeB, "B", "32", "greaterThan") :
-              new BinaryExpr(new VariableIdentifierExpr("B"), new IntConstantExpr("32"), BinOp.GE),
+          noMoreThan32,
           typeB.isVector() ? generateVectorComparison(typeB, "B", "0", "lessThan") :
-              new BinaryExpr(new VariableIdentifierExpr("B"), new IntConstantExpr("0"), BinOp.LT),
+              new BinaryExpr(new VariableIdentifierExpr("B"), generateConstant(typeB, "0"),
+                  BinOp.LT),
           BinOp.LOR);
     }
-    return typeB.isVector() ? generateVectorComparison(typeB, "B", "32u", "greaterThan") :
-        new BinaryExpr(new VariableIdentifierExpr("B"), new UIntConstantExpr("32u"),
-            BinOp.GE);
+    return noMoreThan32;
   }
 
   private static Declaration generateShiftWrapper(BasicType typeA, BasicType typeB, BinOp op,
                                                   String funName) {
-    String intText = (typeB.getElementType() == BasicType.INT) ? "16" : "16u";
     Expr shiftExpr = new TernaryExpr(
         generateShiftTestExpr(typeB),
-        new BinaryExpr(new VariableIdentifierExpr("A"), generateConstant(typeB, intText), op),
+        new BinaryExpr(new VariableIdentifierExpr("A"), generateConstant(typeB, "16"), op),
         new BinaryExpr(new VariableIdentifierExpr("A"), new VariableIdentifierExpr("B"),
             op));
     return new FunctionDefinition(new FunctionPrototype(funName,
@@ -166,11 +166,10 @@ public abstract class Wrapper {
 
   private static Declaration generateShiftAssignWrapper(BasicType typeA, BasicType typeB, BinOp op,
                                                         String funName) {
-    String intText = (typeB.getElementType() == BasicType.INT) ? "16" : "16u";
     Expr shiftAssignExpr = new TernaryExpr(
         generateShiftTestExpr(typeB),
         new ParenExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
-            generateConstant(typeB, intText), op)),
+            generateConstant(typeB, "16"), op)),
         new ParenExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
             new VariableIdentifierExpr("B"), op)));
     return new FunctionDefinition(new FunctionPrototype(funName,
@@ -197,14 +196,9 @@ public abstract class Wrapper {
   }
 
   private static Expr generateModTestExpr(BasicType typeB) {
-    if (typeB.getElementType() == BasicType.INT) {
-      return typeB.isVector() ? generateVectorComparison(typeB, "B", "0") :
-          new BinaryExpr(new VariableIdentifierExpr("B"),
-              new IntConstantExpr("0"), BinOp.EQ);
-    }
-    return typeB.isVector() ? generateVectorComparison(typeB, "B", "0u") :
+    return typeB.isVector() ? generateVectorComparison(typeB, "B", "0") :
         new BinaryExpr(new VariableIdentifierExpr("B"),
-            new UIntConstantExpr("0u"), BinOp.EQ);
+            generateConstant(typeB, "0"), BinOp.EQ);
   }
 
   public static Declaration generateModWrapper(BasicType typeA, BasicType typeB) {
@@ -220,7 +214,7 @@ public abstract class Wrapper {
     } else {
       modExpr = new TernaryExpr(generateModTestExpr(typeB),
           new BinaryExpr(new VariableIdentifierExpr("A"), generateConstant(typeB,
-              (FuzzerConstants.MAX_INT_VALUE - 1) + "u"), BinOp.MOD),
+              String.valueOf(FuzzerConstants.MAX_INT_VALUE - 1)), BinOp.MOD),
           new BinaryExpr(new VariableIdentifierExpr("A"), new VariableIdentifierExpr("B"),
               BinOp.MOD));
     }
@@ -246,7 +240,7 @@ public abstract class Wrapper {
       stmts = Collections.singletonList(new ReturnStmt(new TernaryExpr(
           generateModTestExpr(typeB),
           new ParenExpr(new BinaryExpr(new VariableIdentifierExpr("A"), generateConstant(typeB,
-              (FuzzerConstants.MAX_INT_VALUE - 1) + "u"), BinOp.MOD_ASSIGN)),
+              String.valueOf(FuzzerConstants.MAX_INT_VALUE - 1)), BinOp.MOD_ASSIGN)),
           new ParenExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
               new VariableIdentifierExpr("B"), BinOp.MOD_ASSIGN)))));
     }

@@ -3,8 +3,6 @@ package com.graphicsfuzz;
 
 import com.graphicsfuzz.common.util.IRandom;
 import com.graphicsfuzz.config.ConfigInterface;
-import com.graphicsfuzz.postprocessing.LoopLimiter;
-import com.graphicsfuzz.postprocessing.WrapperBuilder;
 import com.graphicsfuzz.shadergenerators.ComputeShaderGenerator;
 import com.graphicsfuzz.shadergenerators.ShaderGenerator;
 import com.graphicsfuzz.stateprinters.StatePrinter;

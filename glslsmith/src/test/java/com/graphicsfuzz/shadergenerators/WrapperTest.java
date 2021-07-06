@@ -14,7 +14,7 @@ public class WrapperTest {
     Assert.assertEquals(ivec4returnText,
         TestHelper.getText(Wrapper.generateVectorComparison(BasicType.IVEC4, "A", "0")));
     Assert.assertEquals(uvec3returnText,
-        TestHelper.getText(Wrapper.generateVectorComparison(BasicType.UVEC3, "B", "0u")));
+        TestHelper.getText(Wrapper.generateVectorComparison(BasicType.UVEC3, "B", "0")));
 
   }
 
