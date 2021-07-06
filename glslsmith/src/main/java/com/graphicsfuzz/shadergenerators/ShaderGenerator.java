@@ -210,7 +210,7 @@ public abstract class ShaderGenerator {
     }
     if (op == BinOp.SHL || op == BinOp.SHR || op == BinOp.SHL_ASSIGN || op == BinOp.SHR_ASSIGN
         && leftType != rightType) {
-      return new BinaryExpr(leftExpr, new ParenExpr(rightExpr), op);
+      return new ParenExpr(new BinaryExpr(leftExpr, new ParenExpr(rightExpr), op));
     }
     return new BinaryExpr(leftExpr, rightExpr, op);
   }
