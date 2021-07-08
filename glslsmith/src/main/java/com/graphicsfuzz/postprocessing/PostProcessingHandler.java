@@ -38,6 +38,7 @@ public class PostProcessingHandler {
       String newGlslCode = programState.getShaderCode();
       String newHarnessText = shaderPrinter.changeShaderFromHarness(harnessText, newGlslCode);
       Files.write(Path.of(dest), newHarnessText.getBytes());
+      System.out.println("SUCCESS!");
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -58,6 +59,5 @@ public class PostProcessingHandler {
         .help("Destination file for the new shader");
     Namespace ns = parser.parseArgs(args);
     updateFile(ns.getString("src"), ns.getString("dest"));
-    System.out.println("SUCCESS!");
   }
 }
