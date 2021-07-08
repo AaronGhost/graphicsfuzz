@@ -58,5 +58,6 @@ public class PostProcessingHandler {
         .help("Destination file for the new shader");
     Namespace ns = parser.parseArgs(args);
     updateFile(ns.getString("src"), ns.getString("dest"));
+    System.out.println("SUCCESS!");
   }
 }
