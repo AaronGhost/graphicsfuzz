@@ -112,6 +112,10 @@ public class ProgramState {
     currentScope = currentScope.getParent();
   }
 
+  public boolean hasEntryBeenRead(FuzzerScopeEntry entry) {
+    return seenReadEntries.contains(entry);
+  }
+
   public void setEntryHasBeenRead(FuzzerScopeEntry entry) {
     if (!configInterface.allowMultipleWriteAccessInInitializers() && initializer) {
       seenReadEntries.add(entry);

@@ -216,13 +216,18 @@ public abstract class ShaderGenerator {
   }
 
   //Generate a variable access for the given type or crash if none is available
+  //TODO post-processing for intializers situation (no read / write to the same scope entry)
   protected Expr generateBaseVarExpr(BasicType type) {
     List<FuzzerScopeEntry> availableEntries =
         programState.getReadEntriesOfCompatibleType(type);
     assert !availableEntries.isEmpty();
     FuzzerScopeEntry var = availableEntries.get(randGen.nextInt(availableEntries.size()));
-    programState.setEntryHasBeenRead(var);
     boolean lvalue = true;
+    if (programState.hasEntryBeenRead(var)) {
+      lvalue = false;
+    } else {
+      programState.setEntryHasBeenRead(var);
+    }
     if (var.getBaseType().isVector()) {
       if (type.getNumElements() > var.getBaseType().getNumElements()) {
         lvalue = false;
@@ -230,6 +235,7 @@ public abstract class ShaderGenerator {
         lvalue = randGen.nextBoolean();
       }
     }
+
     Expr randomAccessExpr = generateRandomAccessExpr(var, type, lvalue);
     programState.setLvalue(lvalue, lvalue ? var : null);
     programState.setConstant(false);
