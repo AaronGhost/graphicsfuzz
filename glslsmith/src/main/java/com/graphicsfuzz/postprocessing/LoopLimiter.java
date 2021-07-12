@@ -24,24 +24,26 @@ import java.util.Collections;
 
 public class LoopLimiter extends StandardVisitor implements PostProcessorInterface {
   ProgramState programState;
-  int maxLoopBudget;
-  boolean isGlobalLimiter;
+  final int maxLoopBudget;
+  final boolean isGlobalLimiter;
+  int loopCounter;
 
   public LoopLimiter(boolean isGlobalLimiter, int maxLoopBudget) {
     this.isGlobalLimiter = isGlobalLimiter;
     this.maxLoopBudget = maxLoopBudget;
+    this.loopCounter = 0;
   }
 
   @Override
   public void visitWhileStmt(WhileStmt whileStmt) {
     super.visitWhileStmt(whileStmt);
-    Stmt incrStmt = new ExprStmt(new UnaryExpr(new VariableIdentifierExpr("global_limiter"),
+    String limiterText = isGlobalLimiter ? "global_limiter" :
+        "local_limiter_" + loopCounter;
+    loopCounter++;
+    Stmt incrStmt = new ExprStmt(new UnaryExpr(new VariableIdentifierExpr(limiterText),
         UnOp.POST_INC));
-    Stmt thenStmt = isGlobalLimiter ? new BreakStmt() :
-        new BlockStmt(Arrays.asList(new ExprStmt(new BinaryExpr(new VariableIdentifierExpr(
-            "global_limiter"),
-            new IntConstantExpr("0"), BinOp.ASSIGN)), new BreakStmt()), false);
-    Stmt limiterStmt = new IfStmt(new BinaryExpr(new VariableIdentifierExpr("global_limiter"),
+    Stmt thenStmt = new BreakStmt();
+    Stmt limiterStmt = new IfStmt(new BinaryExpr(new VariableIdentifierExpr(limiterText),
         new IntConstantExpr(String.valueOf(maxLoopBudget)), BinOp.GT), thenStmt, null);
     Stmt bodyStmt = whileStmt.getBody();
     if (bodyStmt instanceof BlockStmt) {
@@ -59,10 +61,19 @@ public class LoopLimiter extends StandardVisitor implements PostProcessorInterfa
     TranslationUnit tu = state.getTranslationUnit();
     programState = state;
     visitTranslationUnit(tu);
-    tu.addDeclarationBefore(new VariablesDeclaration(BasicType.INT,
-            Collections.singletonList(new VariableDeclInfo("global_limiter", null,
-                new Initializer(new IntConstantExpr("0"))))),
-        tu.getMainFunction());
+    if (!isGlobalLimiter) {
+      for (int i = 0; i < loopCounter; i++) {
+        tu.addDeclarationBefore(new VariablesDeclaration(BasicType.INT,
+                Collections.singletonList(new VariableDeclInfo("local_limiter_" + i, null,
+                    new Initializer(new IntConstantExpr("0"))))),
+            tu.getMainFunction());
+      }
+    } else if (loopCounter > 0) {
+      tu.addDeclarationBefore(new VariablesDeclaration(BasicType.INT,
+              Collections.singletonList(new VariableDeclInfo("global_limiter", null,
+                  new Initializer(new IntConstantExpr("0"))))),
+          tu.getMainFunction());
+    }
     state.programInitialization(tu, state.getShaderKind());
     return programState;
   }

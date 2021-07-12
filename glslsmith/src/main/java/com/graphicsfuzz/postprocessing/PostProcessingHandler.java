@@ -9,12 +9,20 @@ import com.graphicsfuzz.stateprinters.ShaderTrapStatePrinter;
 import com.graphicsfuzz.stateprinters.StatePrinter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.inf.ArgumentParser;
 import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.Namespace;
 
 public class PostProcessingHandler {
+
+  private static final List<PostProcessorInterface> postProcessors = Arrays.asList(
+    new ArrayIndexBuilder(false),
+      new WrapperBuilder(),
+      new LoopLimiter(true, 100)
+  );
 
   public static void updateFile(String src, String dest) {
     try {
@@ -30,10 +38,9 @@ public class PostProcessingHandler {
       programState.programInitialization(unit, ShaderKind.COMPUTE);
       //TODO setup the buffers according to the given values
       //Pipeline post-processing
-      WrapperBuilder builder = new WrapperBuilder();
-      programState = builder.process(programState);
-      LoopLimiter limiter = new LoopLimiter(true, 100);
-      programState = limiter.process(programState);
+      for (PostProcessorInterface postProcessorInterface : postProcessors) {
+        programState = postProcessorInterface.process(programState);
+      }
       //Replace the glsl code from the shadertrap
       String newGlslCode = programState.getShaderCode();
       String newHarnessText = shaderPrinter.changeShaderFromHarness(harnessText, newGlslCode);
@@ -44,6 +51,7 @@ public class PostProcessingHandler {
     }
   }
 
+  //TODO specifically call post-processing
   public static void main(String[] args) throws ArgumentParserException {
     //Parse Arguments to know what to look at
     ArgumentParser parser = ArgumentParsers.newArgumentParser("GLSLsmith postprocessing")

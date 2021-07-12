@@ -1,25 +1,12 @@
 package com.graphicsfuzz.postprocessing;
 
 import com.graphicsfuzz.ProgramState;
-import com.graphicsfuzz.common.ast.TranslationUnit;
-import com.graphicsfuzz.common.util.GlslParserException;
-import com.graphicsfuzz.common.util.ParseHelper;
-import com.graphicsfuzz.common.util.ParseTimeoutException;
-import com.graphicsfuzz.common.util.ShaderKind;
-import com.graphicsfuzz.config.DefaultConfig;
-import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
-public class WrapperBuilderTest {
-  ProgramState emptyProgramState;
-  ProgramState singleLineProgramState;
-
-  String emptyProgramText = "#version 320 es\n"
-      + "void main()\n"
-      + "{\n"
-      + "}\n";
+public class WrapperBuilderTest extends CommonPostProcessingTest {
 
   String singleLineProgramText = "#version 320 es\n"
       + "void main()\n"
@@ -38,27 +25,15 @@ public class WrapperBuilderTest {
       + " vec2 var_0 = SAFE_LSHIFT(vec2(3), 5);\n"
       + "}\n";
 
-  @Before
-  public void setup() throws GlslParserException, IOException, ParseTimeoutException,
-      InterruptedException {
-
-    TranslationUnit unit = ParseHelper.parse(emptyProgramText);
-    emptyProgramState = new ProgramState(new DefaultConfig());
-    emptyProgramState.programInitialization(unit, ShaderKind.COMPUTE);
-    unit = ParseHelper.parse(singleLineProgramText);
-    singleLineProgramState = new ProgramState(new DefaultConfig());
-    singleLineProgramState.programInitialization(unit, ShaderKind.COMPUTE);
-  }
-
-  @Test
-  public void testProcessWithEmptyShader() {
-    ProgramState returnState = new WrapperBuilder().process(emptyProgramState);
-    Assert.assertEquals(returnState.getShaderCode(), emptyProgramText);
+  @Override
+  protected List<PostProcessorInterface> createInstance() {
+    return Collections.singletonList(new WrapperBuilder());
   }
 
   @Test
   public void testProcessWithSingleLineShader() {
-    ProgramState returnState = new WrapperBuilder().process(singleLineProgramState);
+    ProgramState returnState = new WrapperBuilder()
+        .process(generateProgramStateForCode(singleLineProgramText));
     Assert.assertEquals(returnState.getShaderCode(), wrapperLineProgramText);
   }
 }

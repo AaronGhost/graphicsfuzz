@@ -3,7 +3,6 @@ package com.graphicsfuzz.postprocessing;
 import com.graphicsfuzz.ProgramState;
 import com.graphicsfuzz.common.ast.IAstNode;
 import com.graphicsfuzz.common.ast.TranslationUnit;
-import com.graphicsfuzz.common.ast.expr.ArrayIndexExpr;
 import com.graphicsfuzz.common.ast.expr.BinOp;
 import com.graphicsfuzz.common.ast.expr.BinaryExpr;
 import com.graphicsfuzz.common.ast.expr.FunctionCallExpr;
@@ -26,6 +25,7 @@ public class WrapperBuilder extends StandardVisitor implements PostProcessorInte
     super.visitChildFromParent(child, parent);
   }
 
+  /*
   @Override
   public void visitArrayIndexExpr(ArrayIndexExpr arrayIndexExpr) {
     if (arrayIndexExpr.getIndex() instanceof FunctionCallExpr) {
@@ -36,6 +36,7 @@ public class WrapperBuilder extends StandardVisitor implements PostProcessorInte
     }
     super.visitArrayIndexExpr(arrayIndexExpr);
   }
+   */
 
   //TODO handle constant cases for left and right operands where the wrappers are not necessary
   @Override
