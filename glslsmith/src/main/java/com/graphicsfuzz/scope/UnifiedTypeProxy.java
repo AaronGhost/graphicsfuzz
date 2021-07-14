@@ -3,10 +3,12 @@ package com.graphicsfuzz.scope;
 import com.graphicsfuzz.common.ast.expr.Expr;
 import com.graphicsfuzz.common.ast.type.ArrayType;
 import com.graphicsfuzz.common.ast.type.BasicType;
+import com.graphicsfuzz.common.ast.type.QualifiedType;
 import com.graphicsfuzz.common.ast.type.Type;
 import com.graphicsfuzz.common.ast.type.TypeQualifier;
 import com.graphicsfuzz.common.ast.visitors.IAstVisitor;
 import com.graphicsfuzz.common.typing.Scope;
+import java.util.List;
 
 public class UnifiedTypeProxy extends Type implements UnifiedTypeInterface {
 
@@ -16,6 +18,32 @@ public class UnifiedTypeProxy extends Type implements UnifiedTypeInterface {
   private final int baseTypeSize;
   private final int currentTypeSize;
   private final boolean isArray;
+  private boolean isReadOnly;
+  private boolean isConstOnly;
+  private boolean isWriteOnly;
+  private boolean isCoherent;
+
+  public UnifiedTypeProxy(QualifiedType realType) {
+    this.realType = realType;
+    Type withoutQualifierType = realType.getWithoutQualifiers();
+    if (withoutQualifierType instanceof BasicType) {
+      this.childType = new UnifiedTypeProxy((BasicType) withoutQualifierType);
+    } else if (withoutQualifierType instanceof ArrayType) {
+      this.childType = new UnifiedTypeProxy((ArrayType) withoutQualifierType);
+    } else {
+      throw new RuntimeException("Currently unsupported type sent to the proxy");
+    }
+    this.baseType = childType.getBaseType();
+    this.currentTypeSize = childType.getCurrentTypeSize();
+    this.baseTypeSize = childType.getBaseTypeSize();
+    this.isArray = childType.isArray();
+    List<TypeQualifier> qualifierList = realType.getQualifiers();
+    this.isReadOnly = qualifierList.contains(TypeQualifier.READONLY)
+        || qualifierList.contains(TypeQualifier.CONST);
+    this.isConstOnly = qualifierList.contains(TypeQualifier.CONST);
+    this.isWriteOnly = qualifierList.contains(TypeQualifier.WRITEONLY);
+    this.isCoherent = qualifierList.contains(TypeQualifier.COHERENT);
+  }
 
   public UnifiedTypeProxy(BasicType realType) {
     this.realType = realType;
@@ -24,9 +52,11 @@ public class UnifiedTypeProxy extends Type implements UnifiedTypeInterface {
     this.currentTypeSize = 1;
     this.baseTypeSize = 1;
     this.isArray = false;
+    this.isReadOnly = false;
+    this.isWriteOnly = false;
+    this.isCoherent = false;
   }
 
-  //TODO support multi dimensional arrays
   public UnifiedTypeProxy(ArrayType realType) {
     this.realType = realType;
     if (realType.getBaseType() instanceof BasicType) {
@@ -45,6 +75,9 @@ public class UnifiedTypeProxy extends Type implements UnifiedTypeInterface {
       currentTypeSize = 0;
     }
     isArray = true;
+    this.isWriteOnly = false;
+    this.isReadOnly = false;
+    this.isCoherent = false;
   }
 
 
@@ -112,5 +145,40 @@ public class UnifiedTypeProxy extends Type implements UnifiedTypeInterface {
   @Override
   public boolean hasQualifier(TypeQualifier qualifier) {
     return realType.hasQualifier(qualifier);
+  }
+
+  @Override
+  public boolean isReadOnly() {
+    return isReadOnly;
+  }
+
+  @Override
+  public boolean isCoherent() {
+    return isCoherent;
+  }
+
+  @Override
+  public boolean isConstOnly() {
+    return isConstOnly;
+  }
+
+  @Override
+  public boolean isWriteOnly() {
+    return isWriteOnly;
+  }
+
+  @Override
+  public void setReadOnly(boolean readOnly) {
+    this.isReadOnly = readOnly;
+  }
+
+  @Override
+  public void setWriteOnly(boolean writeOnly) {
+    this.isWriteOnly = writeOnly;
+  }
+
+  @Override
+  public void setCoherent(boolean coherent) {
+    this.isCoherent = coherent;
   }
 }

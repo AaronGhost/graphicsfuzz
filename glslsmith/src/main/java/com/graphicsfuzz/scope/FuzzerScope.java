@@ -13,6 +13,8 @@ import java.util.stream.Collectors;
 public class FuzzerScope {
 
   private int availableOffset = 0;
+  private final int firstAvailableOffset;
+  private int availableShadowOffset = 0;
   private final FuzzerScope parentScope;
   private final Map<String, FuzzerScopeEntry> variableMapping = new HashMap<>();
 
@@ -22,31 +24,38 @@ public class FuzzerScope {
 
   public FuzzerScope() {
     parentScope = null;
+    firstAvailableOffset = 0;
   }
 
   public FuzzerScope(FuzzerScope parent) {
     parentScope = parent;
-    availableOffset = 0;
+    firstAvailableOffset = parent.getAvailableOffset();
+    availableOffset = parent.getAvailableOffset();
   }
 
   public FuzzerScope getParent() {
     return parentScope;
   }
 
+  public int getFirstAvailableOffset() {
+    return firstAvailableOffset;
+  }
+
   public int getAvailableOffset() {
     return availableOffset;
   }
 
-  public void incrementOffset() {
-    availableOffset++;
+  public int getAvailableShadowOffset() {
+    return availableShadowOffset;
   }
 
-  public void addVariable(String name, UnifiedTypeInterface type) {
-    this.addVariable(name, type, true);
-  }
-
-  public void addVariable(String name, UnifiedTypeInterface type, boolean canBeHidden) {
-    variableMapping.put(name, new FuzzerScopeEntry(name, type, canBeHidden));
+  public void addVariable(String name, UnifiedTypeInterface type,
+                          boolean incrementOffset,
+                          boolean incrementShadowOffset) {
+    assert ! (incrementOffset && incrementShadowOffset);
+    availableOffset += incrementOffset ? 1 : 0;
+    availableShadowOffset += incrementShadowOffset ? 1 : 0;
+    variableMapping.put(name, new FuzzerScopeEntry(name, type));
   }
 
   public List<String> getNameOfDeclaredVariables() {
@@ -83,17 +92,21 @@ public class FuzzerScope {
     return null;
   }
 
-  //TODO add readonly and const support
   public List<FuzzerScopeEntry> getWriteAvailableEntries() {
-    return getAllDeclaredVariables();
+    return getAllDeclaredVariables().stream().filter(
+        t -> !t.isReadOnly()
+    ).collect(Collectors.toList());
   }
 
-  //TODO add writeonly support
   public List<FuzzerScopeEntry> getReadEntriesOfCompatibleType(BasicType type) {
     return getAllDeclaredVariables().stream().filter(
+        // Compatible type filter
         t -> (type.getNumElements() == 1) ? t.getBaseType().getElementType() == type :
             t.getBaseType().getNumElements() >= 2 && t.getBaseType().getElementType()
                 == type.getElementType()
+    ).filter(
+        // No write only value filter
+        t -> !t.isWriteOnly()
     ).collect(Collectors.toList());
   }
 }

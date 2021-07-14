@@ -3,9 +3,11 @@ package com.graphicsfuzz.random;
 import com.graphicsfuzz.common.ast.expr.BinOp;
 import com.graphicsfuzz.common.ast.expr.UnOp;
 import com.graphicsfuzz.common.ast.type.BasicType;
+import com.graphicsfuzz.common.ast.type.QualifiedType;
 import com.graphicsfuzz.common.ast.type.Type;
 import com.graphicsfuzz.scope.UnifiedTypeInterface;
 import com.graphicsfuzz.scope.UnifiedTypeProxy;
+import java.util.ArrayList;
 
 public class MokeRandomTypeGenerator implements IRandomType {
 
@@ -133,6 +135,11 @@ public class MokeRandomTypeGenerator implements IRandomType {
   }
 
   @Override
+  public UnifiedTypeInterface getBufferElementType(boolean noReadOnly) {
+    return new UnifiedTypeProxy(new QualifiedType(getRandomBaseType(true), new ArrayList<>()));
+  }
+
+  @Override
   public BasicType getRandomBaseType(boolean restrictToInteger) {
     if (restrictToInteger) {
       return randomBaseInt;
@@ -151,8 +158,14 @@ public class MokeRandomTypeGenerator implements IRandomType {
   }
 
   @Override
-  public UnifiedTypeInterface getRandomNewType(boolean restrictToInteger) {
+  public UnifiedTypeInterface getRandomArrayOrBaseType(boolean restrictToInteger) {
     return randomNewType;
+  }
+
+  @Override
+  public UnifiedTypeInterface getRandomQualifiedProxyType() {
+    return new UnifiedTypeProxy(new QualifiedType(getRandomArrayOrBaseType(false).getRealType(),
+        new ArrayList<>()));
   }
 
   @Override

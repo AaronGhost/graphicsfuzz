@@ -36,7 +36,6 @@ public class ProgramState {
   //Indices management for variables
   private int bindingOffset = 0;
   private int bufferAndUniformOffset = 0;
-  private int nonShadowAvailableVariableOffset = 0;
 
   //Variable to query the shader generation states
   private int exprDepth = 0;
@@ -91,6 +90,7 @@ public class ProgramState {
   public String getShadingLanguageVersion() {
     return translationUnit.getShadingLanguageVersion().getVersionString();
   }
+
 
   public void programInitialization(TranslationUnit translationUnit, ShaderKind shaderKind) {
     this.translationUnit = translationUnit;
@@ -148,20 +148,16 @@ public class ProgramState {
   public void addUniformBufferVariable(String name, UnifiedTypeInterface variable) {
     assert scopeDepth == 0;
     bufferAndUniformOffset += 1;
-    currentScope.addVariable(name, variable, false);
+    currentScope.addVariable(name, variable, false, false);
   }
 
   public void addVariable(String name, UnifiedTypeInterface variable) {
-    this.addVariable(name, variable, true);
+    this.addVariable(name, variable, true, false);
   }
 
-  public void addVariable(String name, UnifiedTypeInterface variable, boolean canBeHidden) {
-    if (canBeHidden) {
-      currentScope.incrementOffset();
-    } else {
-      nonShadowAvailableVariableOffset += 1;
-    }
-    currentScope.addVariable(name, variable, canBeHidden);
+  public void addVariable(String name, UnifiedTypeInterface variable, boolean incrementOffset,
+                          boolean incrementShadowOffset) {
+    currentScope.addVariable(name, variable, incrementOffset, incrementShadowOffset);
   }
 
   //Name and offset get function
@@ -173,8 +169,17 @@ public class ProgramState {
     return "ext_" + bufferAndUniformOffset;
   }
 
+  public boolean isAShadowNameStillAvailable() {
+    return currentScope.getAvailableShadowOffset() < currentScope.getFirstAvailableOffset();
+  }
+
   public String getAvailableShadowName() {
     //TODO shadowing problems
+    assert currentScope.getAvailableShadowOffset() < currentScope.getFirstAvailableOffset();
+    return "var_" + currentScope.getAvailableShadowOffset();
+  }
+
+  public String getAvailableNoShadowName() {
     return "var_" + currentScope.getAvailableOffset();
   }
 

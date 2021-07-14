@@ -75,6 +75,11 @@ public class DefaultConfig implements ConfigInterface {
   }
 
   @Override
+  public int getMaxGlobalDecls() {
+    return 5;
+  }
+
+  @Override
   public int getMaxSwizzleDepth() {
     return 3;
   }

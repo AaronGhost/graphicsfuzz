@@ -8,7 +8,7 @@ public interface ConfigInterface {
   boolean allowMultipleWriteAccessInInitializers();
 
   boolean enforceDefaultCase();
-
+  
   boolean allowArrayAbsAccess();
 
   int getMaxArrayLength();
@@ -16,6 +16,8 @@ public interface ConfigInterface {
   int getMaxBufferElements();
 
   int getMaxExprDepth();
+
+  int getMaxGlobalDecls();
 
   int getMaxInputBuffers();
 

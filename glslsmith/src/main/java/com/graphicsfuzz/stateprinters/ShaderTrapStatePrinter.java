@@ -4,6 +4,7 @@ import com.graphicsfuzz.Buffer;
 import com.graphicsfuzz.ProgramState;
 import com.graphicsfuzz.common.ast.type.ArrayType;
 import com.graphicsfuzz.common.ast.type.BasicType;
+import com.graphicsfuzz.common.ast.type.QualifiedType;
 import com.graphicsfuzz.common.ast.type.Type;
 import com.graphicsfuzz.common.util.ShaderKind;
 import java.util.List;
@@ -11,6 +12,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 //TODO check support for vector types within shadertrap
+//TODO rewrite without instanceof using UnifiedProxy
 public class ShaderTrapStatePrinter implements StatePrinter {
 
   @Override
@@ -74,6 +76,9 @@ public class ShaderTrapStatePrinter implements StatePrinter {
         + 4 * buffer.getLength() + " INIT_VALUES ");
     int offset = 0;
     for (Type type : buffer.getMemberTypes()) {
+      if (type instanceof QualifiedType) {
+        type = ((QualifiedType) type).getTargetType();
+      }
       if (type instanceof ArrayType) {
         ArrayType arrayType = (ArrayType) type;
         createInstruction.append(arrayType.getBaseType().getText()).append(" ");
@@ -103,6 +108,9 @@ public class ShaderTrapStatePrinter implements StatePrinter {
           new StringBuilder("DUMP_BUFFER_TEXT BUFFER " + buffer.getName()
           + " FILE \"" + buffer.getName() + ".txt\" FORMAT \"" + buffer.getName() + " \" ");
       for (Type type : buffer.getMemberTypes()) {
+        if (type instanceof QualifiedType) {
+          type = ((QualifiedType) type).getTargetType();
+        }
         if (type instanceof ArrayType) {
           ArrayType arrayType = (ArrayType) type;
           for (int j = 0; j < arrayType.getArrayInfo().getDimensionality(); j++) {

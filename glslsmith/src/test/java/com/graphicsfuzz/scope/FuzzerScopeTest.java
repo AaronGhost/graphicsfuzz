@@ -23,24 +23,24 @@ public class FuzzerScopeTest {
 
   @Before
   public void setup() {
-    globalScope.addVariable("int1", new UnifiedTypeProxy(BasicType.INT));
+    globalScope.addVariable("int1", new UnifiedTypeProxy(BasicType.INT), true, false);
     ArrayInfo arrayInfo1 = new ArrayInfo(Collections.singletonList(Optional.of(
         new IntConstantExpr(String.valueOf(3)))));
     arrayInfo1.setConstantSizeExpr(0, 3);
     globalScope.addVariable("int2",
-        new UnifiedTypeProxy(new ArrayType(BasicType.INT, arrayInfo1)), false);
-    globalScope.addVariable("uint1", new UnifiedTypeProxy(BasicType.UINT), true);
-    globalScope.addVariable("uint2", new UnifiedTypeProxy(BasicType.UINT), false);
-    notGlobalScope.addVariable("n_int1", new UnifiedTypeProxy(BasicType.INT));
-    notGlobalScope.addVariable("n_int2", new UnifiedTypeProxy(BasicType.INT), false);
+        new UnifiedTypeProxy(new ArrayType(BasicType.INT, arrayInfo1)), true, false);
+    globalScope.addVariable("uint1", new UnifiedTypeProxy(BasicType.UINT), true, false);
+    globalScope.addVariable("uint2", new UnifiedTypeProxy(BasicType.UINT), true, false);
+    notGlobalScope.addVariable("n_int1", new UnifiedTypeProxy(BasicType.INT), true, false);
+    notGlobalScope.addVariable("n_int2", new UnifiedTypeProxy(BasicType.INT), true, false);
     ArrayInfo arrayInfo2 = new ArrayInfo(Collections.singletonList(Optional.of(
             new IntConstantExpr(String.valueOf(5)))));
     arrayInfo2.setConstantSizeExpr(0, 5);
     notGlobalScope.addVariable("n_uint1", new UnifiedTypeProxy(new ArrayType(BasicType.UINT,
-        arrayInfo2)));
-    notGlobalScope.addVariable("n_uint2", new UnifiedTypeProxy(BasicType.UINT), false);
-    notGlobalScope.addVariable("n_uvec1", new UnifiedTypeProxy(BasicType.UVEC3), false);
-    notGlobalScope.addVariable("n_ivec1", new UnifiedTypeProxy(BasicType.IVEC3), true);
+        arrayInfo2)), true, false);
+    notGlobalScope.addVariable("n_uint2", new UnifiedTypeProxy(BasicType.UINT), true, false);
+    notGlobalScope.addVariable("n_uvec1", new UnifiedTypeProxy(BasicType.UVEC3), true, false);
+    notGlobalScope.addVariable("n_ivec1", new UnifiedTypeProxy(BasicType.IVEC3), true, false);
   }
 
   @Test

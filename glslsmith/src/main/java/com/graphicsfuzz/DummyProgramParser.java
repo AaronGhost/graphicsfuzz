@@ -12,7 +12,7 @@ public class DummyProgramParser {
       ParseTimeoutException, InterruptedException {
     String programText = "#version 320 es\n"
         + " layout(std140, binding = 0) buffer buffer_0 {"
-        + "int ext_0[4];"
+        + "coherent int ext_0[4];"
         + "} ;"
         + "void main()\n"
         + "{\n"

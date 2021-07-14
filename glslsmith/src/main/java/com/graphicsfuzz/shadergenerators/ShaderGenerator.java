@@ -81,8 +81,9 @@ public abstract class ShaderGenerator {
     return programState;
   }
 
-  //All generate instructions return IASTNodes
+  //All generate instructions return classes inherited from IASTNodes
   //TODO support named instance
+  //TODO wait for support of memory qualifiers on interface blocks
   protected InterfaceBlock generateInterfaceBlockFromBuffer(Buffer buffer) {
     return new InterfaceBlock(Optional.ofNullable(buffer.getLayoutQualifiers()),
         buffer.getInterfaceQualifier(),
@@ -93,63 +94,112 @@ public abstract class ShaderGenerator {
     );
   }
 
+  //Generate a Variable declaration
+  //TODO generate the full range of possible const values
   protected VariablesDeclaration generateRandomTypedVarDecls(int varDeclNumber,
                                                              boolean hasInitializer) {
     List<VariableDeclInfo> varDeclInfos = new ArrayList<>();
-    UnifiedTypeInterface proxy = randomTypeGenerator.getRandomNewType(false);
+
+    //Get a random new type from those available to the generator (boolean, signed/unsigned
+    // integers) and vectors) it can either be an array or a BasicType
+    UnifiedTypeInterface proxy = randomTypeGenerator.getRandomQualifiedProxyType();
     BasicType baseType = proxy.getBaseType();
+
+    //Create a correct initializer for the selected type
     Initializer initializer = null;
     if (hasInitializer) {
+
+      // Initializer for the arrays
       if (proxy.isArray()) {
         List<Expr> initializerExprs = new ArrayList<>();
+
+        // Taint generation to prevent from generating read / write access in initializers
         programState.setIsInitializer(true);
         for (int i = 0; i < proxy.getBaseTypeSize(); i++) {
-          initializerExprs.add(generateBaseExpr(proxy.getBaseType()));
+          if (proxy.isConstOnly()) {
+            initializerExprs.add(generateBaseConstantExpr(baseType));
+          } else {
+            initializerExprs.add(generateBaseExpr(baseType));
+          }
         }
         programState.setIsInitializer(false);
+
+        //Build a complete array declaration
         initializer = new Initializer(new ArrayConstructorExpr(new ArrayType(proxy.getBaseType(),
             new ArrayInfo(Collections.singletonList(Optional.of(
                 new IntConstantExpr(String.valueOf(proxy.getBaseTypeSize())))))),
             initializerExprs));
       } else {
-        initializer = new Initializer(generateBaseExpr(baseType));
+        // Generate any random expression available from the underlying basic type
+        if (proxy.isConstOnly()) {
+          initializer = new Initializer(generateBaseConstantExpr(baseType));
+        } else {
+          initializer = new Initializer(generateBaseExpr(baseType));
+        }
       }
     }
+
+    // Add the necessary array of the correct size
+    // TODO handle multiple dimension arrays
     ArrayInfo info = proxy.isArray() ? new ArrayInfo(
         Collections.singletonList(Optional.of(
             new IntConstantExpr(String.valueOf(proxy.getBaseTypeSize()))))) : null;
+
+    // For the number of variables declared here, get a new variable and register it in the
+    // program state
     for (int i = 0; i < varDeclNumber; i++) {
       //TODO add support for both shadow and non shadow variables (randomly)
-      String name = programState.getAvailableShadowName();
-      programState.addVariable(name, proxy);
+      String name;
+      if (programState.isAShadowNameStillAvailable() && randGen.nextBoolean()) {
+        name = programState.getAvailableShadowName();
+        programState.addVariable(name, proxy, false, true);
+      } else {
+        name = programState.getAvailableNoShadowName();
+        programState.addVariable(name, proxy, true, false);
+      }
+
+      // Ensure that variables are seen as being written in the current scope
       if (hasInitializer) {
         programState.setEntryHasBeenWritten(programState.getScopeEntryByName(name));
       }
       varDeclInfos.add(new VariableDeclInfo(name, info, initializer));
     }
-    return new VariablesDeclaration(baseType, varDeclInfos);
+    return new VariablesDeclaration(proxy.getRealType(), varDeclInfos);
   }
 
   //Arithmetic Base generation
   protected Expr generateBaseConstantExpr(BasicType type) {
+    // Sets the correct flags in the program state for further recursive call (ie: no lvalue +
+    // constant)
     programState.setLvalue(false, null);
     programState.setConstant(true);
+
+    // Randomly generate a constructor such as ivec4(3) or ivec4(1,2,3,4) by combining the base
+    // Constant type for the underlying Basic type
     if (type.isVector()) {
+      int numberOfValues = randGen.nextBoolean() ? type.getNumElements() : 1;
       List<Expr> args = new ArrayList<>();
-      for (int i = 0; i < type.getNumElements(); i++) {
+      for (int i = 0; i < numberOfValues; i++) {
+        //Recursive call with the basic type
         args.add(generateBaseConstantExpr(type.getElementType()));
       }
       return new TypeConstructorExpr(type.getText(), args);
+
+      //Generates a uint between 0u and 32u if we are on a shift operation else generate on full
+      // range (uint are represented by longs in java)
     } else if (type.equals(BasicType.UINT)) {
-      //Generates the value between 0 and 32 if we are on a shift operation
       if (programState.isShiftOperation()) {
         return new UIntConstantExpr(randGen.nextInt(32) + "u");
       } else {
         return new UIntConstantExpr(randGen.nextLong(FuzzerConstants.MAX_UINT_VALUE) + "u");
       }
+
+      //Generates a random boolean value
     } else if (type.equals(BasicType.BOOL)) {
       return new BoolConstantExpr(randGen.nextBoolean());
     } else {
+
+      //Generates a int between 0 and 32 if we are on a shift operation else generate on full range
       assert type.equals(BasicType.INT);
       if (programState.isShiftOperation()) {
         return new IntConstantExpr(String.valueOf(randGen.nextInt(32)));
@@ -159,23 +209,43 @@ public abstract class ShaderGenerator {
     }
   }
 
+
   protected Expr generateBaseUnaryExpr(BasicType type) {
+    // Generate the inner expression first
     Expr nextExpr = generateBaseExpr(type);
-    final UnOp unOp = randomTypeGenerator.getRandomBaseIntUnaryOp(programState.isLValue());
-    if (unOp.isSideEffecting()) {
-      programState.setEntryHasBeenWritten(programState.getCurrentLValueVariable());
-    }
-    programState.setLvalue(false, null);
-    programState.setConstant(false);
+
+    // Early exit for boolean values (only not is a valid unary operation)
     if (type.equals(BasicType.BOOL)) {
       return new UnaryExpr(new ParenExpr(nextExpr), UnOp.LNOT);
     }
+
+    // Generate an appropriate unary operation (taking into account if the inner expression is a
+    // lvalue
+    final UnOp unOp = randomTypeGenerator.getRandomBaseIntUnaryOp(programState.isLValue());
+
+    // Updates the variable state for further actions if the value has been written (++)
+    if (unOp.isSideEffecting()) {
+      programState.setEntryHasBeenWritten(programState.getCurrentLValueVariable());
+    }
+
+    // Updates the program state flags (no, lvalue, no constant)
+    programState.setLvalue(false, null);
+    programState.setConstant(false);
+
     return new UnaryExpr(nextExpr, unOp);
   }
 
   protected Expr generateBaseBinaryExpr(BasicType returnType) {
+    // Use the return type to determine suitable types for the left operand on vector types
+    // (either vector or element from vector type) or not boolean-type for boolean return type
     BasicType leftType = randomTypeGenerator.getAvailableTypeFromReturnType(returnType);
     Expr leftExpr = generateBaseExpr(leftType);
+
+    //Find a suitable operation according to return type and left-type
+    // return: boolean, left: boolean => boolean operation
+    // return: boolean, left: int, uint, ... => comparison operation
+    // return: vector, left: element type => arithmetic operation without lvalue
+    // return: vector, int, uint, left: same type => arithmetic operation with possible lvalue
     BinOp op;
     if (returnType.equals(BasicType.BOOL) && leftType.equals(BasicType.BOOL)) {
       op = randomTypeGenerator.getRandomBaseBoolBinaryOp();
@@ -186,17 +256,26 @@ public abstract class ShaderGenerator {
     } else {
       op = randomTypeGenerator.getRandomBaseIntBinaryOp(programState.isLValue());
     }
+
+    // Updates the variable state in the program state if it has been written
     if (op.isSideEffecting()) {
       programState.setEntryHasBeenWritten(programState.getCurrentLValueVariable());
     }
+    // Sets flags fpr shift operations to limit the range of constant generations in the right
+    // operand
     programState.setShiftOperation(
         op == BinOp.SHL || op == BinOp.SHR || op == BinOp.SHL_ASSIGN || op == BinOp.SHR_ASSIGN);
     BasicType rightType = randomTypeGenerator.getAvailableTypeFromOp(leftType, op, returnType);
     Expr rightExpr = generateBaseExpr(rightType);
+
+    // Sets the flags after full binary expression generation
     programState.setLvalue(false, null);
     programState.setShiftOperation(false);
     boolean wasConstant = programState.isConstant();
     programState.setConstant(false);
+
+    // Enforces meaningful priority rules on operand by adding extra parentheses where needed
+    // For boolean test if left and / or right operands need parenthesis (type change)
     if (returnType.equals(BasicType.BOOL)) {
       List<BinOp> lessPriorityOp = Arrays.asList(BinOp.EQ, BinOp.NE, BinOp.BOR, BinOp.BXOR,
           BinOp.BAND);
@@ -205,9 +284,12 @@ public abstract class ShaderGenerator {
       return new BinaryExpr(leftNeedParent ? new ParenExpr(leftExpr) : leftExpr,
           rightNeedParent ? new ParenExpr(rightExpr) : rightExpr, op);
     }
+    // Side effecting operations always need parentheses to be used in outer expressions
+    //TODO verify if the wasConstant is necessary there
     if (op.isSideEffecting() || wasConstant) {
       return new ParenExpr(new BinaryExpr(leftExpr, rightExpr, op));
     }
+    // Verify type changes in shift operations (the full right operand is then put into parentheses)
     if (op == BinOp.SHL || op == BinOp.SHR || op == BinOp.SHL_ASSIGN || op == BinOp.SHR_ASSIGN
         && leftType != rightType) {
       return new ParenExpr(new BinaryExpr(leftExpr, new ParenExpr(rightExpr), op));
@@ -223,16 +305,16 @@ public abstract class ShaderGenerator {
     assert !availableEntries.isEmpty();
     FuzzerScopeEntry var = availableEntries.get(randGen.nextInt(availableEntries.size()));
     boolean lvalue = true;
-    if (programState.hasEntryBeenRead(var)) {
+    if (programState.hasEntryBeenRead(var) || var.isReadOnly()) {
       lvalue = false;
     } else {
       programState.setEntryHasBeenRead(var);
-    }
-    if (var.getBaseType().isVector()) {
-      if (type.getNumElements() > var.getBaseType().getNumElements()) {
-        lvalue = false;
-      } else {
-        lvalue = randGen.nextBoolean();
+      if (var.getBaseType().isVector()) {
+        if (type.getNumElements() > var.getBaseType().getNumElements()) {
+          lvalue = false;
+        } else {
+          lvalue = randGen.nextBoolean();
+        }
       }
     }
 
@@ -295,7 +377,7 @@ public abstract class ShaderGenerator {
     List<FuzzerScopeEntry> scopeEntries = programState.getWriteAvailableEntries();
     FuzzerScopeEntry var = scopeEntries.get(randGen.nextInt(scopeEntries.size()));
     BinOp op;
-    if (var.getBaseType().getElementType().equals(BasicType.BOOL)) {
+    if (var.getBaseType().getElementType().equals(BasicType.BOOL) || var.isWriteOnly()) {
       op = BinOp.ASSIGN;
     } else {
       op = randomTypeGenerator.getRandomBaseIntAssignOp();

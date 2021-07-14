@@ -27,11 +27,15 @@ public interface IRandomType {
 
   BasicType getRandomBaseType(boolean restrictToInteger);
 
+  UnifiedTypeInterface getBufferElementType(boolean noReadOnly);
+
   BinOp getRandomComparisonOp();
 
   Type getRandomIntType();
 
-  UnifiedTypeInterface getRandomNewType(boolean restrictToInteger);
+  UnifiedTypeInterface getRandomArrayOrBaseType(boolean restrictToInteger);
+
+  UnifiedTypeInterface getRandomQualifiedProxyType();
 
   BasicType getRandomTargetType(BasicType baseType);
 }

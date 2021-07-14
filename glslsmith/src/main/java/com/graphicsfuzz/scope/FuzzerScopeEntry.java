@@ -6,12 +6,10 @@ import com.graphicsfuzz.common.ast.type.Type;
 public class FuzzerScopeEntry implements UnifiedTypeInterface {
   private final String name;
   private final UnifiedTypeInterface type;
-  private final boolean canBeHidden;
 
-  public FuzzerScopeEntry(String name, UnifiedTypeInterface type, boolean canBeHidden) {
+  public FuzzerScopeEntry(String name, UnifiedTypeInterface type) {
     this.name = name;
     this.type = type;
-    this.canBeHidden = canBeHidden;
   }
 
   @Override
@@ -23,9 +21,6 @@ public class FuzzerScopeEntry implements UnifiedTypeInterface {
     return name;
   }
 
-  public boolean canBeHidden() {
-    return canBeHidden;
-  }
 
   @Override
   public Type getRealType() {
@@ -59,6 +54,41 @@ public class FuzzerScopeEntry implements UnifiedTypeInterface {
 
   public boolean isArray() {
     return type.isArray();
+  }
+
+  @Override
+  public boolean isReadOnly() {
+    return type.isReadOnly();
+  }
+
+  @Override
+  public boolean isCoherent() {
+    return type.isCoherent();
+  }
+
+  @Override
+  public boolean isWriteOnly() {
+    return type.isWriteOnly();
+  }
+
+  @Override
+  public boolean isConstOnly() {
+    return type.isConstOnly();
+  }
+
+  @Override
+  public void setReadOnly(boolean readOnly) {
+    type.setReadOnly(readOnly);
+  }
+
+  @Override
+  public void setWriteOnly(boolean writeOnly) {
+    type.setWriteOnly(writeOnly);
+  }
+
+  @Override
+  public void setCoherent(boolean coherent) {
+    type.setCoherent(coherent);
   }
 
   public int getSize() {

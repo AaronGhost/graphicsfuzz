@@ -6,12 +6,16 @@ import com.graphicsfuzz.common.ast.expr.IntConstantExpr;
 import com.graphicsfuzz.common.ast.expr.UnOp;
 import com.graphicsfuzz.common.ast.type.ArrayType;
 import com.graphicsfuzz.common.ast.type.BasicType;
+import com.graphicsfuzz.common.ast.type.QualifiedType;
 import com.graphicsfuzz.common.ast.type.Type;
+import com.graphicsfuzz.common.ast.type.TypeQualifier;
 import com.graphicsfuzz.common.util.IRandom;
 import com.graphicsfuzz.config.ConfigInterface;
 import com.graphicsfuzz.scope.UnifiedTypeInterface;
 import com.graphicsfuzz.scope.UnifiedTypeProxy;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 public class RandomTypeGenerator implements IRandomType {
@@ -27,7 +31,7 @@ public class RandomTypeGenerator implements IRandomType {
   //TODO might need to change the type generation to use former declared constants...
   // or use an overloaded function with given size
   @Override
-  public UnifiedTypeInterface getRandomNewType(boolean restrictToInteger) {
+  public UnifiedTypeInterface getRandomArrayOrBaseType(boolean restrictToInteger) {
     BasicType basicType = this.getRandomBaseType(restrictToInteger);
     if (randGen.nextBoolean()) {
       int arrayLength = randGen.nextPositiveInt(configuration.getMaxArrayLength());
@@ -39,6 +43,18 @@ public class RandomTypeGenerator implements IRandomType {
       return new UnifiedTypeProxy(new ArrayType(basicType, arrayInfo));
     } else {
       return new UnifiedTypeProxy(basicType);
+    }
+  }
+
+  @Override
+  public UnifiedTypeInterface getRandomQualifiedProxyType() {
+    UnifiedTypeInterface typeInterface = getRandomArrayOrBaseType(false);
+    if (randGen.nextBoolean()) {
+      return new UnifiedTypeProxy(new QualifiedType(typeInterface.getRealType(),
+          Collections.singletonList(TypeQualifier.CONST)));
+    } else {
+      return new UnifiedTypeProxy(new QualifiedType(typeInterface.getRealType(),
+          new ArrayList<>()));
     }
   }
 
@@ -266,6 +282,26 @@ public class RandomTypeGenerator implements IRandomType {
       default:
         return BinOp.BXOR;
     }
+  }
+
+  @Override
+  public UnifiedTypeInterface getBufferElementType(boolean noReadOnly) {
+    List<TypeQualifier> qualifierList = new ArrayList<>();
+    // Randomly coherent
+    if (randGen.nextBoolean()) {
+      qualifierList.add(TypeQualifier.COHERENT);
+    }
+    // Can be readonly and  randomly readonly
+    boolean readonlyElement = !noReadOnly && randGen.nextBoolean();
+    if (readonlyElement) {
+      qualifierList.add(TypeQualifier.READONLY);
+    }
+    // is not readonly and randomly writeonly
+    if (!readonlyElement && randGen.nextBoolean()) {
+      qualifierList.add(TypeQualifier.WRITEONLY);
+    }
+    return new UnifiedTypeProxy(new QualifiedType(getRandomArrayOrBaseType(true).getRealType(),
+        qualifierList));
   }
 
   @Override

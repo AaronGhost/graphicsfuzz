@@ -25,19 +25,6 @@ public class WrapperBuilder extends StandardVisitor implements PostProcessorInte
     super.visitChildFromParent(child, parent);
   }
 
-  /*
-  @Override
-  public void visitArrayIndexExpr(ArrayIndexExpr arrayIndexExpr) {
-    if (arrayIndexExpr.getIndex() instanceof FunctionCallExpr) {
-      FunctionCallExpr indexExpr = (FunctionCallExpr) arrayIndexExpr.getIndex();
-      if (indexExpr.getCallee().equals("abs")) {
-        arrayIndexExpr.setIndex(indexExpr.getArg(0));
-      }
-    }
-    super.visitArrayIndexExpr(arrayIndexExpr);
-  }
-   */
-
   //TODO handle constant cases for left and right operands where the wrappers are not necessary
   @Override
   public void visitBinaryExpr(BinaryExpr binaryExpr) {
@@ -101,18 +88,20 @@ public class WrapperBuilder extends StandardVisitor implements PostProcessorInte
     //Change all necessary binary operators
     visitTranslationUnit(tu);
     //Add the necessary wrapper declaration in order
-    //Generate safe math wrappers prototypes
-    for (ImmutableTriple<Wrapper.Operation, BasicType, BasicType> wrapperFunction :
-        programState.getWrappers()) {
-      tu.addDeclarationBefore(Wrapper.generateDeclaration(wrapperFunction.left,
-          wrapperFunction.middle, wrapperFunction.right), tu.getMainFunction());
-    }
     //Generate safe math wrappers functions
     for (ImmutableTriple<Wrapper.Operation, BasicType, BasicType> wrapperFunction :
         programState.getWrappers()) {
       tu.addDeclarationBefore(wrapperFunction.left.generator.apply(wrapperFunction.middle,
           wrapperFunction.right), tu.getMainFunction());
     }
+
+    //Generate safe math wrappers prototypes
+    for (ImmutableTriple<Wrapper.Operation, BasicType, BasicType> wrapperFunction :
+        programState.getWrappers()) {
+      tu.addDeclaration(Wrapper.generateDeclaration(wrapperFunction.left,
+          wrapperFunction.middle, wrapperFunction.right));
+    }
+
     state.programInitialization(tu, state.getShaderKind());
     return state;
   }

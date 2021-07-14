@@ -38,9 +38,10 @@ public class ComputeShaderGenerator extends ShaderGenerator {
     super.generateShader();
     generateInputBuffers();
     generateOutputBuffers();
-    //TODO generate random uniforms and consts
+    //TODO add random uniform
+    List<Declaration> globalDecls = generateGlobalDecls();
     List<Stmt> statements = generateShaderMain();
-    generateShaderSkeleton(statements);
+    generateShaderSkeleton(globalDecls, statements);
   }
 
   public void generateInputBuffers() {
@@ -58,7 +59,7 @@ public class ComputeShaderGenerator extends ShaderGenerator {
     }
   }
 
-  private void internalGenerateBuffer(boolean inOut) {
+  private void internalGenerateBuffer(boolean isInBuffer) {
     int newMembers = randGen.nextPositiveInt(configuration.getMaxBufferElements());
 
     //Buffer internal values holders
@@ -66,9 +67,23 @@ public class ComputeShaderGenerator extends ShaderGenerator {
     List<Type> memberTypes = new ArrayList<>();
     List<String> memberNames = new ArrayList<>();
 
+    // Buffers that are bound can be coherent, readonly or writeonly (reandonly / writeonly is
+    // permitted but not useful at current step)
+    // For convenience we choose to have no readonly output buffers
+    // TODO support everything for readonly + writeonly buffers
+    // TODO support interface level memory qualifiers when the support will be added to the AST
+    // Randomly pick if the full buffer is coherent
+    // For now the following code is useless
+    /*
+    boolean coherentBuffer = randGen.nextBoolean();
+    boolean readonlyBuffer = isInBuffer && randGen.nextBoolean();
+    boolean writeonlyBuffer = !readonlyBuffer && randGen.nextBoolean();
+     */
+
     //Randomly populate internal values
     for (int memberIndex = 0; memberIndex < newMembers; memberIndex++) {
-      UnifiedTypeInterface proxy = randomTypeGenerator.getRandomNewType(true);
+      // Elements can be declared as coherent, readonly or/ and writeonly
+      UnifiedTypeInterface proxy = randomTypeGenerator.getBufferElementType(!isInBuffer);
       memberTypes.add(proxy.getRealType());
       String name = programState.getNextUniformBufferName();
       memberNames.add(name);
@@ -86,19 +101,29 @@ public class ComputeShaderGenerator extends ShaderGenerator {
 
     //Create the correct buffer object
     Buffer inputBuffer = new Buffer("buffer_" + programState.getBindingOffset(),
+        //Std430 ensures that all buffers are always stored the same way in the interface blocks
         new LayoutQualifierSequence(new Std430LayoutQualifier(),
             new BindingLayoutQualifier(programState.getBindingOffset())),
         values, TypeQualifier.BUFFER, memberNames, memberTypes, "",
-        inOut, programState.getBindingOffset());
+        isInBuffer, programState.getBindingOffset());
     programState.addBuffer(inputBuffer);
   }
 
+  protected List<Declaration> generateGlobalDecls() {
+    List<Declaration> globalDecls = new ArrayList<>();
+    for (int i = 0; i  < randGen.nextPositiveInt(configuration.getMaxGlobalDecls()); i++) {
+      globalDecls.add(generateRandomTypedVarDecls(
+          randGen.nextPositiveInt(configuration.getMaxVardeclElements()),
+          true));
+    }
+    return globalDecls;
+  }
 
   protected List<Stmt> generateShaderMain() {
     return generateScope();
   }
 
-  protected void generateShaderSkeleton(List<Stmt> mainStatements) {
+  protected void generateShaderSkeleton(List<Declaration> globalDecls, List<Stmt> mainStatements) {
     //Generate the mandatory local_size parameters for the defaultLayoutInput
     List<LayoutQualifier> localSizes = Arrays.asList(
         new LocalSizeLayoutQualifier("x",
@@ -116,6 +141,9 @@ public class ComputeShaderGenerator extends ShaderGenerator {
     for (Buffer bufferSymbol : programState.getBuffers()) {
       declList.add(generateInterfaceBlockFromBuffer(bufferSymbol));
     }
+
+    // Add global statements
+    declList.addAll(globalDecls);
 
     //Generate an empty main function
     FunctionDefinition mainFunction = new FunctionDefinition(new FunctionPrototype("main",

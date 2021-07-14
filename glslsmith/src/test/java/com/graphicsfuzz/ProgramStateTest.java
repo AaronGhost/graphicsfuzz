@@ -13,6 +13,7 @@ import org.junit.Test;
 
 public class ProgramStateTest {
 
+  //TODO write tests for readonly writeonly const variables
   ProgramState programState;
   FuzzerScopeEntry var0;
   FuzzerScopeEntry var1;
@@ -101,4 +102,5 @@ public class ProgramStateTest {
     Assert.assertEquals(entries.stream().map(FuzzerScopeEntry::getName)
         .sorted().collect(Collectors.toList()), names);
   }
+
 }

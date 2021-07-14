@@ -19,5 +19,18 @@ public interface UnifiedTypeInterface {
 
   boolean isArray();
 
+  boolean isReadOnly();
+
+  boolean isConstOnly();
+
+  boolean isCoherent();
+
+  boolean isWriteOnly();
+
+  void setReadOnly(boolean readOnly);
+
+  void setWriteOnly(boolean writeOnly);
+
+  void setCoherent(boolean coherent);
 
 }
