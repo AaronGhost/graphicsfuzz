@@ -111,6 +111,9 @@ public class ComputeShaderGenerator extends ShaderGenerator {
 
   protected List<Declaration> generateGlobalDecls() {
     List<Declaration> globalDecls = new ArrayList<>();
+    if (configuration.getMaxGlobalDecls() == 0) {
+      return globalDecls;
+    }
     for (int i = 0; i  < randGen.nextPositiveInt(configuration.getMaxGlobalDecls()); i++) {
       globalDecls.add(generateRandomTypedVarDecls(
           randGen.nextPositiveInt(configuration.getMaxVardeclElements()),

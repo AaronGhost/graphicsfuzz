@@ -20,7 +20,7 @@ public class PostProcessingHandler {
 
   private static final List<PostProcessorInterface> postProcessors = Arrays.asList(
       new ArrayIndexBuilder(false),
-      new WrapperBuilder(),
+      new ArithmeticWrapperBuilder(),
       new LoopLimiter(true, 100)
   );
 

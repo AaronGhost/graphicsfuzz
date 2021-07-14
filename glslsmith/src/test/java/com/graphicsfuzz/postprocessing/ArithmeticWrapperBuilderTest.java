@@ -6,7 +6,7 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class WrapperBuilderTest extends CommonPostProcessingTest {
+public class ArithmeticWrapperBuilderTest extends CommonPostProcessingTest {
 
   String singleLineProgramText = "#version 320 es\n"
       + "void main()\n"
@@ -27,12 +27,12 @@ public class WrapperBuilderTest extends CommonPostProcessingTest {
 
   @Override
   protected List<PostProcessorInterface> createInstance() {
-    return Collections.singletonList(new WrapperBuilder());
+    return Collections.singletonList(new ArithmeticWrapperBuilder());
   }
 
   @Test
   public void testProcessWithSingleLineShader() {
-    ProgramState returnState = new WrapperBuilder()
+    ProgramState returnState = new ArithmeticWrapperBuilder()
         .process(generateProgramStateForCode(singleLineProgramText));
     Assert.assertEquals(returnState.getShaderCode(), wrapperLineProgramText);
   }

@@ -26,6 +26,11 @@ public class ArrayIndexBuilderTest extends CommonPostProcessingTest {
       + "}\n";
 
   String absLineText = "#version 320 es\n"
+      + "int SAFE_ABS(int p0);\n"
+      + "int SAFE_ABS(int A)\n"
+      + "{\n"
+      + " return A == -2147483648 ? 2147483647 : abs(A);\n"
+      + "}\n"
       + "void main()\n"
       + "{\n"
       + " ivec3 var_0[2] = ivec3[2](3, 4);\n"

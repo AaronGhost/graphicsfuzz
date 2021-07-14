@@ -1,7 +1,6 @@
 package com.graphicsfuzz.postprocessing;
 
 import com.graphicsfuzz.ProgramState;
-import com.graphicsfuzz.common.ast.TranslationUnit;
 import com.graphicsfuzz.common.ast.expr.ArrayIndexExpr;
 import com.graphicsfuzz.common.ast.expr.BinOp;
 import com.graphicsfuzz.common.ast.expr.BinaryExpr;
@@ -10,12 +9,10 @@ import com.graphicsfuzz.common.ast.expr.FunctionCallExpr;
 import com.graphicsfuzz.common.ast.expr.IntConstantExpr;
 import com.graphicsfuzz.common.ast.expr.MemberLookupExpr;
 import com.graphicsfuzz.common.ast.type.BasicType;
-import com.graphicsfuzz.common.ast.visitors.StandardVisitor;
 
-public class ArrayIndexBuilder  extends StandardVisitor implements PostProcessorInterface {
+public class ArrayIndexBuilder extends BaseWrapperBuilder {
 
   private final boolean useClamp;
-  private ProgramState programState;
 
   public ArrayIndexBuilder(boolean useClamp) {
     this.useClamp = useClamp;
@@ -35,14 +32,5 @@ public class ArrayIndexBuilder  extends StandardVisitor implements PostProcessor
           new MemberLookupExpr(arrayExpr, "length()"), BinOp.MOD));
     }
     super.visitArrayIndexExpr(arrayIndexExpr);
-  }
-
-  @Override
-  public ProgramState process(ProgramState state) {
-    programState = state;
-    TranslationUnit tu = programState.getTranslationUnit();
-    visitTranslationUnit(tu);
-    programState.programInitialization(tu, programState.getShaderKind());
-    return programState;
   }
 }

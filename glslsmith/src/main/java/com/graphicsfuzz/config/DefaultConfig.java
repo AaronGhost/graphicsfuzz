@@ -76,7 +76,7 @@ public class DefaultConfig implements ConfigInterface {
 
   @Override
   public int getMaxGlobalDecls() {
-    return 5;
+    return 0;
   }
 
   @Override

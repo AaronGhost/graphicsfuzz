@@ -8,14 +8,11 @@ import com.graphicsfuzz.common.ast.expr.BinaryExpr;
 import com.graphicsfuzz.common.ast.expr.FunctionCallExpr;
 import com.graphicsfuzz.common.ast.type.BasicType;
 import com.graphicsfuzz.common.ast.type.Type;
-import com.graphicsfuzz.common.ast.visitors.StandardVisitor;
 import com.graphicsfuzz.common.typing.Typer;
 import java.util.HashMap;
 import java.util.Map;
-import org.apache.commons.lang3.tuple.ImmutableTriple;
 
-public class WrapperBuilder extends StandardVisitor implements PostProcessorInterface {
-  protected ProgramState programState;
+public class ArithmeticWrapperBuilder extends BaseWrapperBuilder {
   protected Typer typer;
   protected Map<IAstNode, IAstNode> parentMap = new HashMap<>();
 
@@ -82,27 +79,7 @@ public class WrapperBuilder extends StandardVisitor implements PostProcessorInte
   @Override
   public ProgramState process(ProgramState state) {
     TranslationUnit tu = state.getTranslationUnit();
-    programState = state;
-    //Type the expressions
     typer = new Typer(tu);
-    //Change all necessary binary operators
-    visitTranslationUnit(tu);
-    //Add the necessary wrapper declaration in order
-    //Generate safe math wrappers functions
-    for (ImmutableTriple<Wrapper.Operation, BasicType, BasicType> wrapperFunction :
-        programState.getWrappers()) {
-      tu.addDeclarationBefore(wrapperFunction.left.generator.apply(wrapperFunction.middle,
-          wrapperFunction.right), tu.getMainFunction());
-    }
-
-    //Generate safe math wrappers prototypes
-    for (ImmutableTriple<Wrapper.Operation, BasicType, BasicType> wrapperFunction :
-        programState.getWrappers()) {
-      tu.addDeclaration(Wrapper.generateDeclaration(wrapperFunction.left,
-          wrapperFunction.middle, wrapperFunction.right));
-    }
-
-    state.programInitialization(tu, state.getShaderKind());
-    return state;
+    return super.process(state);
   }
 }
