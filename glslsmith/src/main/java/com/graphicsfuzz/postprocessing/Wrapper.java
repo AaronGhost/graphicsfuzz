@@ -55,7 +55,8 @@ public abstract class Wrapper {
     }
   }
 
-  public static FunctionPrototype generateDeclaration(Operation op, BasicType typeA, BasicType typeB) {
+  public static FunctionPrototype generateDeclaration(Operation op, BasicType typeA,
+                                                      BasicType typeB) {
     Type parArgA = typeA;
     if (op.inoutA) {
       parArgA = new QualifiedType(typeA, Collections.singletonList(TypeQualifier.INOUT_PARAM));
