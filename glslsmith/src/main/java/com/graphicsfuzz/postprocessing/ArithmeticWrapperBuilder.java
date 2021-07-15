@@ -8,12 +8,10 @@ import com.graphicsfuzz.common.ast.expr.BinaryExpr;
 import com.graphicsfuzz.common.ast.expr.FunctionCallExpr;
 import com.graphicsfuzz.common.ast.type.BasicType;
 import com.graphicsfuzz.common.ast.type.Type;
-import com.graphicsfuzz.common.typing.Typer;
 import java.util.HashMap;
 import java.util.Map;
 
 public class ArithmeticWrapperBuilder extends BaseWrapperBuilder {
-  protected Typer typer;
   protected Map<IAstNode, IAstNode> parentMap = new HashMap<>();
 
   @Override
@@ -76,10 +74,4 @@ public class ArithmeticWrapperBuilder extends BaseWrapperBuilder {
     super.visitBinaryExpr(binaryExpr);
   }
 
-  @Override
-  public ProgramState process(ProgramState state) {
-    TranslationUnit tu = state.getTranslationUnit();
-    typer = new Typer(tu);
-    return super.process(state);
-  }
 }

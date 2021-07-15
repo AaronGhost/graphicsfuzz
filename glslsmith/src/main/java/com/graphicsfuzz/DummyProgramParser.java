@@ -17,7 +17,7 @@ public class DummyProgramParser {
         + "void main()\n"
         + "{\n"
         + "ivec4 var_0[2] = ivec4[2](ivec4(1,23,12,13),ivec4(2));\n"
-        + "ivec2 var_1 = var_0[0].xy;\n"
+        + "ivec2 var_1 = var_0[ 5 % var_0.length()];\n"
         + "}";
     TranslationUnit unit = ParseHelper.parse(programText);
     System.out.println(unit);

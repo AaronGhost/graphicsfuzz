@@ -19,8 +19,8 @@ import net.sourceforge.argparse4j.inf.Namespace;
 public class PostProcessingHandler {
 
   private static final List<PostProcessorInterface> postProcessors = Arrays.asList(
-      new ArrayIndexBuilder(false),
       new ArithmeticWrapperBuilder(),
+      new ArrayIndexBuilder(false),
       new LoopLimiter(true, 100)
   );
 

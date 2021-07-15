@@ -406,6 +406,7 @@ public abstract class ShaderGenerator {
       Expr indexExpr = generateBaseExpr(BasicType.INT);
       programState.setLvalue(previousLvalue, previousVar);
       //TODO handle that step in post processing
+      /*
       if (!configuration.allowArrayAbsAccess() || randGen.nextBoolean()) {
         indexExpr = new FunctionCallExpr("clamp",
             indexExpr, new IntConstantExpr("0"),
@@ -414,6 +415,7 @@ public abstract class ShaderGenerator {
         indexExpr = new FunctionCallExpr("abs", new BinaryExpr(new ParenExpr(indexExpr),
             new IntConstantExpr(String.valueOf(var.getCurrentTypeSize())), BinOp.MOD));
       }
+       */
       childExpr = new ArrayIndexExpr(new VariableIdentifierExpr(var.getName()),
           indexExpr);
     }
