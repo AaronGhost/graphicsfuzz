@@ -181,4 +181,27 @@ public class UnifiedTypeProxy extends Type implements UnifiedTypeInterface {
   public void setCoherent(boolean coherent) {
     this.isCoherent = coherent;
   }
+
+  @Override
+  public String toString() {
+    return "proxy_" + realType.toString();
+  }
+
+  @Override
+  public int hashCode() {
+    return realType.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj instanceof Type) {
+      if (obj instanceof UnifiedTypeProxy) {
+        return ((UnifiedTypeProxy) obj).realType.equals(this.realType);
+      }
+      if (obj instanceof BasicType || obj instanceof ArrayType || obj instanceof QualifiedType) {
+        return (obj).equals(this.realType);
+      }
+    }
+    return false;
+  }
 }

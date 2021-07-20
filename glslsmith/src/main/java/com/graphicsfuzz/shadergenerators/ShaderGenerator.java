@@ -15,6 +15,7 @@ import com.graphicsfuzz.common.ast.expr.BinOp;
 import com.graphicsfuzz.common.ast.expr.BinaryExpr;
 import com.graphicsfuzz.common.ast.expr.BoolConstantExpr;
 import com.graphicsfuzz.common.ast.expr.Expr;
+import com.graphicsfuzz.common.ast.expr.FunctionCallExpr;
 import com.graphicsfuzz.common.ast.expr.IntConstantExpr;
 import com.graphicsfuzz.common.ast.expr.MemberLookupExpr;
 import com.graphicsfuzz.common.ast.expr.ParenExpr;
@@ -44,6 +45,7 @@ import com.graphicsfuzz.random.IRandomType;
 import com.graphicsfuzz.random.RandomTypeGenerator;
 import com.graphicsfuzz.scope.FuzzerScopeEntry;
 import com.graphicsfuzz.scope.UnifiedTypeInterface;
+import com.graphicsfuzz.scope.UnifiedTypeProxy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -56,6 +58,7 @@ public abstract class ShaderGenerator {
   protected ProgramState programState;
   protected IRandomType randomTypeGenerator;
   protected ConfigInterface configuration;
+  protected FunctionRegistry registry;
 
   public void generateShader() {
     resetProgramState();
@@ -70,6 +73,7 @@ public abstract class ShaderGenerator {
     this.randGen = randomGenerator;
     this.randomTypeGenerator = randomTypeGenerator;
     this.configuration = configuration;
+    this.registry = new FunctionRegistry(randGen);
   }
 
   public void resetProgramState() {
@@ -175,6 +179,7 @@ public abstract class ShaderGenerator {
 
     // Randomly generate a constructor such as ivec4(3) or ivec4(1,2,3,4) by combining the base
     // Constant type for the underlying Basic type
+    // TODO use a generateVectorInstruction...
     if (type.isVector()) {
       int numberOfValues = randGen.nextBoolean() ? type.getNumElements() : 1;
       List<Expr> args = new ArrayList<>();
@@ -332,7 +337,7 @@ public abstract class ShaderGenerator {
   }
 
   protected Expr generateBaseNonTerminalExpr(BasicType type) {
-    switch (randGen.nextInt(5)) {
+    switch (randGen.nextInt(6)) {
       case 0:
         return generateBaseBinaryExpr(type);
       case 1:
@@ -341,9 +346,22 @@ public abstract class ShaderGenerator {
         return generateTernaryExpr(type);
       case 3:
         return generateBaseUnaryExpr(type);
+      case 4:
+        return generateFunCallExpr(type);
       default:
         return new ParenExpr(generateBaseUnaryExpr(type));
     }
+  }
+
+  protected Expr generateFunCallExpr(BasicType type) {
+    FunctionStruct funCallStruct = registry.getRandomFunctionStruct(new UnifiedTypeProxy(type));
+    List<Expr> parameters = new ArrayList<>();
+    for (UnifiedTypeProxy parameterType : funCallStruct.parameterTypes) {
+      parameters.add(generateBaseExpr(parameterType.getBaseType()));
+    }
+    programState.setLvalue(false, null);
+    programState.setConstant(false);
+    return new FunctionCallExpr(funCallStruct.name, parameters);
   }
 
   protected Expr generateTernaryExpr(BasicType type) {
