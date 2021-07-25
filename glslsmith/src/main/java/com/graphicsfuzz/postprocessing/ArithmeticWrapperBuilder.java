@@ -1,5 +1,6 @@
 package com.graphicsfuzz.postprocessing;
 
+import com.graphicsfuzz.Operation;
 import com.graphicsfuzz.common.ast.IAstNode;
 import com.graphicsfuzz.common.ast.expr.BinOp;
 import com.graphicsfuzz.common.ast.expr.BinaryExpr;
@@ -28,42 +29,42 @@ public class ArithmeticWrapperBuilder extends BaseWrapperBuilder {
       BasicType leftType = (BasicType) lhsType;
       BasicType rightType = (BasicType) rhsType;
       if (op == BinOp.DIV) {
-        programState.registerWrapper(Wrapper.Operation.SAFE_DIV, leftType,
+        programState.registerWrapper(Operation.SAFE_DIV, leftType,
             rightType);
         parentMap.get(binaryExpr).replaceChild(binaryExpr, new FunctionCallExpr(
             "SAFE_DIV", binaryExpr.getLhs(), binaryExpr.getRhs()));
       } else if (op == BinOp.DIV_ASSIGN) {
-        programState.registerWrapper(Wrapper.Operation.SAFE_DIV_ASSIGN, leftType,
+        programState.registerWrapper(Operation.SAFE_DIV_ASSIGN, leftType,
             rightType);
         parentMap.get(binaryExpr).replaceChild(binaryExpr, new FunctionCallExpr(
             "SAFE_DIV_ASSIGN", binaryExpr.getLhs(), binaryExpr.getRhs()));
       } else if (op == BinOp.SHL) {
-        programState.registerWrapper(Wrapper.Operation.SAFE_LSHIFT, leftType,
+        programState.registerWrapper(Operation.SAFE_LSHIFT, leftType,
             rightType);
         parentMap.get(binaryExpr).replaceChild(binaryExpr, new FunctionCallExpr(
             "SAFE_LSHIFT", binaryExpr.getLhs(), binaryExpr.getRhs()));
       } else if (op == BinOp.SHL_ASSIGN) {
-        programState.registerWrapper(Wrapper.Operation.SAFE_LSHIFT_ASSIGN, leftType,
+        programState.registerWrapper(Operation.SAFE_LSHIFT_ASSIGN, leftType,
             rightType);
         parentMap.get(binaryExpr).replaceChild(binaryExpr, new FunctionCallExpr(
             "SAFE_LSHIFT_ASSIGN", binaryExpr.getLhs(), binaryExpr.getRhs()));
       } else if (op == BinOp.SHR) {
-        programState.registerWrapper(Wrapper.Operation.SAFE_RSHIFT, leftType,
+        programState.registerWrapper(Operation.SAFE_RSHIFT, leftType,
             rightType);
         parentMap.get(binaryExpr).replaceChild(binaryExpr, new FunctionCallExpr(
             "SAFE_RSHIFT", binaryExpr.getLhs(), binaryExpr.getRhs()));
       } else if (op == BinOp.SHR_ASSIGN) {
-        programState.registerWrapper(Wrapper.Operation.SAFE_RSHIFT_ASSIGN, leftType,
+        programState.registerWrapper(Operation.SAFE_RSHIFT_ASSIGN, leftType,
             rightType);
         parentMap.get(binaryExpr).replaceChild(binaryExpr, new FunctionCallExpr(
             "SAFE_RSHIFT_ASSIGN", binaryExpr.getLhs(), binaryExpr.getRhs()));
       } else if (op == BinOp.MOD) {
-        programState.registerWrapper(Wrapper.Operation.SAFE_MOD, leftType,
+        programState.registerWrapper(Operation.SAFE_MOD, leftType,
             rightType);
         parentMap.get(binaryExpr).replaceChild(binaryExpr, new FunctionCallExpr(
             "SAFE_MOD", binaryExpr.getLhs(), binaryExpr.getRhs()));
       } else if (op == BinOp.MOD_ASSIGN) {
-        programState.registerWrapper(Wrapper.Operation.SAFE_MOD_ASSIGN, leftType,
+        programState.registerWrapper(Operation.SAFE_MOD_ASSIGN, leftType,
             rightType);
         parentMap.get(binaryExpr).replaceChild(binaryExpr, new FunctionCallExpr(
             "SAFE_MOD_ASSIGN", binaryExpr.getLhs(), binaryExpr.getRhs()));

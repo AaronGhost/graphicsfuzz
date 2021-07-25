@@ -1,4 +1,4 @@
-package com.graphicsfuzz.shadergenerators;
+package com.graphicsfuzz.functions;
 
 import com.graphicsfuzz.scope.UnifiedTypeProxy;
 import java.util.ArrayList;

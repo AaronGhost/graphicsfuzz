@@ -41,6 +41,8 @@ import com.graphicsfuzz.common.ast.type.BasicType;
 import com.graphicsfuzz.common.util.IRandom;
 import com.graphicsfuzz.config.ConfigInterface;
 import com.graphicsfuzz.config.FuzzerConstants;
+import com.graphicsfuzz.functions.FunctionRegistry;
+import com.graphicsfuzz.functions.FunctionStruct;
 import com.graphicsfuzz.random.IRandomType;
 import com.graphicsfuzz.random.RandomTypeGenerator;
 import com.graphicsfuzz.scope.FuzzerScopeEntry;
@@ -51,7 +53,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-
 
 public abstract class ShaderGenerator {
   protected IRandom randGen;

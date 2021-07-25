@@ -1,10 +1,13 @@
-package com.graphicsfuzz.postprocessing;
+package com.graphicsfuzz;
 
-import com.graphicsfuzz.ProgramState;
 import com.graphicsfuzz.common.ast.TranslationUnit;
 import com.graphicsfuzz.common.util.ParseHelper;
 import com.graphicsfuzz.common.util.ShaderKind;
 import com.graphicsfuzz.config.DefaultConfig;
+import com.graphicsfuzz.postprocessing.ArithmeticWrapperBuilder;
+import com.graphicsfuzz.postprocessing.ArrayIndexBuilder;
+import com.graphicsfuzz.postprocessing.LoopLimiter;
+import com.graphicsfuzz.postprocessing.PostProcessorInterface;
 import com.graphicsfuzz.stateprinters.ShaderTrapStatePrinter;
 import com.graphicsfuzz.stateprinters.StatePrinter;
 import java.nio.file.Files;

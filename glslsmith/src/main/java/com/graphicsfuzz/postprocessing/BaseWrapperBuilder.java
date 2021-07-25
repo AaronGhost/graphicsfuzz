@@ -1,6 +1,8 @@
 package com.graphicsfuzz.postprocessing;
 
+import com.graphicsfuzz.Operation;
 import com.graphicsfuzz.ProgramState;
+import com.graphicsfuzz.Wrapper;
 import com.graphicsfuzz.common.ast.TranslationUnit;
 import com.graphicsfuzz.common.ast.decl.FunctionPrototype;
 import com.graphicsfuzz.common.ast.type.BasicType;
@@ -21,11 +23,11 @@ public abstract class BaseWrapperBuilder extends StandardVisitor implements Post
     programState = state;
     //Change all necessary binary operators
     visitTranslationUnit(tu);
-    List<ImmutableTriple<Wrapper.Operation, BasicType, BasicType>> necessaryWrappers =
+    List<ImmutableTriple<Operation, BasicType, BasicType>> necessaryWrappers =
         new ArrayList<>();
 
     // Checks the wrappers that are necessary to add (prevent from adding twice the same wrapper)
-    for (ImmutableTriple<Wrapper.Operation, BasicType, BasicType> wrapperFunction :
+    for (ImmutableTriple<Operation, BasicType, BasicType> wrapperFunction :
         programState.getWrappers()) {
       FunctionPrototype wrapperPrototype = Wrapper.generateDeclaration(wrapperFunction.left,
           wrapperFunction.middle, wrapperFunction.right);
@@ -40,14 +42,14 @@ public abstract class BaseWrapperBuilder extends StandardVisitor implements Post
     // the last one at the end
 
     //Add the necessary wrapper body in any order
-    for (ImmutableTriple<Wrapper.Operation, BasicType, BasicType> wrapperFunction :
+    for (ImmutableTriple<Operation, BasicType, BasicType> wrapperFunction :
         necessaryWrappers) {
       tu.addDeclaration(wrapperFunction.left.generator.apply(wrapperFunction.middle,
           wrapperFunction.right));
     }
 
     // Add the necessary wrappers prototypes in any order
-    for (ImmutableTriple<Wrapper.Operation, BasicType, BasicType> wrapperFunction :
+    for (ImmutableTriple<Operation, BasicType, BasicType> wrapperFunction :
         necessaryWrappers) {
       tu.addDeclaration(Wrapper.generateDeclaration(wrapperFunction.left,
             wrapperFunction.middle, wrapperFunction.right));

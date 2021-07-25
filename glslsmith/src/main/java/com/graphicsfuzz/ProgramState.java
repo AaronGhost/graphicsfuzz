@@ -5,7 +5,6 @@ import com.graphicsfuzz.common.ast.type.BasicType;
 import com.graphicsfuzz.common.tool.PrettyPrinterVisitor;
 import com.graphicsfuzz.common.util.ShaderKind;
 import com.graphicsfuzz.config.ConfigInterface;
-import com.graphicsfuzz.postprocessing.Wrapper;
 import com.graphicsfuzz.scope.FuzzerScope;
 import com.graphicsfuzz.scope.FuzzerScopeEntry;
 import com.graphicsfuzz.scope.UnifiedTypeInterface;
@@ -49,7 +48,7 @@ public class ProgramState {
   private List<FuzzerScopeEntry> seenWrittenEntries = new ArrayList<>();
 
   //Referencing the necessary safe wrappers for later generation
-  private final Set<ImmutableTriple<Wrapper.Operation, BasicType, BasicType>> necessaryWrappers =
+  private final Set<ImmutableTriple<Operation, BasicType, BasicType>> necessaryWrappers =
       new HashSet<>();
 
   //API populated uniforms and buffer
@@ -248,19 +247,19 @@ public class ProgramState {
   }
 
   //Wrappers management
-  public void registerWrapper(Wrapper.Operation op, BasicType typeA, BasicType typeB) {
+  public void registerWrapper(Operation op, BasicType typeA, BasicType typeB) {
     necessaryWrappers.add(new ImmutableTriple<>(op, typeA, typeB));
-    if (op == Wrapper.Operation.SAFE_MOD || op == Wrapper.Operation.SAFE_MOD_ASSIGN) {
+    if (op == Operation.SAFE_MOD || op == Operation.SAFE_MOD_ASSIGN) {
       if (typeA.getElementType() == BasicType.INT) {
-        registerWrapper(Wrapper.Operation.SAFE_ABS, typeA, null);
+        registerWrapper(Operation.SAFE_ABS, typeA, null);
       }
       if (typeB != null && typeB.getElementType() == BasicType.INT) {
-        registerWrapper(Wrapper.Operation.SAFE_ABS, typeB, null);
+        registerWrapper(Operation.SAFE_ABS, typeB, null);
       }
     }
   }
 
-  public Set<ImmutableTriple<Wrapper.Operation, BasicType, BasicType>> getWrappers() {
+  public Set<ImmutableTriple<Operation, BasicType, BasicType>> getWrappers() {
     return necessaryWrappers;
   }
 

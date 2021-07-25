@@ -1,5 +1,6 @@
 package com.graphicsfuzz.shadergenerators;
 
+import com.graphicsfuzz.TestHelper;
 import com.graphicsfuzz.common.ast.decl.ArrayInfo;
 import com.graphicsfuzz.common.ast.expr.ArrayIndexExpr;
 import com.graphicsfuzz.common.ast.expr.BoolConstantExpr;

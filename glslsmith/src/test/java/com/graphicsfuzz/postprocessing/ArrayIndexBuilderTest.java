@@ -1,6 +1,7 @@
 package com.graphicsfuzz.postprocessing;
 
 
+import com.graphicsfuzz.Operation;
 import com.graphicsfuzz.ProgramState;
 import com.graphicsfuzz.common.ast.type.BasicType;
 import java.util.Arrays;
@@ -54,8 +55,8 @@ public class ArrayIndexBuilderTest extends CommonPostProcessingTest {
     ProgramState returnState = new ArrayIndexBuilder(false)
         .process(generateProgramStateForCode(linesProgramText));
     Assert.assertTrue(returnState.getWrappers().contains(
-        new ImmutableTriple<Wrapper.Operation, BasicType, BasicType>(
-            Wrapper.Operation.SAFE_ABS, BasicType.INT, null)));
+        new ImmutableTriple<Operation, BasicType, BasicType>(
+            Operation.SAFE_ABS, BasicType.INT, null)));
     Assert.assertEquals(returnState.getShaderCode(), absLineText);
   }
 }

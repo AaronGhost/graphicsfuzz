@@ -1,4 +1,4 @@
-package com.graphicsfuzz.shadergenerators;
+package com.graphicsfuzz;
 
 import com.graphicsfuzz.common.ast.decl.Declaration;
 import com.graphicsfuzz.common.ast.expr.Expr;

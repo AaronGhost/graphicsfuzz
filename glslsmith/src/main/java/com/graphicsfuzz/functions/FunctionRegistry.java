@@ -1,4 +1,4 @@
-package com.graphicsfuzz.shadergenerators;
+package com.graphicsfuzz.functions;
 
 import com.graphicsfuzz.common.ast.type.BasicType;
 import com.graphicsfuzz.common.util.IRandom;

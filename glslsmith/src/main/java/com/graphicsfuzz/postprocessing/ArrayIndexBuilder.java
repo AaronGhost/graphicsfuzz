@@ -1,5 +1,6 @@
 package com.graphicsfuzz.postprocessing;
 
+import com.graphicsfuzz.Operation;
 import com.graphicsfuzz.common.ast.expr.ArrayIndexExpr;
 import com.graphicsfuzz.common.ast.expr.BinOp;
 import com.graphicsfuzz.common.ast.expr.BinaryExpr;
@@ -28,7 +29,7 @@ public class ArrayIndexBuilder extends BaseWrapperBuilder {
             new BinaryExpr(new MemberLookupExpr(arrayExpr, "length()"), new IntConstantExpr("1"),
                 BinOp.SUB)));
       } else {
-        programState.registerWrapper(Wrapper.Operation.SAFE_ABS, BasicType.INT, null);
+        programState.registerWrapper(Operation.SAFE_ABS, BasicType.INT, null);
         arrayIndexExpr.setIndex(new BinaryExpr(new FunctionCallExpr("SAFE_ABS", indexExpr),
             new MemberLookupExpr(arrayExpr, "length()"), BinOp.MOD));
       }
