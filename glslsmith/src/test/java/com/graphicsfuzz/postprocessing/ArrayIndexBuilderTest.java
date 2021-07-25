@@ -1,7 +1,6 @@
 package com.graphicsfuzz.postprocessing;
 
 
-import com.graphicsfuzz.Operation;
 import com.graphicsfuzz.ProgramState;
 import com.graphicsfuzz.common.ast.type.BasicType;
 import java.util.Arrays;

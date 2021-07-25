@@ -1,6 +1,5 @@
 package com.graphicsfuzz.postprocessing;
 
-import com.graphicsfuzz.Operation;
 import com.graphicsfuzz.common.ast.expr.ArrayIndexExpr;
 import com.graphicsfuzz.common.ast.expr.BinOp;
 import com.graphicsfuzz.common.ast.expr.BinaryExpr;

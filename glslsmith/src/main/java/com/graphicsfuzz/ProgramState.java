@@ -5,6 +5,7 @@ import com.graphicsfuzz.common.ast.type.BasicType;
 import com.graphicsfuzz.common.tool.PrettyPrinterVisitor;
 import com.graphicsfuzz.common.util.ShaderKind;
 import com.graphicsfuzz.config.ConfigInterface;
+import com.graphicsfuzz.postprocessing.Operation;
 import com.graphicsfuzz.scope.FuzzerScope;
 import com.graphicsfuzz.scope.FuzzerScopeEntry;
 import com.graphicsfuzz.scope.UnifiedTypeInterface;
@@ -256,6 +257,9 @@ public class ProgramState {
       if (typeB != null && typeB.getElementType() == BasicType.INT) {
         registerWrapper(Operation.SAFE_ABS, typeB, null);
       }
+    }
+    if (op == Operation.SAFE_BITFIELD_EXTRACT || op == Operation.SAFE_BITFIELD_INSERT) {
+      registerWrapper(Operation.SAFE_ABS, typeA, null);
     }
   }
 

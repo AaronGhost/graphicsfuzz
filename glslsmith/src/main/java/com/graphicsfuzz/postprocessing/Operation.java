@@ -1,4 +1,4 @@
-package com.graphicsfuzz;
+package com.graphicsfuzz.postprocessing;
 
 import com.graphicsfuzz.common.ast.decl.Declaration;
 import com.graphicsfuzz.common.ast.type.BasicType;
@@ -13,7 +13,9 @@ public enum Operation {
   SAFE_RSHIFT(Wrapper::generateRShiftWrapper, "SAFE_RSHIFT", false),
   SAFE_RSHIFT_ASSIGN(Wrapper::generateRShiftAssignWrapper, "SAFE_RSHIFT_ASSIGN", true),
   SAFE_MOD(Wrapper::generateModWrapper, "SAFE_MOD", false),
-  SAFE_MOD_ASSIGN(Wrapper::generateModAssignWrapper, "SAFE_MOD_ASSIGN", true);
+  SAFE_MOD_ASSIGN(Wrapper::generateModAssignWrapper, "SAFE_MOD_ASSIGN", true),
+  SAFE_BITFIELD_INSERT(Wrapper::generateBitInsertWrapper, "SAFE_BITFIELD_INSERT", false),
+  SAFE_BITFIELD_EXTRACT(Wrapper::generateBitExtractWrapper, "SAFE_BITFIELD_EXTRACT", false);
 
   public final BiFunction<BasicType, BasicType, Declaration> generator;
   public final String name;

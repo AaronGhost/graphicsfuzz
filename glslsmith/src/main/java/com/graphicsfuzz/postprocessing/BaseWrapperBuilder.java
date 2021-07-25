@@ -1,8 +1,6 @@
 package com.graphicsfuzz.postprocessing;
 
-import com.graphicsfuzz.Operation;
 import com.graphicsfuzz.ProgramState;
-import com.graphicsfuzz.Wrapper;
 import com.graphicsfuzz.common.ast.TranslationUnit;
 import com.graphicsfuzz.common.ast.decl.FunctionPrototype;
 import com.graphicsfuzz.common.ast.type.BasicType;

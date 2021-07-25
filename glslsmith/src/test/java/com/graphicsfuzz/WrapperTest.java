@@ -1,6 +1,7 @@
 package com.graphicsfuzz;
 
 import com.graphicsfuzz.common.ast.type.BasicType;
+import com.graphicsfuzz.postprocessing.Wrapper;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -271,5 +272,45 @@ public class WrapperTest {
         BasicType.INT)), intModAssignText);
     Assert.assertEquals(TestHelper.getText(Wrapper.generateModAssignWrapper(BasicType.UINT,
         BasicType.UINT)), uintModAssignText);
+  }
+
+  @Test
+  public void testGenerateBitfieldInsertWrapper() {
+    String intBitfieldInsertText = "int SAFE_BITFIELD_INSERT(int value, int offset, int bits)\n"
+        + "{\n"
+        + " int safe_offset = SAFE_ABS(offset) % 32;\n"
+        + " int safe_bits = SAFE_ABS(bits) % (32 - safe_offset);\n"
+        + " return bitfieldInsert(value, safe_offset, safe_bits);\n"
+        + "}\n";
+    String vec4BitfieldInsertText = "ivec4 SAFE_BITFIELD_INSERT(ivec4 value, int offset, int bits)\n"
+        + "{\n"
+        + " int safe_offset = SAFE_ABS(offset) % 32;\n"
+        + " int safe_bits = SAFE_ABS(bits) % (32 - safe_offset);\n"
+        + " return bitfieldInsert(value, safe_offset, safe_bits);\n"
+        + "}\n";
+    Assert.assertEquals(TestHelper.getText(Wrapper.generateBitInsertWrapper(BasicType.INT, null)),
+        intBitfieldInsertText);
+    Assert.assertEquals(TestHelper.getText(Wrapper.generateBitInsertWrapper(BasicType.IVEC4, null)),
+        vec4BitfieldInsertText);
+  }
+
+  @Test
+  public void testGenerateBitfieldExtractWrapper() {
+    String intBitfieldExtractText = "int SAFE_BITFIELD_EXTRACT(int value, int offset, int bits)\n"
+        + "{\n"
+        + " int safe_offset = SAFE_ABS(offset) % 32;\n"
+        + " int safe_bits = SAFE_ABS(bits) % (32 - safe_offset);\n"
+        + " return bitfieldExtract(value, safe_offset, safe_bits);\n"
+        + "}\n";
+    String vec4BitfieldExtractText = "ivec4 SAFE_BITFIELD_EXTRACT(ivec4 value, int offset, int bits)\n"
+        + "{\n"
+        + " int safe_offset = SAFE_ABS(offset) % 32;\n"
+        + " int safe_bits = SAFE_ABS(bits) % (32 - safe_offset);\n"
+        + " return bitfieldExtract(value, safe_offset, safe_bits);\n"
+        + "}\n";
+    Assert.assertEquals(TestHelper.getText(Wrapper.generateBitExtractWrapper(BasicType.INT, null)),
+        intBitfieldExtractText);
+    Assert.assertEquals(TestHelper.getText(Wrapper.generateBitExtractWrapper(BasicType.IVEC4, null)),
+        vec4BitfieldExtractText);
   }
 }

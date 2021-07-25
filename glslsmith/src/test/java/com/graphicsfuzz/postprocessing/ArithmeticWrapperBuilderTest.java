@@ -11,18 +11,18 @@ public class ArithmeticWrapperBuilderTest extends CommonPostProcessingTest {
   String singleLineProgramText = "#version 320 es\n"
       + "void main()\n"
       + "{\n"
-      + "vec2 var_0 = vec2(3) << 5;"
+      + "ivec2 var_0 = ivec2(3) << 5;"
       + "}\n";
 
   String wrapperLineProgramText =  "#version 320 es\n"
-      + "vec2 SAFE_LSHIFT(vec2 p0, int p1);\n"
-      + "vec2 SAFE_LSHIFT(vec2 A, int B)\n"
+      + "ivec2 SAFE_LSHIFT(ivec2 p0, int p1);\n"
+      + "ivec2 SAFE_LSHIFT(ivec2 A, int B)\n"
       + "{\n"
       + " return B >= 32 || B < 0 ? A << 16 : A << B;\n"
       + "}\n"
       + "void main()\n"
       + "{\n"
-      + " vec2 var_0 = SAFE_LSHIFT(vec2(3), 5);\n"
+      + " ivec2 var_0 = SAFE_LSHIFT(ivec2(3), 5);\n"
       + "}\n";
 
   @Override
