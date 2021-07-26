@@ -282,7 +282,8 @@ public class WrapperTest {
         + " int safe_bits = SAFE_ABS(bits) % (32 - safe_offset);\n"
         + " return bitfieldInsert(value, safe_offset, safe_bits);\n"
         + "}\n";
-    String vec4BitfieldInsertText = "ivec4 SAFE_BITFIELD_INSERT(ivec4 value, int offset, int bits)\n"
+    String vec4BitfieldInsertText = "ivec4 SAFE_BITFIELD_INSERT(ivec4 value,"
+        + " int offset, int bits)\n"
         + "{\n"
         + " int safe_offset = SAFE_ABS(offset) % 32;\n"
         + " int safe_bits = SAFE_ABS(bits) % (32 - safe_offset);\n"
@@ -302,7 +303,8 @@ public class WrapperTest {
         + " int safe_bits = SAFE_ABS(bits) % (32 - safe_offset);\n"
         + " return bitfieldExtract(value, safe_offset, safe_bits);\n"
         + "}\n";
-    String vec4BitfieldExtractText = "ivec4 SAFE_BITFIELD_EXTRACT(ivec4 value, int offset, int bits)\n"
+    String vec4BitfieldExtractText = "ivec4 SAFE_BITFIELD_EXTRACT(ivec4 value,"
+        + " int offset, int bits)\n"
         + "{\n"
         + " int safe_offset = SAFE_ABS(offset) % 32;\n"
         + " int safe_bits = SAFE_ABS(bits) % (32 - safe_offset);\n"
@@ -310,7 +312,8 @@ public class WrapperTest {
         + "}\n";
     Assert.assertEquals(TestHelper.getText(Wrapper.generateBitExtractWrapper(BasicType.INT, null)),
         intBitfieldExtractText);
-    Assert.assertEquals(TestHelper.getText(Wrapper.generateBitExtractWrapper(BasicType.IVEC4, null)),
+    Assert.assertEquals(TestHelper.getText(Wrapper.generateBitExtractWrapper(BasicType.IVEC4,
+        null)),
         vec4BitfieldExtractText);
   }
 }
