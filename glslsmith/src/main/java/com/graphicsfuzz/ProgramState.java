@@ -222,6 +222,10 @@ public class ProgramState {
     return lvalue;
   }
 
+  public boolean isSideEffectOpPermitted() {
+    return lvalue && !currentLValueVariable.isWriteOnly();
+  }
+
   public void enterInitializer() {
     initializer++;
   }

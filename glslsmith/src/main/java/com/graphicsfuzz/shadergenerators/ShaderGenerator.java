@@ -228,7 +228,8 @@ public abstract class ShaderGenerator {
 
     // Generate an appropriate unary operation (taking into account if the inner expression is a
     // lvalue
-    final UnOp unOp = randomTypeGenerator.getRandomBaseIntUnaryOp(programState.isLValue());
+    final UnOp unOp = randomTypeGenerator.getRandomBaseIntUnaryOp(
+        programState.isSideEffectOpPermitted());
 
     // Updates the variable state for further actions if the value has been written (++)
     if (unOp.isSideEffecting()) {
@@ -261,7 +262,7 @@ public abstract class ShaderGenerator {
     } else if (returnType.isVector() && leftType.isScalar()) {
       op = randomTypeGenerator.getRandomBaseIntVectBinaryOp();
     } else {
-      op = randomTypeGenerator.getRandomBaseIntBinaryOp(programState.isLValue());
+      op = randomTypeGenerator.getRandomBaseIntBinaryOp(programState.isSideEffectOpPermitted());
     }
 
     // Updates the variable state in the program state if it has been written
