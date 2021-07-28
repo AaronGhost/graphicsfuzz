@@ -35,6 +35,7 @@ import com.graphicsfuzz.common.ast.expr.Expr;
 import com.graphicsfuzz.common.ast.expr.FloatConstantExpr;
 import com.graphicsfuzz.common.ast.expr.FunctionCallExpr;
 import com.graphicsfuzz.common.ast.expr.IntConstantExpr;
+import com.graphicsfuzz.common.ast.expr.LengthExpr;
 import com.graphicsfuzz.common.ast.expr.MemberLookupExpr;
 import com.graphicsfuzz.common.ast.expr.ParenExpr;
 import com.graphicsfuzz.common.ast.expr.TernaryExpr;
@@ -405,6 +406,12 @@ public class PrettyPrinterVisitor extends StandardVisitor {
   }
 
   @Override
+  public void visitLengthExpr(LengthExpr lengthExpr) {
+    visit(lengthExpr.getReceiver());
+    out.append(".length()");
+  }
+
+  @Override
   public void visitIntConstantExpr(IntConstantExpr intConstantExpr) {
     out.append(intConstantExpr.getValue());
   }
@@ -727,7 +734,7 @@ public class PrettyPrinterVisitor extends StandardVisitor {
 
     // If a uniform block is being declared and we have a uniform supplier that provides known
     // values for the uniform wrapped in, we emit details of those known values in comments.
-    if (interfaceBlock.getInterfaceQualifier().equals(TypeQualifier.UNIFORM)) {
+    if (interfaceBlock.isUniformBlock()) {
       // It is guaranteed that a block, for which getInterfaceQualifier() returns "uniform",
       // has a single field.
       assert interfaceBlock.getMemberNames().size() == 1;
@@ -756,9 +763,10 @@ public class PrettyPrinterVisitor extends StandardVisitor {
     if (interfaceBlock.hasLayoutQualifierSequence()) {
       out.append(interfaceBlock.getLayoutQualifierSequence().toString()).append(" ");
     }
-    out.append(interfaceBlock.getInterfaceQualifier().toString())
-        .append(" ")
-        .append(interfaceBlock.getStructName())
+    for (TypeQualifier qualifier : interfaceBlock.getInterfaceQualifiers()) {
+      out.append(qualifier.toString()).append(" ");
+    }
+    out.append(interfaceBlock.getStructName())
         .append(" {");
     newLine();
 

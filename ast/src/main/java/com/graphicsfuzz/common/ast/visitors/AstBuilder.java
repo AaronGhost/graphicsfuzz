@@ -37,6 +37,7 @@ import com.graphicsfuzz.common.ast.expr.Expr;
 import com.graphicsfuzz.common.ast.expr.FloatConstantExpr;
 import com.graphicsfuzz.common.ast.expr.FunctionCallExpr;
 import com.graphicsfuzz.common.ast.expr.IntConstantExpr;
+import com.graphicsfuzz.common.ast.expr.LengthExpr;
 import com.graphicsfuzz.common.ast.expr.MemberLookupExpr;
 import com.graphicsfuzz.common.ast.expr.ParenExpr;
 import com.graphicsfuzz.common.ast.expr.TernaryExpr;
@@ -481,8 +482,10 @@ public class AstBuilder extends GLSLBaseVisitor<Object> {
         ? Optional.empty()
         : Optional.of(visitLayout_qualifier(ctx.layout_qualifier()));
     final Basic_interface_blockContext basicCtx = ctx.basic_interface_block();
-    final TypeQualifier interfaceQualifier =
-        visitInterface_qualifier(basicCtx.interface_qualifier());
+    final List<TypeQualifier> interfaceQualifiers = new ArrayList<>();
+    for (Interface_qualifierContext interfaceQualifierContext : basicCtx.interface_qualifier()) {
+      interfaceQualifiers.add(visitInterface_qualifier(interfaceQualifierContext));
+    }
     if (basicCtx.instance_name() != null) {
       throw new UnsupportedLanguageFeatureException("Named interface blocks are not currently "
           + "supported.");
@@ -490,7 +493,7 @@ public class AstBuilder extends GLSLBaseVisitor<Object> {
     final Pair<List<String>, List<Type>> members = getMembers(basicCtx.member_list());
     return new InterfaceBlock(
         maybeLayoutQualifier,
-        interfaceQualifier,
+        interfaceQualifiers,
         basicCtx.IDENTIFIER().getText(),
         members.a,
         members.b,
@@ -508,6 +511,16 @@ public class AstBuilder extends GLSLBaseVisitor<Object> {
         return TypeQualifier.UNIFORM;
       case "buffer":
         return TypeQualifier.BUFFER;
+      case "coherent":
+        return TypeQualifier.COHERENT;
+      case "volatile":
+        return TypeQualifier.VOLATILE;
+      case "restrict":
+        return TypeQualifier.RESTRICT;
+      case "readonly":
+        return TypeQualifier.READONLY;
+      case "writeonly":
+        return TypeQualifier.WRITEONLY;
       default:
         // The above is supposed to capture all the interface qualifiers, so this
         // indicates that the input is bad (rather than lack of support).
@@ -1361,8 +1374,18 @@ public class AstBuilder extends GLSLBaseVisitor<Object> {
           visitExpression(ctx.integer_expression().expression()));
     }
     if (ctx.method_call_generic() != null) {
-      throw new UnsupportedLanguageFeatureException("Method calls are not currently supported: "
-          + getOriginalSourceText(ctx));
+      if (ctx.method_call_generic().method_call_header_with_parameters() != null) {
+        throw new UnsupportedLanguageFeatureException("Method calls with parameters are "
+            + "allowed by the GLSL grammar but have no meaning in the language at present: "
+            + getOriginalSourceText(ctx));
+      }
+      if (!ctx.method_call_generic().method_call_header_no_parameters().method_call_header()
+          .variable_identifier().IDENTIFIER().getText().equals("length")) {
+        throw new UnsupportedLanguageFeatureException("The only allowed method call in GLSL is to"
+            + " length(); found: "
+            + getOriginalSourceText(ctx));
+      }
+      return new LengthExpr(visitPostfix_expression(ctx.postfix_expression()));
     }
     if (ctx.IDENTIFIER() != null) {
       return new MemberLookupExpr(visitPostfix_expression(ctx.postfix_expression()),
