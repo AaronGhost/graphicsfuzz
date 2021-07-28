@@ -26,10 +26,10 @@ public class PostProcessingHandler {
   // post-processors need to be registered here
   private static final List<PostProcessorInterface> postProcessors = Arrays.asList(
       new ArithmeticWrapperBuilder(),
-      new ArrayIndexBuilder(false),
       new CallingOrderCleaner(),
       new StdWrapperBuilder(),
-      new LoopLimiter(true, 100)
+      new LoopLimiter(true, 100),
+      new ArrayIndexBuilder(false)
   );
 
   public static void updateFile(String src, String dest) {

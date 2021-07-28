@@ -21,6 +21,7 @@ import com.graphicsfuzz.common.ast.stmt.IfStmt;
 import com.graphicsfuzz.common.ast.stmt.Stmt;
 import com.graphicsfuzz.common.ast.stmt.WhileStmt;
 import com.graphicsfuzz.common.ast.type.ArrayType;
+import com.graphicsfuzz.common.ast.type.QualifiedType;
 import com.graphicsfuzz.common.ast.type.Type;
 import com.graphicsfuzz.common.ast.type.TypeQualifier;
 import com.graphicsfuzz.common.ast.visitors.StandardVisitor;
@@ -263,10 +264,13 @@ public class CallingOrderCleaner extends StandardVisitor implements PostProcesso
   private VariablesDeclaration buildCopyVardDecl(String newName, String oldName,
                                                  Type variableType) {
     ArrayInfo arrayInfo = null;
+    Type declType = variableType;
     if (variableType.getWithoutQualifiers() instanceof ArrayType) {
-      arrayInfo = ((ArrayType) variableType.getWithoutQualifiers()).getArrayInfo();
+      arrayInfo = ((ArrayType) variableType.getWithoutQualifiers()).getArrayInfo().clone();
+      declType = new QualifiedType(((ArrayType) variableType.getWithoutQualifiers()).getBaseType(),
+          new ArrayList<>());
     }
-    return new VariablesDeclaration(variableType, new VariableDeclInfo(newName, arrayInfo,
+    return new VariablesDeclaration(declType, new VariableDeclInfo(newName, arrayInfo,
         new Initializer(new VariableIdentifierExpr(oldName))));
   }
 
