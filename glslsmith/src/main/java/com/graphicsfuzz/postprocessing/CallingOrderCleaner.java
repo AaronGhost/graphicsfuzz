@@ -65,7 +65,8 @@ public class CallingOrderCleaner extends StandardVisitor implements PostProcesso
     }
     isFunCall++;
     if (correctPrototype == null) {
-      throw new RuntimeException("Function call of an undeclared function");
+      throw new RuntimeException("Function call of an undeclared function: "
+          + functionCallExpr.getCallee());
     }
     ListIterator<Expr> parametersIterator = functionCallExpr.getArgs().listIterator();
     for (ParameterDecl formalParameter : correctPrototype.getParameters()) {
@@ -219,10 +220,12 @@ public class CallingOrderCleaner extends StandardVisitor implements PostProcesso
       ifStmt.setThenStmt(buildBlockStmt(ifStmt.getThenStmt(), tempInitMap));
       tempInitMap.clear();
     }
-    visitChildFromParent(ifStmt.getElseStmt(), ifStmt);
-    if (!tempInitMap.isEmpty()) {
-      ifStmt.setElseStmt(buildBlockStmt(ifStmt.getThenStmt(), tempInitMap));
-      tempInitMap.clear();
+    if (ifStmt.hasElseStmt()) {
+      visitChildFromParent(ifStmt.getElseStmt(), ifStmt);
+      if (!tempInitMap.isEmpty()) {
+        ifStmt.setElseStmt(buildBlockStmt(ifStmt.getThenStmt(), tempInitMap));
+        tempInitMap.clear();
+      }
     }
   }
 

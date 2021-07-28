@@ -2,6 +2,7 @@ package com.graphicsfuzz;
 
 import com.graphicsfuzz.common.ast.TranslationUnit;
 import com.graphicsfuzz.common.util.ParseHelper;
+import com.graphicsfuzz.common.util.ShaderKind;
 import com.graphicsfuzz.config.DefaultConfig;
 import com.graphicsfuzz.postprocessing.ArithmeticWrapperBuilder;
 import com.graphicsfuzz.postprocessing.ArrayIndexBuilder;
@@ -41,7 +42,7 @@ public class PostProcessingHandler {
       //Setup the Program state and the TU using the parsed code
       //TODO see if the config interface is necessary to the program state
       ProgramState programState = new ProgramState(new DefaultConfig());
-      TranslationUnit unit = ParseHelper.parse(glslCode);
+      TranslationUnit unit = ParseHelper.parse(glslCode, ShaderKind.COMPUTE);
       programState.programInitialization(unit);
       //TODO setup the buffers according to the given values
       //Pipeline post-processing

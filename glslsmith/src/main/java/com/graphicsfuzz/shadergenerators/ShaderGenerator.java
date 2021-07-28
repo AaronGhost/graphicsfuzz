@@ -89,10 +89,10 @@ public abstract class ShaderGenerator {
 
   //All generate instructions return classes inherited from IASTNodes
   //TODO support named instance
-  //TODO wait for support of memory qualifiers on interface blocks
+  //TODO update with the qualifiers on the interface
   protected InterfaceBlock generateInterfaceBlockFromBuffer(Buffer buffer) {
     return new InterfaceBlock(Optional.ofNullable(buffer.getLayoutQualifiers()),
-        buffer.getInterfaceQualifier(),
+        Collections.singletonList(buffer.getInterfaceQualifier()),
         buffer.getName(),
         buffer.getMemberNames(),
         buffer.getMemberTypes(),
