@@ -7,7 +7,6 @@ import com.graphicsfuzz.common.ast.expr.Expr;
 import com.graphicsfuzz.common.ast.expr.FunctionCallExpr;
 import com.graphicsfuzz.common.ast.expr.IntConstantExpr;
 import com.graphicsfuzz.common.ast.expr.LengthExpr;
-import com.graphicsfuzz.common.ast.expr.MemberLookupExpr;
 import com.graphicsfuzz.common.ast.type.ArrayType;
 import com.graphicsfuzz.common.ast.type.BasicType;
 

@@ -39,6 +39,7 @@ public class PostProcessingHandler {
       //TODO adapt to any state printer
       StatePrinter shaderPrinter = new ShaderTrapStatePrinter();
       String glslCode = shaderPrinter.getShaderCodeFromHarness(harnessText);
+      //TODO determine the kind of shader from the harness
       //Setup the Program state and the TU using the parsed code
       //TODO see if the config interface is necessary to the program state
       ProgramState programState = new ProgramState(new DefaultConfig());
