@@ -37,7 +37,6 @@ import java.util.Stack;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
-//TODO add support for inout Funcall using the getPrototype method from the Typer
 public class CallingOrderCleaner extends StandardVisitor implements PostProcessorInterface {
   private int isInitializer;
   private boolean isOut;
@@ -52,6 +51,7 @@ public class CallingOrderCleaner extends StandardVisitor implements PostProcesso
   private final Set<String> seenInitReadEntries = new HashSet<>();
   private final Set<String> seenInitWrittenEntries = new HashSet<>();
   private final Stack<Set<String>> seenFunCallEntries = new Stack<>();
+  private final Set<String> seenFunCallEntriesInThatArg = new HashSet<>();
   private final Map<String, Pair<String, Type>> tempInitMap = new HashMap<>();
 
   @Override
@@ -80,13 +80,14 @@ public class CallingOrderCleaner extends StandardVisitor implements PostProcesso
       visitChildFromParent(realParameter, functionCallExpr);
       isOut = false;
       isExprSideEffecting = false;
+      seenFunCallEntries.peek().addAll(seenFunCallEntriesInThatArg);
+      seenFunCallEntriesInThatArg.clear();
     }
     isFunCall--;
     seenFunCallEntries.pop();
     funCounter++;
   }
 
-  //TODO add support for funcall case there
   @Override
   public void visitVariableIdentifierExpr(VariableIdentifierExpr variableIdentifierExpr) {
     final String variableName = variableIdentifierExpr.getName();
@@ -109,7 +110,7 @@ public class CallingOrderCleaner extends StandardVisitor implements PostProcesso
 
         // Variable registering for FunCalls and early exit (no double rewriting of variables)
         if (isFunCall > 0 && isOut) {
-          seenFunCallEntries.peek().add(variableName);
+          seenFunCallEntriesInThatArg.add(variableName);
         }
         return;
 
@@ -125,7 +126,7 @@ public class CallingOrderCleaner extends StandardVisitor implements PostProcesso
 
         // Variable registering for FunCalls and early exit (no double rewriting of variables)
         if (isFunCall > 0 && isOut) {
-          seenFunCallEntries.peek().add(variableName);
+          seenFunCallEntriesInThatArg.add(variableName);
         }
         return;
 
@@ -151,7 +152,7 @@ public class CallingOrderCleaner extends StandardVisitor implements PostProcesso
 
         // Current expression is an unseen out param
       } else {
-        seenFunCallEntries.peek().add(variableName);
+        seenFunCallEntriesInThatArg.add(variableName);
       }
     }
   }
@@ -205,7 +206,7 @@ public class CallingOrderCleaner extends StandardVisitor implements PostProcesso
       if (!tempInitMap.isEmpty()) {
         for (String tempVariableName : tempInitMap.keySet()) {
           Pair<String, Type> variableInfo = tempInitMap.get(tempVariableName);
-          stmt.insertBefore(child, new DeclarationStmt(buildCopyVardDecl(tempVariableName,
+          stmt.insertBefore(child, new DeclarationStmt(buildCopyVarDecl(tempVariableName,
               variableInfo.getLeft(), variableInfo.getRight())));
         }
         tempInitMap.clear();
@@ -261,8 +262,8 @@ public class CallingOrderCleaner extends StandardVisitor implements PostProcesso
     }
   }
 
-  private VariablesDeclaration buildCopyVardDecl(String newName, String oldName,
-                                                 Type variableType) {
+  private VariablesDeclaration buildCopyVarDecl(String newName, String oldName,
+                                                Type variableType) {
     ArrayInfo arrayInfo = null;
     Type declType = variableType;
     if (variableType.getWithoutQualifiers() instanceof ArrayType) {
@@ -270,8 +271,10 @@ public class CallingOrderCleaner extends StandardVisitor implements PostProcesso
       declType = new QualifiedType(((ArrayType) variableType.getWithoutQualifiers()).getBaseType(),
           new ArrayList<>());
     }
-    return new VariablesDeclaration(declType, new VariableDeclInfo(newName, arrayInfo,
-        new Initializer(new VariableIdentifierExpr(oldName))));
+    return new VariablesDeclaration(new QualifiedType(declType.getWithoutQualifiers(),
+        new ArrayList<>()),
+        new VariableDeclInfo(newName, arrayInfo,
+            new Initializer(new VariableIdentifierExpr(oldName))));
   }
 
   private BlockStmt buildBlockStmt(Stmt currentStmt,
@@ -279,7 +282,7 @@ public class CallingOrderCleaner extends StandardVisitor implements PostProcesso
     List<Stmt> declStmts = new ArrayList<>();
     for (String tempVariableName : changingVariables.keySet()) {
       Pair<String, Type> variableInfo = changingVariables.get(tempVariableName);
-      declStmts.add(new DeclarationStmt(buildCopyVardDecl(tempVariableName,
+      declStmts.add(new DeclarationStmt(buildCopyVarDecl(tempVariableName,
           variableInfo.getLeft(), variableInfo.getRight())));
     }
     declStmts.add(currentStmt);

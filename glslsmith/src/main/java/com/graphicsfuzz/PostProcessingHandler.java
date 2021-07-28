@@ -25,10 +25,10 @@ public class PostProcessingHandler {
 
   // post-processors need to be registered here
   private static final List<PostProcessorInterface> postProcessors = Arrays.asList(
-      new ArithmeticWrapperBuilder(),
       new CallingOrderCleaner(),
-      new StdWrapperBuilder(),
       new LoopLimiter(true, 100),
+      new ArithmeticWrapperBuilder(),
+      new StdWrapperBuilder(),
       new ArrayIndexBuilder(false)
   );
 

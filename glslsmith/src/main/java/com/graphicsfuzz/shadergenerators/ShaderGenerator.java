@@ -391,6 +391,7 @@ public abstract class ShaderGenerator {
             break;
           }
           parameters.add(generateBaseVarExpr(parameterType.getBaseType(), true));
+          programState.finishFunCallArg();
           programState.setOutParam(false);
         } else {
           parameters.add(generateBaseExpr(parameterType.getBaseType()));

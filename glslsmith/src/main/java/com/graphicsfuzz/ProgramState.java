@@ -52,6 +52,7 @@ public class ProgramState {
   private final Set<FuzzerScopeEntry> seenInitReadEntries = new HashSet<>();
   private final Set<FuzzerScopeEntry> seenInitWrittenEntries = new HashSet<>();
   private final Stack<Set<FuzzerScopeEntry>> seenFunCallEntries = new Stack<>();
+  private final Set<FuzzerScopeEntry> seenInFunCallArg = new HashSet<>();
 
   //Referencing the necessary safe wrappers for later generation
   private final Set<ImmutableTriple<Operation, BasicType, BasicType>> necessaryWrappers =
@@ -132,12 +133,19 @@ public class ProgramState {
     currentInitExprWrittenEntries.clear();
   }
 
+  public void finishFunCallArg() {
+    if (outParam) {
+      seenFunCallEntries.peek().addAll(seenInFunCallArg);
+      seenFunCallEntries.clear();
+    }
+  }
+
   public void setEntryHasBeenWritten(FuzzerScopeEntry entry) {
     if (!configInterface.allowMultipleWriteAccessInInitializers() && initializer > 0) {
       currentInitExprWrittenEntries.add(entry);
     }
     if (funCall > 0 && outParam) {
-      seenFunCallEntries.peek().add(entry);
+      seenInFunCallArg.add(entry);
     }
   }
 
