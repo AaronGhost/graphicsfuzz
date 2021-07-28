@@ -21,19 +21,19 @@ public class FunctionRegistry {
   public FunctionRegistry(IRandom randGen, ShaderKind shaderKind) {
     this.randGen = randGen;
     this.shaderKind = shaderKind;
-    List<FunctionStruct> intReturnFunctions = new ArrayList<>();
-    List<FunctionStruct> uintReturnFunctions = new ArrayList<>();
-    List<FunctionStruct> boolReturnFunctions = new ArrayList<>();
-    List<FunctionStruct> uvec2ReturnFunctions = new ArrayList<>();
-    List<FunctionStruct> uvec3ReturnFunctions = new ArrayList<>();
-    List<FunctionStruct> uvec4ReturnFunctions = new ArrayList<>();
-    List<FunctionStruct> ivec2ReturnFunctions = new ArrayList<>();
-    List<FunctionStruct> ivec3ReturnFunctions = new ArrayList<>();
-    List<FunctionStruct> ivec4ReturnFunctions = new ArrayList<>();
-    List<FunctionStruct> bvec2ReturnFunctions = new ArrayList<>();
-    List<FunctionStruct> bvec3ReturnFunctions = new ArrayList<>();
-    List<FunctionStruct> bvec4ReturnFunctions = new ArrayList<>();
-    List<FunctionStruct> voidReturnFunctions = new ArrayList<>();
+    final List<FunctionStruct> intReturnFunctions = new ArrayList<>();
+    final List<FunctionStruct> uintReturnFunctions = new ArrayList<>();
+    final List<FunctionStruct> boolReturnFunctions = new ArrayList<>();
+    final List<FunctionStruct> uvec2ReturnFunctions = new ArrayList<>();
+    final List<FunctionStruct> uvec3ReturnFunctions = new ArrayList<>();
+    final List<FunctionStruct> uvec4ReturnFunctions = new ArrayList<>();
+    final List<FunctionStruct> ivec2ReturnFunctions = new ArrayList<>();
+    final List<FunctionStruct> ivec3ReturnFunctions = new ArrayList<>();
+    final List<FunctionStruct> ivec4ReturnFunctions = new ArrayList<>();
+    final List<FunctionStruct> bvec2ReturnFunctions = new ArrayList<>();
+    final List<FunctionStruct> bvec3ReturnFunctions = new ArrayList<>();
+    final List<FunctionStruct> bvec4ReturnFunctions = new ArrayList<>();
+    final List<FunctionStruct> voidReturnFunctions = new ArrayList<>();
 
     // Build the std registry
 
