@@ -33,8 +33,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static com.graphicsfuzz.postprocessing.Operation.SAFE_BITFIELD_INSERT;
-
 
 public abstract class Wrapper {
 
