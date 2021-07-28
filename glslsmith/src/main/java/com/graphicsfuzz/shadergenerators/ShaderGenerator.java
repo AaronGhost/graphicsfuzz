@@ -385,11 +385,11 @@ public abstract class ShaderGenerator {
           break;
         }
         if (parameterType.isOut()) {
+          programState.setOutParam(true);
           if (programState.getWriteEntriesOfCompatibleType(parameterType.getBaseType()).isEmpty()) {
             allParametersNotAvailable = true;
             break;
           }
-          programState.setOutParam(true);
           parameters.add(generateBaseVarExpr(parameterType.getBaseType(), true));
           programState.setOutParam(false);
         } else {
