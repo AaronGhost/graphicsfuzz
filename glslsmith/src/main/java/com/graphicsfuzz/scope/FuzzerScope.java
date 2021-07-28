@@ -98,9 +98,21 @@ public class FuzzerScope {
     ).collect(Collectors.toList());
   }
 
+  public List<FuzzerScopeEntry> getWriteEntriesOfCompatibleType(BasicType type) {
+    return getAllDeclaredVariables().stream().filter(
+        // Any type for which the number of element is bigger or equal than the current type
+        t -> t.getBaseType().getNumElements() >= type.getNumElements()
+                && t.getBaseType().getElementType() == type.getElementType()
+    ).filter(
+        // No read only value filter
+        t -> !(t.isReadOnly() || t.isConstOnly())
+    ).collect(Collectors.toList());
+  }
+
   public List<FuzzerScopeEntry> getReadEntriesOfCompatibleType(BasicType type) {
     return getAllDeclaredVariables().stream().filter(
-        // Compatible type filter
+        // Compatible type filter: any element / vector for types of size 1
+        // Any vector for types of size more than 1
         t -> (type.getNumElements() == 1) ? t.getBaseType().getElementType() == type :
             t.getBaseType().getNumElements() >= 2 && t.getBaseType().getElementType()
                 == type.getElementType()

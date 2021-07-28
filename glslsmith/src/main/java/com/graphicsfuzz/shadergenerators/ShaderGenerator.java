@@ -38,6 +38,7 @@ import com.graphicsfuzz.common.ast.stmt.SwitchStmt;
 import com.graphicsfuzz.common.ast.stmt.WhileStmt;
 import com.graphicsfuzz.common.ast.type.ArrayType;
 import com.graphicsfuzz.common.ast.type.BasicType;
+import com.graphicsfuzz.common.ast.type.VoidType;
 import com.graphicsfuzz.common.util.IRandom;
 import com.graphicsfuzz.config.ConfigInterface;
 import com.graphicsfuzz.config.FuzzerConstants;
@@ -74,7 +75,8 @@ public abstract class ShaderGenerator {
     this.randGen = randomGenerator;
     this.randomTypeGenerator = randomTypeGenerator;
     this.configuration = configuration;
-    this.registry = new FunctionRegistry(randGen);
+    this.programState = new ProgramState(configuration);
+    this.registry = new FunctionRegistry(randGen, programState.getShaderKind());
   }
 
   public void resetProgramState() {
@@ -118,15 +120,16 @@ public abstract class ShaderGenerator {
         List<Expr> initializerExprs = new ArrayList<>();
 
         // Taint generation to prevent from generating read / write access in initializers
-        programState.setIsInitializer(true);
+        programState.enterInitializer();
         for (int i = 0; i < proxy.getBaseTypeSize(); i++) {
           if (proxy.isConstOnly()) {
             initializerExprs.add(generateBaseConstantExpr(baseType));
           } else {
             initializerExprs.add(generateBaseExpr(baseType));
           }
+          programState.finishInitParam();
         }
-        programState.setIsInitializer(false);
+        programState.exitInitializer();
 
         //Build a complete array declaration
         initializer = new Initializer(new ArrayConstructorExpr(new ArrayType(proxy.getBaseType(),
@@ -152,7 +155,6 @@ public abstract class ShaderGenerator {
     // For the number of variables declared here, get a new variable and register it in the
     // program state
     for (int i = 0; i < varDeclNumber; i++) {
-      //TODO add support for both shadow and non shadow variables (randomly)
       String name;
       if (programState.isAShadowNameStillAvailable() && randGen.nextBoolean()) {
         name = programState.getAvailableShadowName();
@@ -303,9 +305,14 @@ public abstract class ShaderGenerator {
   }
 
   //Generate a variable access for the given type or crash if none is available
-  //TODO post-processing for intializers situation (no read / write to the same scope entry)
   protected Expr generateBaseVarExpr(BasicType type) {
-    List<FuzzerScopeEntry> availableEntries =
+    return generateBaseVarExpr(type, false);
+  }
+
+  protected Expr generateBaseVarExpr(BasicType type, boolean ensureLValue) {
+    // If we are returning a value which is made to be written we write it as being written)
+    List<FuzzerScopeEntry> availableEntries = ensureLValue
+        ? programState.getWriteEntriesOfCompatibleType(type) :
         programState.getReadEntriesOfCompatibleType(type);
     assert !availableEntries.isEmpty();
     FuzzerScopeEntry var = availableEntries.get(randGen.nextInt(availableEntries.size()));
@@ -314,7 +321,9 @@ public abstract class ShaderGenerator {
       lvalue = false;
     } else {
       programState.setEntryHasBeenRead(var);
-      if (var.getBaseType().isVector()) {
+      if (ensureLValue) {
+        programState.setEntryHasBeenWritten(var);
+      } else if (var.getBaseType().isVector()) {
         if (type.getNumElements() > var.getBaseType().getNumElements()) {
           lvalue = false;
         } else {
@@ -355,11 +364,38 @@ public abstract class ShaderGenerator {
   }
 
   protected Expr generateFunCallExpr(BasicType type) {
-    FunctionStruct funCallStruct = registry.getRandomFunctionStruct(new UnifiedTypeProxy(type));
+    return generateFunCallExpr(new UnifiedTypeProxy(type));
+  }
+
+  protected Expr generateFunCallExpr(UnifiedTypeProxy type) {
+    FunctionStruct funCallStruct = registry.getRandomFunctionStruct(type);
     List<Expr> parameters = new ArrayList<>();
-    for (UnifiedTypeProxy parameterType : funCallStruct.parameterTypes) {
-      parameters.add(generateBaseExpr(parameterType.getBaseType()));
+    // We set in the programState that we are generating a funcall, ie store values if the
+    // variable is declared as out later and no flush until the end of the functionCall generation
+    programState.enterFunCall();
+    boolean allParametersNotAvailable = true;
+    while (allParametersNotAvailable) {
+      allParametersNotAvailable = false;
+      parameters.clear();
+      for (UnifiedTypeProxy parameterType : funCallStruct.parameterTypes) {
+        if (parameterType.isVoid()) {
+          assert parameters.isEmpty();
+          break;
+        }
+        if (parameterType.isOut()) {
+          if (programState.getWriteEntriesOfCompatibleType(parameterType.getBaseType()).isEmpty()) {
+            allParametersNotAvailable = true;
+            break;
+          }
+          programState.setOutParam(true);
+          parameters.add(generateBaseVarExpr(parameterType.getBaseType(), true));
+          programState.setOutParam(false);
+        } else {
+          parameters.add(generateBaseExpr(parameterType.getBaseType()));
+        }
+      }
     }
+    programState.exitFunCall();
     programState.setLvalue(false, null);
     programState.setConstant(false);
     return new FunctionCallExpr(funCallStruct.name, parameters);
@@ -423,17 +459,6 @@ public abstract class ShaderGenerator {
       FuzzerScopeEntry previousVar = programState.getCurrentLValueVariable();
       Expr indexExpr = generateBaseExpr(BasicType.INT);
       programState.setLvalue(previousLvalue, previousVar);
-      //TODO handle that step in post processing
-      /*
-      if (!configuration.allowArrayAbsAccess() || randGen.nextBoolean()) {
-        indexExpr = new FunctionCallExpr("clamp",
-            indexExpr, new IntConstantExpr("0"),
-            new IntConstantExpr(String.valueOf(var.getCurrentTypeSize() - 1)));
-      } else {
-        indexExpr = new FunctionCallExpr("abs", new BinaryExpr(new ParenExpr(indexExpr),
-            new IntConstantExpr(String.valueOf(var.getCurrentTypeSize())), BinOp.MOD));
-      }
-       */
       childExpr = new ArrayIndexExpr(new VariableIdentifierExpr(var.getName()),
           indexExpr);
     }
@@ -556,17 +581,25 @@ public abstract class ShaderGenerator {
     return new SwitchStmt(switchExpr, new BlockStmt(switchBody, true));
   }
 
-  //TODO generate variable declaration with boolean type
+
   protected LoopStmt generateWhileLoop() {
     Expr condExpr = generateBaseExpr(BasicType.BOOL);
     Stmt bodyStmt = new BlockStmt(generateScope(1, configuration.getMaxWhileScopeLength()), true);
     return new WhileStmt(condExpr, bodyStmt);
   }
 
+
+  protected ExprStmt generateVoidFunCall() {
+    return new ExprStmt(generateFunCallExpr(new UnifiedTypeProxy(VoidType.VOID)));
+  }
+
+
   protected List<Stmt> generateScope() {
     return generateScope(1, configuration.getMaxMainLength());
   }
 
+  //TODO ensure at this stage that some function exists that has a void return type and does not
+  // necessit out params
   protected List<Stmt> generateScope(int minScopeLength, int maxScopeLength) {
     programState.addScope();
     List<Stmt> stmts = new ArrayList<>();
@@ -574,7 +607,7 @@ public abstract class ShaderGenerator {
     for (int i = 0; i < randomActionBound; i++) {
       Stmt stmt;
       int actionIndex =
-          randGen.nextInt(programState.getScopeDepth() < configuration.getMaxScopeDepth() ? 9 : 5);
+          randGen.nextInt(programState.getScopeDepth() < configuration.getMaxScopeDepth() ? 10 : 5);
       if (actionIndex < 3) {
         stmt = new ExprStmt(generateProgramAssignmentLine());
       } else if (actionIndex == 6) {
@@ -583,6 +616,8 @@ public abstract class ShaderGenerator {
         stmt = generateSwitchStmt();
       } else if (actionIndex == 8) {
         stmt = generateWhileLoop();
+      } else if (actionIndex == 9) {
+        stmt = generateVoidFunCall();
       } else {
         stmt = new DeclarationStmt(generateRandomTypedVarDecls(
             randGen.nextPositiveInt(configuration.getMaxVardeclElements()),

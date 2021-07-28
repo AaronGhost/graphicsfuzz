@@ -1,6 +1,7 @@
 package com.graphicsfuzz.config;
 
 import com.graphicsfuzz.common.glslversion.ShadingLanguageVersion;
+import com.graphicsfuzz.common.util.ShaderKind;
 
 public class DefaultConfig implements ConfigInterface {
 
@@ -8,6 +9,11 @@ public class DefaultConfig implements ConfigInterface {
   @Override
   public ShadingLanguageVersion getShadingLanguageVersion() {
     return ShadingLanguageVersion.ESSL_310;
+  }
+
+  @Override
+  public ShaderKind getShaderKind() {
+    return ShaderKind.COMPUTE;
   }
 
   //Compute shader Local size parameters
@@ -102,7 +108,7 @@ public class DefaultConfig implements ConfigInterface {
 
   @Override
   public boolean allowEmptySwitch() {
-    return true;
+    return false;
   }
 
   @Override

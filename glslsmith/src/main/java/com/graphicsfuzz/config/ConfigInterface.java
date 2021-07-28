@@ -1,6 +1,7 @@
 package com.graphicsfuzz.config;
 
 import com.graphicsfuzz.common.glslversion.ShadingLanguageVersion;
+import com.graphicsfuzz.common.util.ShaderKind;
 
 public interface ConfigInterface {
   boolean allowEmptySwitch();
@@ -8,7 +9,7 @@ public interface ConfigInterface {
   boolean allowMultipleWriteAccessInInitializers();
 
   boolean enforceDefaultCase();
-  
+
   boolean allowArrayAbsAccess();
 
   int getMaxArrayLength();
@@ -44,4 +45,6 @@ public interface ConfigInterface {
   int getMaxWhileScopeLength();
 
   ShadingLanguageVersion getShadingLanguageVersion();
+
+  ShaderKind getShaderKind();
 }

@@ -27,6 +27,10 @@ public interface UnifiedTypeInterface {
 
   boolean isWriteOnly();
 
+  boolean isVoid();
+
+  boolean isOut();
+
   void setReadOnly(boolean readOnly);
 
   void setWriteOnly(boolean writeOnly);

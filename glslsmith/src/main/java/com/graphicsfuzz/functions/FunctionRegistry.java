@@ -1,7 +1,9 @@
 package com.graphicsfuzz.functions;
 
 import com.graphicsfuzz.common.ast.type.BasicType;
+import com.graphicsfuzz.common.ast.type.VoidType;
 import com.graphicsfuzz.common.util.IRandom;
+import com.graphicsfuzz.common.util.ShaderKind;
 import com.graphicsfuzz.scope.UnifiedTypeProxy;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,12 +13,14 @@ import java.util.Map;
 
 //TODO add float based functions
 public class FunctionRegistry {
-  IRandom randGen;
-  final Map<UnifiedTypeProxy, List<FunctionStruct>> stdFunctions = new HashMap<>();
-  final Map<UnifiedTypeProxy, List<FunctionStruct>> userDefinedFunctions = new HashMap<>();
+  private final IRandom randGen;
+  private final Map<UnifiedTypeProxy, List<FunctionStruct>> stdFunctions = new HashMap<>();
+  private final Map<UnifiedTypeProxy, List<FunctionStruct>> userDefinedFunctions = new HashMap<>();
+  private final ShaderKind shaderKind;
 
-  public FunctionRegistry(IRandom randGen) {
+  public FunctionRegistry(IRandom randGen, ShaderKind shaderKind) {
     this.randGen = randGen;
+    this.shaderKind = shaderKind;
     List<FunctionStruct> intReturnFunctions = new ArrayList<>();
     List<FunctionStruct> uintReturnFunctions = new ArrayList<>();
     List<FunctionStruct> boolReturnFunctions = new ArrayList<>();
@@ -29,6 +33,7 @@ public class FunctionRegistry {
     List<FunctionStruct> bvec2ReturnFunctions = new ArrayList<>();
     List<FunctionStruct> bvec3ReturnFunctions = new ArrayList<>();
     List<FunctionStruct> bvec4ReturnFunctions = new ArrayList<>();
+    List<FunctionStruct> voidReturnFunctions = new ArrayList<>();
 
     // Build the std registry
 
@@ -537,8 +542,43 @@ public class FunctionRegistry {
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // Integer functions
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    //TODO support outparams functions with void return types
     //TODo suport lowp and mediump values
+
+    // UmulExtended
+    voidReturnFunctions.add(new FunctionStruct("umulExtended",
+        new UnifiedTypeProxy(VoidType.VOID),
+        new UnifiedTypeProxy(BasicType.UINT), new UnifiedTypeProxy(BasicType.UINT),
+        new UnifiedTypeProxy(BasicType.UINT), new UnifiedTypeProxy(BasicType.UINT)));
+    voidReturnFunctions.add(new FunctionStruct("umulExtended",
+        new UnifiedTypeProxy(VoidType.VOID),
+        new UnifiedTypeProxy(BasicType.UVEC2), new UnifiedTypeProxy(BasicType.UVEC2),
+        new UnifiedTypeProxy(BasicType.UVEC2), new UnifiedTypeProxy(BasicType.UVEC2)));
+    voidReturnFunctions.add(new FunctionStruct("umulExtended",
+        new UnifiedTypeProxy(VoidType.VOID),
+        new UnifiedTypeProxy(BasicType.UVEC3), new UnifiedTypeProxy(BasicType.UVEC3),
+        new UnifiedTypeProxy(BasicType.UVEC3), new UnifiedTypeProxy(BasicType.UVEC3)));
+    voidReturnFunctions.add(new FunctionStruct("umulExtended",
+        new UnifiedTypeProxy(VoidType.VOID),
+        new UnifiedTypeProxy(BasicType.UVEC4), new UnifiedTypeProxy(BasicType.UVEC4),
+        new UnifiedTypeProxy(BasicType.UVEC4), new UnifiedTypeProxy(BasicType.UVEC4)));
+
+    // ImulExtended
+    voidReturnFunctions.add(new FunctionStruct("imulExtended",
+        new UnifiedTypeProxy(VoidType.VOID),
+        new UnifiedTypeProxy(BasicType.INT), new UnifiedTypeProxy(BasicType.INT),
+        new UnifiedTypeProxy(BasicType.INT), new UnifiedTypeProxy(BasicType.INT)));
+    voidReturnFunctions.add(new FunctionStruct("imulExtended",
+        new UnifiedTypeProxy(VoidType.VOID),
+        new UnifiedTypeProxy(BasicType.IVEC2), new UnifiedTypeProxy(BasicType.IVEC2),
+        new UnifiedTypeProxy(BasicType.IVEC2), new UnifiedTypeProxy(BasicType.IVEC2)));
+    voidReturnFunctions.add(new FunctionStruct("imulExtended",
+        new UnifiedTypeProxy(VoidType.VOID),
+        new UnifiedTypeProxy(BasicType.IVEC3), new UnifiedTypeProxy(BasicType.IVEC3),
+        new UnifiedTypeProxy(BasicType.IVEC3), new UnifiedTypeProxy(BasicType.IVEC3)));
+    voidReturnFunctions.add(new FunctionStruct("imulExtended",
+        new UnifiedTypeProxy(VoidType.VOID),
+        new UnifiedTypeProxy(BasicType.IVEC4), new UnifiedTypeProxy(BasicType.IVEC4),
+        new UnifiedTypeProxy(BasicType.IVEC4), new UnifiedTypeProxy(BasicType.IVEC4)));
 
     // Bitfield Extract functions for integers
     intReturnFunctions.add(new FunctionStruct("bitfieldExtract",
@@ -641,6 +681,26 @@ public class FunctionRegistry {
         new UnifiedTypeProxy(BasicType.UVEC4),
         new UnifiedTypeProxy(BasicType.UVEC4)));
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // Shader invocation Control and Shader memory control
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    if (shaderKind == ShaderKind.COMPUTE) {
+      voidReturnFunctions.add(new FunctionStruct("barrier", new UnifiedTypeProxy(VoidType.VOID)));
+    }
+    voidReturnFunctions.add(new FunctionStruct("memoryBarrier",
+        new UnifiedTypeProxy(VoidType.VOID)));
+    voidReturnFunctions.add(new FunctionStruct("memoryBarrierAtomicCounter",
+        new UnifiedTypeProxy(VoidType.VOID)));
+    voidReturnFunctions.add(new FunctionStruct("memoryBarrierBuffer",
+        new UnifiedTypeProxy(VoidType.VOID)));
+    voidReturnFunctions.add(new FunctionStruct("memoryBarrierShared",
+        new UnifiedTypeProxy(VoidType.VOID)));
+    voidReturnFunctions.add(new FunctionStruct("memoryBarrierImage",
+        new UnifiedTypeProxy(VoidType.VOID)));
+    voidReturnFunctions.add(new FunctionStruct("groupMemoryBarrier",
+        new UnifiedTypeProxy(VoidType.VOID)));
+
     // Builds the registry
     stdFunctions.put(new UnifiedTypeProxy(BasicType.INT), intReturnFunctions);
     stdFunctions.put(new UnifiedTypeProxy(BasicType.UINT), uintReturnFunctions);
@@ -654,6 +714,7 @@ public class FunctionRegistry {
     stdFunctions.put(new UnifiedTypeProxy(BasicType.BVEC2), bvec2ReturnFunctions);
     stdFunctions.put(new UnifiedTypeProxy(BasicType.BVEC3), bvec3ReturnFunctions);
     stdFunctions.put(new UnifiedTypeProxy(BasicType.BVEC4), bvec4ReturnFunctions);
+    stdFunctions.put(new UnifiedTypeProxy(VoidType.VOID), voidReturnFunctions);
   }
 
 

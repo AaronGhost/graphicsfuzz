@@ -87,8 +87,7 @@ public class ShaderTrapStatePrinterTest {
 
     ProgramState programState = new ProgramState(new DefaultConfig());
     programState.programInitialization(new TranslationUnit(ShaderKind.COMPUTE,
-        Optional.of(ShadingLanguageVersion.ESSL_310), Arrays.asList(inVariable, mainFunction)),
-        ShaderKind.COMPUTE);
+        Optional.of(ShadingLanguageVersion.ESSL_310), Arrays.asList(inVariable, mainFunction)));
     Assert.assertEquals(new ShaderTrapStatePrinter().printWrapper(programState),
         minimalProgramText);
   }

@@ -6,6 +6,7 @@ import com.graphicsfuzz.common.ast.type.BasicType;
 import com.graphicsfuzz.common.ast.type.QualifiedType;
 import com.graphicsfuzz.common.ast.type.Type;
 import com.graphicsfuzz.common.ast.type.TypeQualifier;
+import com.graphicsfuzz.common.ast.type.VoidType;
 import com.graphicsfuzz.common.ast.visitors.IAstVisitor;
 import com.graphicsfuzz.common.typing.Scope;
 import java.util.List;
@@ -18,10 +19,12 @@ public class UnifiedTypeProxy extends Type implements UnifiedTypeInterface {
   private final int baseTypeSize;
   private final int currentTypeSize;
   private final boolean isArray;
+  private final boolean isOut;
   private boolean isReadOnly;
   private boolean isConstOnly;
   private boolean isWriteOnly;
   private boolean isCoherent;
+  private boolean isVoid;
 
   public UnifiedTypeProxy(QualifiedType realType) {
     this.realType = realType;
@@ -43,6 +46,10 @@ public class UnifiedTypeProxy extends Type implements UnifiedTypeInterface {
     this.isConstOnly = qualifierList.contains(TypeQualifier.CONST);
     this.isWriteOnly = qualifierList.contains(TypeQualifier.WRITEONLY);
     this.isCoherent = qualifierList.contains(TypeQualifier.COHERENT);
+    this.isOut =
+        qualifierList.contains(TypeQualifier.OUT_PARAM)
+            || qualifierList.contains(TypeQualifier.INOUT_PARAM);
+    this.isVoid = false;
   }
 
   public UnifiedTypeProxy(BasicType realType) {
@@ -55,6 +62,8 @@ public class UnifiedTypeProxy extends Type implements UnifiedTypeInterface {
     this.isReadOnly = false;
     this.isWriteOnly = false;
     this.isCoherent = false;
+    this.isVoid = false;
+    this.isOut = false;
   }
 
   public UnifiedTypeProxy(ArrayType realType) {
@@ -78,6 +87,23 @@ public class UnifiedTypeProxy extends Type implements UnifiedTypeInterface {
     this.isWriteOnly = false;
     this.isReadOnly = false;
     this.isCoherent = false;
+    this.isVoid = false;
+    this.isOut = false;
+  }
+
+  public UnifiedTypeProxy(VoidType voidType) {
+    this.realType = voidType;
+    this.childType = null;
+    this.baseType = null;
+    this.baseTypeSize = 0;
+    this.currentTypeSize = 0;
+    this.isArray = false;
+    this.isWriteOnly = false;
+    this.isReadOnly = false;
+    this.isConstOnly = false;
+    this.isCoherent = false;
+    this.isVoid = false;
+    this.isOut = false;
   }
 
 
@@ -165,6 +191,16 @@ public class UnifiedTypeProxy extends Type implements UnifiedTypeInterface {
   @Override
   public boolean isWriteOnly() {
     return isWriteOnly;
+  }
+
+  @Override
+  public boolean isVoid() {
+    return isVoid;
+  }
+
+  @Override
+  public boolean isOut() {
+    return isOut;
   }
 
   @Override

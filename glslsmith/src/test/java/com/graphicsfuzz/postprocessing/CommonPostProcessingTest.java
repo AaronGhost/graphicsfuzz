@@ -3,7 +3,6 @@ package com.graphicsfuzz.postprocessing;
 import com.graphicsfuzz.ProgramState;
 import com.graphicsfuzz.common.ast.TranslationUnit;
 import com.graphicsfuzz.common.util.ParseHelper;
-import com.graphicsfuzz.common.util.ShaderKind;
 import com.graphicsfuzz.config.DefaultConfig;
 import java.util.List;
 import org.junit.Assert;
@@ -44,7 +43,7 @@ public abstract class CommonPostProcessingTest {
       e.printStackTrace();
     }
     ProgramState state = new ProgramState(new DefaultConfig());
-    state.programInitialization(unit, ShaderKind.COMPUTE);
+    state.programInitialization(unit);
     return state;
   }
 }

@@ -14,6 +14,7 @@ import org.junit.Test;
 public class ProgramStateTest {
 
   //TODO write tests for readonly writeonly const variables
+  //TODO write tests for complex settings with enclosed iniitalizers and function calls
   ProgramState programState;
   FuzzerScopeEntry var0;
   FuzzerScopeEntry var1;
@@ -38,7 +39,7 @@ public class ProgramStateTest {
   }
 
   @Test
-  public void testGetReadEntriesOfCompatibleType() {
+  public void testGetReadEntriesOfCompatibleTypeWithInitializer() {
     List<FuzzerScopeEntry> entries = programState.getReadEntriesOfCompatibleType(BasicType.UINT);
     Assert.assertEquals(entries.stream().map(FuzzerScopeEntry::getName)
         .sorted().collect(Collectors.toList()), Arrays.asList("var1", "var3"));
@@ -51,27 +52,36 @@ public class ProgramStateTest {
     entries = programState.getReadEntriesOfCompatibleType(BasicType.UINT);
     Assert.assertEquals(entries.stream().map(FuzzerScopeEntry::getName)
         .sorted().collect(Collectors.toList()), Arrays.asList("var1", "var3"));
-    programState.setIsInitializer(true);
+
+    // Enter initializer
+    programState.enterInitializer();
     entries = programState.getReadEntriesOfCompatibleType(BasicType.INT);
     Assert.assertEquals(entries.stream().map(FuzzerScopeEntry::getName)
         .sorted().collect(Collectors.toList()), Arrays.asList("var0", "var2", "var4"));
     programState.setEntryHasBeenRead(var0);
     programState.setEntryHasBeenRead(var3);
+
+    // Enter initializer second param
+    programState.finishInitParam();
     entries = programState.getReadEntriesOfCompatibleType(BasicType.INT);
     Assert.assertEquals(entries.stream().map(FuzzerScopeEntry::getName)
         .sorted().collect(Collectors.toList()), Arrays.asList("var0", "var2", "var4"));
     programState.setEntryHasBeenWritten(var4);
+
+    // Enter initializer third param
+    programState.finishInitParam();
     entries = programState.getReadEntriesOfCompatibleType(BasicType.INT);
     Assert.assertEquals(entries.stream().map(FuzzerScopeEntry::getName)
         .sorted().collect(Collectors.toList()), Arrays.asList("var0", "var2"));
-    programState.setIsInitializer(false);
+    programState.exitInitializer();
     entries = programState.getReadEntriesOfCompatibleType(BasicType.INT);
     Assert.assertEquals(entries.stream().map(FuzzerScopeEntry::getName)
         .sorted().collect(Collectors.toList()), Arrays.asList("var0", "var2", "var4"));
   }
 
   @Test
-  public void testGetWriteAvailableEntries() {
+  public void testGetWriteAvailableEntriesWithInitializer() {
+    // No initializer
     List<FuzzerScopeEntry> entries = programState.getWriteAvailableEntries();
     Assert.assertEquals(entries.stream().map(FuzzerScopeEntry::getName)
         .sorted().collect(Collectors.toList()), names);
@@ -84,7 +94,9 @@ public class ProgramStateTest {
     entries = programState.getWriteAvailableEntries();
     Assert.assertEquals(entries.stream().map(FuzzerScopeEntry::getName)
         .sorted().collect(Collectors.toList()), names);
-    programState.setIsInitializer(true);
+
+    // Enter initializer first param
+    programState.enterInitializer();
     entries = programState.getWriteAvailableEntries();
     Assert.assertEquals(entries.stream().map(FuzzerScopeEntry::getName)
         .sorted().collect(Collectors.toList()), names);
@@ -92,12 +104,23 @@ public class ProgramStateTest {
     programState.setEntryHasBeenRead(var3);
     entries = programState.getWriteAvailableEntries();
     Assert.assertEquals(entries.stream().map(FuzzerScopeEntry::getName)
+        .sorted().collect(Collectors.toList()), names);
+
+    // Enter initializer second param
+    programState.finishInitParam();
+    entries = programState.getWriteAvailableEntries();
+    Assert.assertEquals(entries.stream().map(FuzzerScopeEntry::getName)
         .sorted().collect(Collectors.toList()), Arrays.asList("var1", "var2", "var4"));
     programState.setEntryHasBeenWritten(var4);
+
+    // Enter initializer third param
+    programState.finishInitParam();
     entries = programState.getWriteAvailableEntries();
     Assert.assertEquals(entries.stream().map(FuzzerScopeEntry::getName)
         .sorted().collect(Collectors.toList()), Arrays.asList("var1", "var2"));
-    programState.setIsInitializer(false);
+    programState.exitInitializer();
+
+
     entries = programState.getWriteAvailableEntries();
     Assert.assertEquals(entries.stream().map(FuzzerScopeEntry::getName)
         .sorted().collect(Collectors.toList()), names);

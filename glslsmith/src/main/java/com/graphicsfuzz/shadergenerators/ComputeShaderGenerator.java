@@ -156,6 +156,6 @@ public class ComputeShaderGenerator extends ShaderGenerator {
     //Generate the translation unit and add it to the programState
     TranslationUnit translationUnit = new TranslationUnit(ShaderKind.COMPUTE,
         Optional.of(configuration.getShadingLanguageVersion()), declList);
-    programState.programInitialization(translationUnit, ShaderKind.COMPUTE);
+    programState.programInitialization(translationUnit);
   }
 }

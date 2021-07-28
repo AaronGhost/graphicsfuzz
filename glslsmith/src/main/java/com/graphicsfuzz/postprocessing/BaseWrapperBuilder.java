@@ -53,7 +53,7 @@ public abstract class BaseWrapperBuilder extends StandardVisitor implements Post
             wrapperFunction.middle, wrapperFunction.right));
     }
 
-    state.programInitialization(tu, state.getShaderKind());
+    state.programInitialization(tu);
     return state;
   }
 }

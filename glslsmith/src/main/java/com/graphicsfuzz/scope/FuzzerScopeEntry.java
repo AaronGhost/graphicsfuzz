@@ -71,6 +71,18 @@ public class FuzzerScopeEntry implements UnifiedTypeInterface {
     return type.isWriteOnly();
   }
 
+  //A fuzzer scope entry can never be void
+  @Override
+  public boolean isVoid() {
+    return false;
+  }
+
+  //A fuzzer scope entry can never be a out param
+  @Override
+  public boolean isOut() {
+    return false;
+  }
+
   @Override
   public boolean isConstOnly() {
     return type.isConstOnly();

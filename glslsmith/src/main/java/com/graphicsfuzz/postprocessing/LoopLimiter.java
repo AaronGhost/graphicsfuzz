@@ -74,7 +74,7 @@ public class LoopLimiter extends StandardVisitor implements PostProcessorInterfa
                   new Initializer(new IntConstantExpr("0"))))),
           tu.getMainFunction());
     }
-    state.programInitialization(tu, state.getShaderKind());
+    state.programInitialization(tu);
     return programState;
   }
 }

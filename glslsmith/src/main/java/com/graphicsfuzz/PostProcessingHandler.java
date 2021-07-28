@@ -2,12 +2,13 @@ package com.graphicsfuzz;
 
 import com.graphicsfuzz.common.ast.TranslationUnit;
 import com.graphicsfuzz.common.util.ParseHelper;
-import com.graphicsfuzz.common.util.ShaderKind;
 import com.graphicsfuzz.config.DefaultConfig;
 import com.graphicsfuzz.postprocessing.ArithmeticWrapperBuilder;
 import com.graphicsfuzz.postprocessing.ArrayIndexBuilder;
+import com.graphicsfuzz.postprocessing.CallingOrderCleaner;
 import com.graphicsfuzz.postprocessing.LoopLimiter;
 import com.graphicsfuzz.postprocessing.PostProcessorInterface;
+import com.graphicsfuzz.postprocessing.StdWrapperBuilder;
 import com.graphicsfuzz.stateprinters.ShaderTrapStatePrinter;
 import com.graphicsfuzz.stateprinters.StatePrinter;
 import java.nio.file.Files;
@@ -21,9 +22,12 @@ import net.sourceforge.argparse4j.inf.Namespace;
 
 public class PostProcessingHandler {
 
+  // post-processors need to be registered here
   private static final List<PostProcessorInterface> postProcessors = Arrays.asList(
       new ArithmeticWrapperBuilder(),
       new ArrayIndexBuilder(false),
+      new CallingOrderCleaner(),
+      new StdWrapperBuilder(),
       new LoopLimiter(true, 100)
   );
 
@@ -38,7 +42,7 @@ public class PostProcessingHandler {
       //TODO see if the config interface is necessary to the program state
       ProgramState programState = new ProgramState(new DefaultConfig());
       TranslationUnit unit = ParseHelper.parse(glslCode);
-      programState.programInitialization(unit, ShaderKind.COMPUTE);
+      programState.programInitialization(unit);
       //TODO setup the buffers according to the given values
       //Pipeline post-processing
       for (PostProcessorInterface postProcessorInterface : postProcessors) {

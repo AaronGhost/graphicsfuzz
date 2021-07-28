@@ -18,6 +18,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
@@ -26,8 +27,7 @@ import org.apache.commons.lang3.tuple.ImmutableTriple;
 public class ProgramState {
   //General attributes
   private TranslationUnit translationUnit;
-  private ShaderKind shaderKind;
-  private ConfigInterface configInterface;
+  private final ConfigInterface configInterface;
 
   //Scope management
   private FuzzerScope currentScope = new FuzzerScope();
@@ -42,11 +42,16 @@ public class ProgramState {
   private boolean lvalue = false;
   private boolean constant = true;
   private boolean shiftOperation = false;
-  private boolean initializer = false;
+  private int initializer = 0;
+  private int funCall = 0;
+  private boolean outParam = false;
   private int swizzleDepth = 0;
   private FuzzerScopeEntry currentLValueVariable = null;
-  private List<FuzzerScopeEntry> seenReadEntries = new ArrayList<>();
-  private List<FuzzerScopeEntry> seenWrittenEntries = new ArrayList<>();
+  private final Set<FuzzerScopeEntry> currentInitExprReadEntries = new HashSet<>();
+  private final Set<FuzzerScopeEntry> currentInitExprWrittenEntries = new HashSet<>();
+  private final Set<FuzzerScopeEntry> seenInitReadEntries = new HashSet<>();
+  private final Set<FuzzerScopeEntry> seenInitWrittenEntries = new HashSet<>();
+  private final Stack<Set<FuzzerScopeEntry>> seenFunCallEntries = new Stack<>();
 
   //Referencing the necessary safe wrappers for later generation
   private final Set<ImmutableTriple<Operation, BasicType, BasicType>> necessaryWrappers =
@@ -71,7 +76,7 @@ public class ProgramState {
 
   //General attributes management
   public ShaderKind getShaderKind() {
-    return shaderKind;
+    return configInterface.getShaderKind();
   }
 
   public String getShaderCode() {
@@ -91,10 +96,8 @@ public class ProgramState {
     return translationUnit.getShadingLanguageVersion().getVersionString();
   }
 
-
-  public void programInitialization(TranslationUnit translationUnit, ShaderKind shaderKind) {
+  public void programInitialization(TranslationUnit translationUnit) {
     this.translationUnit = translationUnit;
-    this.shaderKind = shaderKind;
   }
 
   //Scope management
@@ -113,18 +116,28 @@ public class ProgramState {
   }
 
   public boolean hasEntryBeenRead(FuzzerScopeEntry entry) {
-    return seenReadEntries.contains(entry);
+    return seenInitWrittenEntries.contains(entry);
   }
 
   public void setEntryHasBeenRead(FuzzerScopeEntry entry) {
-    if (!configInterface.allowMultipleWriteAccessInInitializers() && initializer) {
-      seenReadEntries.add(entry);
+    if (!configInterface.allowMultipleWriteAccessInInitializers() && initializer > 0) {
+      currentInitExprReadEntries.add(entry);
     }
   }
 
+  public void finishInitParam() {
+    seenInitReadEntries.addAll(currentInitExprReadEntries);
+    seenInitWrittenEntries.addAll(currentInitExprWrittenEntries);
+    currentInitExprReadEntries.clear();
+    currentInitExprWrittenEntries.clear();
+  }
+
   public void setEntryHasBeenWritten(FuzzerScopeEntry entry) {
-    if (!configInterface.allowMultipleWriteAccessInInitializers() && initializer) {
-      seenWrittenEntries.add(entry);
+    if (!configInterface.allowMultipleWriteAccessInInitializers() && initializer > 0) {
+      currentInitExprWrittenEntries.add(entry);
+    }
+    if (funCall > 0 && outParam) {
+      seenFunCallEntries.peek().add(entry);
     }
   }
 
@@ -132,17 +145,39 @@ public class ProgramState {
     return currentScope.getScopeEntryByName(variableName);
   }
 
+  public List<FuzzerScopeEntry> getWriteEntriesOfCompatibleType(BasicType type) {
+    List<FuzzerScopeEntry> scopeEntries = currentScope.getWriteEntriesOfCompatibleType(type);
+    return filterWriteAvailableEntries(scopeEntries);
+  }
+
   public List<FuzzerScopeEntry> getReadEntriesOfCompatibleType(BasicType type) {
-    return currentScope.getReadEntriesOfCompatibleType(type).stream().filter(
-        t -> ! seenWrittenEntries.contains(t)
-    ).collect(Collectors.toList());
+    List<FuzzerScopeEntry> scopeEntries = currentScope.getWriteEntriesOfCompatibleType(type);
+    if (! configInterface.allowMultipleWriteAccessInInitializers() && initializer > 0) {
+      return scopeEntries.stream().filter(
+          t -> !seenInitWrittenEntries.contains(t)
+      ).collect(Collectors.toList());
+    }
+    return scopeEntries;
   }
 
   public List<FuzzerScopeEntry> getWriteAvailableEntries() {
-    return currentScope.getWriteAvailableEntries().stream().filter(
-        t -> (! seenReadEntries.contains(t)) && (! seenWrittenEntries.contains(t)))
-        .collect(Collectors.toList());
+    List<FuzzerScopeEntry> scopeEntries = currentScope.getWriteAvailableEntries();
+    return filterWriteAvailableEntries(scopeEntries);
   }
+
+  private List<FuzzerScopeEntry> filterWriteAvailableEntries(List<FuzzerScopeEntry> scopeEntries) {
+    if (! configInterface.allowMultipleWriteAccessInInitializers() && initializer > 0) {
+      scopeEntries = scopeEntries.stream().filter(
+          t -> !(seenInitReadEntries.contains(t)
+              || seenInitWrittenEntries.contains(t))).collect(Collectors.toList());
+    }
+    if (funCall > 0 && outParam) {
+      scopeEntries = scopeEntries.stream().filter(
+          t -> seenFunCallEntries.peek().contains(t)).collect(Collectors.toList());
+    }
+    return scopeEntries;
+  }
+
 
   //Functions to add variable to the current scope
   public void addUniformBufferVariable(String name, UnifiedTypeInterface variable) {
@@ -174,7 +209,6 @@ public class ProgramState {
   }
 
   public String getAvailableShadowName() {
-    //TODO shadowing problems
     assert currentScope.getAvailableShadowOffset() < currentScope.getFirstAvailableOffset();
     return "var_" + currentScope.getAvailableShadowOffset();
   }
@@ -188,14 +222,36 @@ public class ProgramState {
     return lvalue;
   }
 
-  public void setIsInitializer(boolean initializer) {
-    seenReadEntries.clear();
-    seenWrittenEntries.clear();
-    this.initializer = initializer;
+  public void enterInitializer() {
+    initializer++;
   }
 
-  public boolean isInitializer() {
-    return initializer;
+  public void exitInitializer() {
+    initializer--;
+    assert initializer >= 0;
+    if (initializer == 0) {
+      seenInitWrittenEntries.clear();
+      seenInitReadEntries.clear();
+    }
+  }
+
+  public void enterFunCall() {
+    funCall++;
+    seenFunCallEntries.push(new HashSet<>());
+  }
+
+  public void exitFunCall() {
+    funCall--;
+    assert funCall >= 0;
+    seenFunCallEntries.pop();
+  }
+
+  public void setOutParam(boolean outParam) {
+    this.outParam = outParam;
+  }
+
+  public boolean isOutParam() {
+    return outParam;
   }
 
   public FuzzerScopeEntry getCurrentLValueVariable() {
