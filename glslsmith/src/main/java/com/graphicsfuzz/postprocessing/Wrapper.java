@@ -33,6 +33,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static com.graphicsfuzz.postprocessing.Operation.SAFE_BITFIELD_INSERT;
+
 
 public abstract class Wrapper {
 
@@ -262,14 +264,15 @@ public abstract class Wrapper {
         new BlockStmt(stmts, true));
   }
 
-  private static Declaration generateStdBitWrapper(BasicType type, String functionName,
-                                                   String wrapperName) {
+  private static List<Stmt> generateStdBitWrapperBase() {
     // Declares a safe new offset variable
+    List<Stmt> declarationList = new ArrayList<>();
     VariablesDeclaration offsetDeclaration = new VariablesDeclaration(BasicType.INT,
         Collections.singletonList(new VariableDeclInfo(
-        "safe_offset", null,
+            "safe_offset", null,
             new Initializer(new BinaryExpr(new FunctionCallExpr("SAFE_ABS",
                 new VariableIdentifierExpr("offset")), new IntConstantExpr("32"), BinOp.MOD)))));
+    declarationList.add(new DeclarationStmt(offsetDeclaration));
     // Declare a safe new bits variable
     VariablesDeclaration bitsDeclaration = new VariablesDeclaration(BasicType.INT,
         Collections.singletonList(new VariableDeclInfo(
@@ -279,22 +282,33 @@ public abstract class Wrapper {
                 new ParenExpr(new BinaryExpr(new IntConstantExpr("32"),
                     new VariableIdentifierExpr("safe_offset"), BinOp.SUB)),
                 BinOp.MOD)))));
-    // Create the real funcall
-    Expr funCallExpr = new FunctionCallExpr(functionName, new VariableIdentifierExpr("value"),
-        new VariableIdentifierExpr("safe_offset"), new VariableIdentifierExpr("safe_bits"));
-    List<Stmt> stmts = Arrays.asList(new DeclarationStmt(offsetDeclaration),
-        new DeclarationStmt(bitsDeclaration), new ReturnStmt(funCallExpr));
-    return new FunctionDefinition(new FunctionPrototype(wrapperName, type,
-        Arrays.asList(new ParameterDecl("value", type, null), new ParameterDecl("offset",
-            BasicType.INT, null), new ParameterDecl("bits", BasicType.INT, null))),
-        new BlockStmt(stmts, true));
+    declarationList.add(new DeclarationStmt(bitsDeclaration));
+    return declarationList;
   }
 
   public static Declaration generateBitInsertWrapper(BasicType valueType, BasicType useless) {
-    return generateStdBitWrapper(valueType, "bitfieldInsert", "SAFE_BITFIELD_INSERT");
+    List<Stmt> body = generateStdBitWrapperBase();
+    Expr funCallExpr = new FunctionCallExpr("bitfieldInsert",
+        new VariableIdentifierExpr("base"), new VariableIdentifierExpr("insert"),
+        new VariableIdentifierExpr("safe_offset"), new VariableIdentifierExpr("safe_bits"));
+    body.add(new ReturnStmt(funCallExpr));
+    return new FunctionDefinition(new FunctionPrototype("SAFE_BITFIELD_INSERT", valueType,
+        Arrays.asList(new ParameterDecl("base", valueType, null),
+            new ParameterDecl("insert", valueType, null),
+            new ParameterDecl("offset", BasicType.INT, null),
+            new ParameterDecl("bits", BasicType.INT, null))),
+        new BlockStmt(body, true));
   }
 
   public static Declaration generateBitExtractWrapper(BasicType valueType, BasicType useless) {
-    return generateStdBitWrapper(valueType, "bitfieldExtract", "SAFE_BITFIELD_EXTRACT");
+    List<Stmt> body = generateStdBitWrapperBase();
+    Expr funCallExpr = new FunctionCallExpr("bitfieldExtract", new VariableIdentifierExpr("value"),
+        new VariableIdentifierExpr("safe_offset"), new VariableIdentifierExpr("safe_bits"));
+    body.add(new ReturnStmt(funCallExpr));
+    return new FunctionDefinition(new FunctionPrototype("SAFE_BITFIELD_EXTRACT", valueType,
+        Arrays.asList(new ParameterDecl("value", valueType, null),
+            new ParameterDecl("offset", BasicType.INT, null),
+            new ParameterDecl("bits", BasicType.INT, null))),
+        new BlockStmt(body, true));
   }
 }

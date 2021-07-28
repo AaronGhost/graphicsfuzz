@@ -1,12 +1,15 @@
 package com.graphicsfuzz.functions;
 
 import com.graphicsfuzz.common.ast.type.BasicType;
+import com.graphicsfuzz.common.ast.type.QualifiedType;
+import com.graphicsfuzz.common.ast.type.TypeQualifier;
 import com.graphicsfuzz.common.ast.type.VoidType;
 import com.graphicsfuzz.common.util.IRandom;
 import com.graphicsfuzz.common.util.ShaderKind;
 import com.graphicsfuzz.scope.UnifiedTypeProxy;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -548,37 +551,61 @@ public class FunctionRegistry {
     voidReturnFunctions.add(new FunctionStruct("umulExtended",
         new UnifiedTypeProxy(VoidType.VOID),
         new UnifiedTypeProxy(BasicType.UINT), new UnifiedTypeProxy(BasicType.UINT),
-        new UnifiedTypeProxy(BasicType.UINT), new UnifiedTypeProxy(BasicType.UINT)));
+        new UnifiedTypeProxy(new QualifiedType(BasicType.UINT,
+            Collections.singletonList(TypeQualifier.OUT_PARAM))),
+        new UnifiedTypeProxy(new QualifiedType(BasicType.UINT,
+            Collections.singletonList(TypeQualifier.OUT_PARAM)))));
     voidReturnFunctions.add(new FunctionStruct("umulExtended",
         new UnifiedTypeProxy(VoidType.VOID),
         new UnifiedTypeProxy(BasicType.UVEC2), new UnifiedTypeProxy(BasicType.UVEC2),
-        new UnifiedTypeProxy(BasicType.UVEC2), new UnifiedTypeProxy(BasicType.UVEC2)));
+        new UnifiedTypeProxy(new QualifiedType(BasicType.UVEC2,
+            Collections.singletonList(TypeQualifier.OUT_PARAM))),
+        new UnifiedTypeProxy(new QualifiedType(BasicType.UVEC2,
+            Collections.singletonList(TypeQualifier.OUT_PARAM)))));
     voidReturnFunctions.add(new FunctionStruct("umulExtended",
         new UnifiedTypeProxy(VoidType.VOID),
         new UnifiedTypeProxy(BasicType.UVEC3), new UnifiedTypeProxy(BasicType.UVEC3),
-        new UnifiedTypeProxy(BasicType.UVEC3), new UnifiedTypeProxy(BasicType.UVEC3)));
+        new UnifiedTypeProxy(new QualifiedType(BasicType.UVEC3,
+            Collections.singletonList(TypeQualifier.OUT_PARAM))),
+        new UnifiedTypeProxy(new QualifiedType(BasicType.UVEC3,
+            Collections.singletonList(TypeQualifier.OUT_PARAM)))));
     voidReturnFunctions.add(new FunctionStruct("umulExtended",
         new UnifiedTypeProxy(VoidType.VOID),
         new UnifiedTypeProxy(BasicType.UVEC4), new UnifiedTypeProxy(BasicType.UVEC4),
-        new UnifiedTypeProxy(BasicType.UVEC4), new UnifiedTypeProxy(BasicType.UVEC4)));
+        new UnifiedTypeProxy(new QualifiedType(BasicType.UVEC4,
+            Collections.singletonList(TypeQualifier.OUT_PARAM))),
+        new UnifiedTypeProxy(new QualifiedType(BasicType.UVEC4,
+          Collections.singletonList(TypeQualifier.OUT_PARAM)))));
 
     // ImulExtended
     voidReturnFunctions.add(new FunctionStruct("imulExtended",
         new UnifiedTypeProxy(VoidType.VOID),
         new UnifiedTypeProxy(BasicType.INT), new UnifiedTypeProxy(BasicType.INT),
-        new UnifiedTypeProxy(BasicType.INT), new UnifiedTypeProxy(BasicType.INT)));
+        new UnifiedTypeProxy(new QualifiedType(BasicType.INT,
+            Collections.singletonList(TypeQualifier.OUT_PARAM))),
+        new UnifiedTypeProxy(new QualifiedType(BasicType.INT,
+            Collections.singletonList(TypeQualifier.OUT_PARAM)))));
     voidReturnFunctions.add(new FunctionStruct("imulExtended",
         new UnifiedTypeProxy(VoidType.VOID),
         new UnifiedTypeProxy(BasicType.IVEC2), new UnifiedTypeProxy(BasicType.IVEC2),
-        new UnifiedTypeProxy(BasicType.IVEC2), new UnifiedTypeProxy(BasicType.IVEC2)));
+        new UnifiedTypeProxy(new QualifiedType(BasicType.IVEC2,
+            Collections.singletonList(TypeQualifier.OUT_PARAM))),
+        new UnifiedTypeProxy(new QualifiedType(BasicType.IVEC2,
+            Collections.singletonList(TypeQualifier.OUT_PARAM)))));
     voidReturnFunctions.add(new FunctionStruct("imulExtended",
         new UnifiedTypeProxy(VoidType.VOID),
         new UnifiedTypeProxy(BasicType.IVEC3), new UnifiedTypeProxy(BasicType.IVEC3),
-        new UnifiedTypeProxy(BasicType.IVEC3), new UnifiedTypeProxy(BasicType.IVEC3)));
+        new UnifiedTypeProxy(new QualifiedType(BasicType.IVEC3,
+            Collections.singletonList(TypeQualifier.OUT_PARAM))),
+        new UnifiedTypeProxy(new QualifiedType(BasicType.IVEC3,
+            Collections.singletonList(TypeQualifier.OUT_PARAM)))));
     voidReturnFunctions.add(new FunctionStruct("imulExtended",
         new UnifiedTypeProxy(VoidType.VOID),
         new UnifiedTypeProxy(BasicType.IVEC4), new UnifiedTypeProxy(BasicType.IVEC4),
-        new UnifiedTypeProxy(BasicType.IVEC4), new UnifiedTypeProxy(BasicType.IVEC4)));
+        new UnifiedTypeProxy(new QualifiedType(BasicType.IVEC4,
+            Collections.singletonList(TypeQualifier.OUT_PARAM))),
+        new UnifiedTypeProxy(new QualifiedType(BasicType.IVEC4,
+            Collections.singletonList(TypeQualifier.OUT_PARAM)))));
 
     // Bitfield Extract functions for integers
     intReturnFunctions.add(new FunctionStruct("bitfieldExtract",

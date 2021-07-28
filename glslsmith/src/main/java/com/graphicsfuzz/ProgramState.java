@@ -151,7 +151,7 @@ public class ProgramState {
   }
 
   public List<FuzzerScopeEntry> getReadEntriesOfCompatibleType(BasicType type) {
-    List<FuzzerScopeEntry> scopeEntries = currentScope.getWriteEntriesOfCompatibleType(type);
+    List<FuzzerScopeEntry> scopeEntries = currentScope.getReadEntriesOfCompatibleType(type);
     if (! configInterface.allowMultipleWriteAccessInInitializers() && initializer > 0) {
       return scopeEntries.stream().filter(
           t -> !seenInitWrittenEntries.contains(t)
@@ -319,7 +319,7 @@ public class ProgramState {
       }
     }
     if (op == Operation.SAFE_BITFIELD_EXTRACT || op == Operation.SAFE_BITFIELD_INSERT) {
-      registerWrapper(Operation.SAFE_ABS, typeA, null);
+      registerWrapper(Operation.SAFE_ABS, BasicType.INT, null);
     }
   }
 

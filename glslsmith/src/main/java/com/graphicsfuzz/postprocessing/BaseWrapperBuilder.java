@@ -36,21 +36,18 @@ public abstract class BaseWrapperBuilder extends StandardVisitor implements Post
       }
     }
 
-    // We add functions from the start of the file in order to that the first added line will be
-    // the last one at the end
-
-    //Add the necessary wrapper body in any order
-    for (ImmutableTriple<Operation, BasicType, BasicType> wrapperFunction :
-        necessaryWrappers) {
-      tu.addDeclaration(wrapperFunction.left.generator.apply(wrapperFunction.middle,
-          wrapperFunction.right));
-    }
-
     // Add the necessary wrappers prototypes in any order
     for (ImmutableTriple<Operation, BasicType, BasicType> wrapperFunction :
         necessaryWrappers) {
       tu.addDeclaration(Wrapper.generateDeclaration(wrapperFunction.left,
-            wrapperFunction.middle, wrapperFunction.right));
+          wrapperFunction.middle, wrapperFunction.right));
+    }
+
+    //Add the necessary wrapper bodies in any order before the main function
+    for (ImmutableTriple<Operation, BasicType, BasicType> wrapperFunction :
+        necessaryWrappers) {
+      tu.addDeclarationBefore(wrapperFunction.left.generator.apply(wrapperFunction.middle,
+          wrapperFunction.right), tu.getMainFunction());
     }
 
     state.programInitialization(tu);

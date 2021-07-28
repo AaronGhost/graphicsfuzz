@@ -369,13 +369,14 @@ public abstract class ShaderGenerator {
   }
 
   protected Expr generateFunCallExpr(UnifiedTypeProxy type) {
-    FunctionStruct funCallStruct = registry.getRandomFunctionStruct(type);
+    FunctionStruct funCallStruct = null;
     List<Expr> parameters = new ArrayList<>();
     // We set in the programState that we are generating a funcall, ie store values if the
     // variable is declared as out later and no flush until the end of the functionCall generation
     programState.enterFunCall();
     boolean allParametersNotAvailable = true;
     while (allParametersNotAvailable) {
+      funCallStruct = registry.getRandomFunctionStruct(type);
       allParametersNotAvailable = false;
       parameters.clear();
       for (UnifiedTypeProxy parameterType : funCallStruct.parameterTypes) {
