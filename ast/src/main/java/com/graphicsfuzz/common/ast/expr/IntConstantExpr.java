@@ -66,11 +66,4 @@ public class IntConstantExpr extends ConstantExpr {
     return getValue().startsWith("0x");
   }
 
-  @Override
-  public boolean equals(Object obj) {
-    if (! (obj instanceof IntConstantExpr)) {
-      return false;
-    }
-    return value.equals(((IntConstantExpr) obj).getValue());
-  }
 }

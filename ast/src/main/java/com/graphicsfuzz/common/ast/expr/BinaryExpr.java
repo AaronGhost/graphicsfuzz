@@ -108,12 +108,4 @@ public class BinaryExpr extends Expr {
     return 2;
   }
 
-  @Override
-  public boolean equals(Object obj) {
-    if (!(obj instanceof BinaryExpr)) {
-      return false;
-    }
-    BinaryExpr other = (BinaryExpr) obj;
-    return lhs.equals(other.getLhs()) && rhs.equals(other.getRhs()) && op.equals(other.getOp());
-  }
 }

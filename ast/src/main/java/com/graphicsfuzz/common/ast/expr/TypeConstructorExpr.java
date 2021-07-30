@@ -129,12 +129,4 @@ public class TypeConstructorExpr extends Expr {
     return args.size();
   }
 
-  @Override
-  public boolean equals(Object obj) {
-    if (! (obj instanceof TypeConstructorExpr)) {
-      return false;
-    }
-    TypeConstructorExpr other = (TypeConstructorExpr) obj;
-    return type.equals(other.getTypename()) && args.equals(other.getArgs());
-  }
 }

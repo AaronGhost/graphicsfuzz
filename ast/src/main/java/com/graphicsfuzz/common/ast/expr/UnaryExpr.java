@@ -76,12 +76,4 @@ public class UnaryExpr extends Expr {
     return 1;
   }
 
-  @Override
-  public boolean equals(Object obj) {
-    if (! (obj instanceof UnaryExpr)) {
-      return false;
-    }
-    UnaryExpr other = (UnaryExpr) obj;
-    return op.equals(other.getOp()) && expr.equals(other.getExpr());
-  }
 }

@@ -71,11 +71,4 @@ public class UIntConstantExpr extends ConstantExpr {
     return getValueWithoutSuffix().startsWith("0x");
   }
 
-  @Override
-  public boolean equals(Object obj) {
-    if (! (obj instanceof UIntConstantExpr)) {
-      return false;
-    }
-    return value.equals(((UIntConstantExpr) obj).getValue());
-  }
 }

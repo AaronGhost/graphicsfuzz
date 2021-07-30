@@ -87,12 +87,4 @@ public class MemberLookupExpr extends Expr {
     return 1;
   }
 
-  @Override
-  public boolean equals(Object obj) {
-    if (! (obj instanceof MemberLookupExpr)) {
-      return false;
-    }
-    MemberLookupExpr other = (MemberLookupExpr) obj;
-    return structure.equals(other.structure) && member.equals(other.member);
-  }
 }

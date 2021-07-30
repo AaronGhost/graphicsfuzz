@@ -45,12 +45,4 @@ public class FloatConstantExpr extends ConstantExpr {
   public FloatConstantExpr clone() {
     return new FloatConstantExpr(value);
   }
-
-  @Override
-  public boolean equals(Object obj) {
-    if (! (obj instanceof FloatConstantExpr)) {
-      return false;
-    }
-    return value.equals(((FloatConstantExpr) obj).getValue());
-  }
 }
