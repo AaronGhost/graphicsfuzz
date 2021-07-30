@@ -15,7 +15,8 @@ public enum Operation {
   SAFE_MOD(Wrapper::generateModWrapper, "SAFE_MOD", false),
   SAFE_MOD_ASSIGN(Wrapper::generateModAssignWrapper, "SAFE_MOD_ASSIGN", true),
   SAFE_BITFIELD_INSERT(Wrapper::generateBitInsertWrapper, "SAFE_BITFIELD_INSERT", false),
-  SAFE_BITFIELD_EXTRACT(Wrapper::generateBitExtractWrapper, "SAFE_BITFIELD_EXTRACT", false);
+  SAFE_BITFIELD_EXTRACT(Wrapper::generateBitExtractWrapper, "SAFE_BITFIELD_EXTRACT", false),
+  SAFE_CLAMP(Wrapper::generateClampWrapper, "SAFE_CLAMP", false);
 
   public final BiFunction<BasicType, BasicType, Declaration> generator;
   public final String name;

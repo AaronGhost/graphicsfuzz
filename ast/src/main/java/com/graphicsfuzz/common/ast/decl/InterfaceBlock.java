@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 
 public class InterfaceBlock extends Declaration {
 
-  private final Optional<LayoutQualifierSequence> layoutQualifier;
+  private Optional<LayoutQualifierSequence> layoutQualifier;
   private final List<TypeQualifier> interfaceQualifiers;
   private final String structName;
   private final List<String> memberNames;
@@ -97,6 +97,10 @@ public class InterfaceBlock extends Declaration {
   public LayoutQualifierSequence getLayoutQualifierSequence() {
     assert hasLayoutQualifierSequence();
     return layoutQualifier.get();
+  }
+
+  public void setLayoutQualifierSequence(LayoutQualifierSequence sequence) {
+    layoutQualifier = Optional.of(sequence);
   }
 
   public List<TypeQualifier> getInterfaceQualifiers() {

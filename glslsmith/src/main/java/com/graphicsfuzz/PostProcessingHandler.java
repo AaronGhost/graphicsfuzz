@@ -6,6 +6,7 @@ import com.graphicsfuzz.common.util.ShaderKind;
 import com.graphicsfuzz.config.DefaultConfig;
 import com.graphicsfuzz.postprocessing.ArithmeticWrapperBuilder;
 import com.graphicsfuzz.postprocessing.ArrayIndexBuilder;
+import com.graphicsfuzz.postprocessing.BufferFormatEnforcer;
 import com.graphicsfuzz.postprocessing.CallingOrderCleaner;
 import com.graphicsfuzz.postprocessing.InitializerEnforcer;
 import com.graphicsfuzz.postprocessing.LoopLimiter;
@@ -26,6 +27,7 @@ public class PostProcessingHandler {
 
   // post-processors need to be registered here
   private static final List<PostProcessorInterface> postProcessors = Arrays.asList(
+      new BufferFormatEnforcer(),
       new InitializerEnforcer(),
       new CallingOrderCleaner(),
       new LoopLimiter(true, 100),

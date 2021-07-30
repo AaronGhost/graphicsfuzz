@@ -9,17 +9,27 @@ public class StdWrapperBuilder extends BaseWrapperBuilder {
   @Override
   public void visitFunctionCallExpr(FunctionCallExpr functionCallExpr) {
     String callee = functionCallExpr.getCallee();
-    if (callee.equals("bitfieldExtract") || callee.equals("bitfieldInsert")) {
+    if (callee.equals("bitfieldExtract") || callee.equals("bitfieldInsert") || callee.equals(
+        "clamp")) {
       Type valueType = typer.lookupType(functionCallExpr.getArg(0)).getWithoutQualifiers();
       if (valueType instanceof BasicType) {
         if (callee.equals("bitfieldExtract")) {
           functionCallExpr.setCallee("SAFE_BITFIELD_EXTRACT");
           programState.registerWrapper(Operation.SAFE_BITFIELD_EXTRACT,
               (BasicType) valueType, null);
-        } else {
+        } else if (callee.equals("bitfieldInsert")) {
           functionCallExpr.setCallee("SAFE_BITFIELD_INSERT");
           programState.registerWrapper(Operation.SAFE_BITFIELD_INSERT,
               (BasicType) valueType, null);
+        } else {
+          Type extremumType = typer.lookupType(functionCallExpr.getArg(1)).getWithoutQualifiers();
+          if (extremumType instanceof BasicType) {
+            functionCallExpr.setCallee("SAFE_CLAMP");
+            programState.registerWrapper(Operation.SAFE_CLAMP,
+                (BasicType) valueType, (BasicType) extremumType);
+          } else {
+            throw new RuntimeException("Wrong operand type");
+          }
         }
       } else {
         throw new RuntimeException("Wrong operand type");
