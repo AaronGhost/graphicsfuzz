@@ -45,5 +45,5 @@ public class FloatConstantExpr extends ConstantExpr {
   public FloatConstantExpr clone() {
     return new FloatConstantExpr(value);
   }
-  
+
 }
