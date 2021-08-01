@@ -262,7 +262,8 @@ public abstract class ShaderGenerator {
     } else if (returnType.isVector() && leftType.isScalar()) {
       op = randomTypeGenerator.getRandomBaseIntVectBinaryOp();
     } else {
-      op = randomTypeGenerator.getRandomBaseIntBinaryOp(programState.isSideEffectOpPermitted());
+      op = randomTypeGenerator.getRandomBaseIntBinaryOp(returnType, leftType,
+          programState.isSideEffectOpPermitted());
     }
 
     // Updates the variable state in the program state if it has been written

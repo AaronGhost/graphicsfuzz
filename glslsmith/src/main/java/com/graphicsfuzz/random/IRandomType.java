@@ -15,7 +15,8 @@ public interface IRandomType {
 
   BinOp getRandomBaseIntAssignOp();
 
-  BinOp getRandomBaseIntBinaryOp(boolean canGenerateAssign);
+  BinOp getRandomBaseIntBinaryOp(BasicType returnType, BasicType leftType,
+                                 boolean canGenerateAssign);
 
   UnOp getRandomBaseIntUnaryOp(boolean canGenerateIncrDec);
 

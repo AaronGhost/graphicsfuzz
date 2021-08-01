@@ -114,7 +114,8 @@ public class MokeRandomTypeGenerator implements IRandomType {
   }
 
   @Override
-  public BinOp getRandomBaseIntBinaryOp(boolean canGenerateAssign) {
+  public BinOp getRandomBaseIntBinaryOp(BasicType returnType,
+                                        BasicType leftType, boolean canGenerateAssign) {
     if (canGenerateAssign) {
       return assignIntBinaryOp;
     }

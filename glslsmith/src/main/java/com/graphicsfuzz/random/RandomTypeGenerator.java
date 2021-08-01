@@ -127,51 +127,92 @@ public class RandomTypeGenerator implements IRandomType {
   }
 
   @Override
-  public BinOp getRandomBaseIntBinaryOp(boolean canGenerateAssign) {
-    switch (randGen.nextInt(canGenerateAssign ? 21
-        : 10)) {
-      case 0:
-        return BinOp.MOD;
-      case 1:
-        return BinOp.MUL;
-      case 2:
-        return BinOp.DIV;
-      case 3:
-        return BinOp.ADD;
-      case 4:
-        return BinOp.SUB;
-      case 5:
-        return BinOp.BAND;
-      case 6:
-        return BinOp.BOR;
-      case 7:
-        return BinOp.BXOR;
-      case 8:
-        return BinOp.SHL;
-      case 9:
-        return BinOp.SHR;
-      case 10:
-        return BinOp.MOD_ASSIGN;
-      case 11:
-        return BinOp.MUL_ASSIGN;
-      case 12:
-        return BinOp.DIV_ASSIGN;
-      case 13:
-        return BinOp.ADD_ASSIGN;
-      case 14:
-        return BinOp.SUB_ASSIGN;
-      case 15:
-        return BinOp.BAND_ASSIGN;
-      case 16:
-        return BinOp.BOR_ASSIGN;
-      case 17:
-        return BinOp.BXOR_ASSIGN;
-      case 18:
-        return BinOp.SHL_ASSIGN;
-      case 19:
-        return BinOp.SHR_ASSIGN;
-      default:
-        return BinOp.ASSIGN;
+  public BinOp getRandomBaseIntBinaryOp(BasicType returnType,
+                                        BasicType leftType, boolean canGenerateAssign) {
+    // We can't generate shift operations
+    if (returnType.isVector() && leftType.isScalar()) {
+      switch (randGen.nextInt(canGenerateAssign ? 17 : 7)) {
+        case 0:
+          return BinOp.MOD;
+        case 1:
+          return BinOp.MUL;
+        case 2:
+          return BinOp.DIV;
+        case 3:
+          return BinOp.ADD;
+        case 4:
+          return BinOp.SUB;
+        case 5:
+          return BinOp.BAND;
+        case 6:
+          return BinOp.BOR;
+        case 7:
+          return BinOp.BXOR;
+        case 8:
+          return BinOp.MOD_ASSIGN;
+        case 9:
+          return BinOp.MUL_ASSIGN;
+        case 10:
+          return BinOp.DIV_ASSIGN;
+        case 11:
+          return BinOp.ADD_ASSIGN;
+        case 12:
+          return BinOp.SUB_ASSIGN;
+        case 13:
+          return BinOp.BAND_ASSIGN;
+        case 14:
+          return BinOp.BOR_ASSIGN;
+        case 15:
+          return BinOp.BXOR_ASSIGN;
+        default:
+          return BinOp.ASSIGN;
+      }
+    } else {
+      switch (randGen.nextInt(canGenerateAssign ? 21
+          : 10)) {
+        case 0:
+          return BinOp.MOD;
+        case 1:
+          return BinOp.MUL;
+        case 2:
+          return BinOp.DIV;
+        case 3:
+          return BinOp.ADD;
+        case 4:
+          return BinOp.SUB;
+        case 5:
+          return BinOp.BAND;
+        case 6:
+          return BinOp.BOR;
+        case 7:
+          return BinOp.BXOR;
+        case 8:
+          return BinOp.SHL;
+        case 9:
+          return BinOp.SHR;
+        case 10:
+          return BinOp.MOD_ASSIGN;
+        case 11:
+          return BinOp.MUL_ASSIGN;
+        case 12:
+          return BinOp.DIV_ASSIGN;
+        case 13:
+          return BinOp.ADD_ASSIGN;
+        case 14:
+          return BinOp.SUB_ASSIGN;
+        case 15:
+          return BinOp.BAND_ASSIGN;
+        case 16:
+          return BinOp.BOR_ASSIGN;
+        case 17:
+          return BinOp.BXOR_ASSIGN;
+        case 18:
+          return BinOp.SHL_ASSIGN;
+        case 19:
+          return BinOp.SHR_ASSIGN;
+        default:
+          return BinOp.ASSIGN;
+      }
     }
   }
 
