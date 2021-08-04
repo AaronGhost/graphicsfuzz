@@ -6,7 +6,7 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class InitializerEnforcerTest extends CommonPostProcessingTest{
+public class InitializerEnforcerTest extends CommonPostProcessingTest {
 
   @Override
   protected List<PostProcessorInterface> createInstance() {

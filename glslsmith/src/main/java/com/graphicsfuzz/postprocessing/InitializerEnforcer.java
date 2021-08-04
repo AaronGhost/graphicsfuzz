@@ -16,10 +16,12 @@ public class InitializerEnforcer extends ScopeTrackingVisitor implements PostPro
     for (VariableDeclInfo variableDeclInfo: variablesDeclaration.getDeclInfos()) {
       if (!variableDeclInfo.hasInitializer()) {
         if (variableDeclInfo.hasArrayInfo()) {
-          ArrayType builtType = new ArrayType(variablesDeclaration.getBaseType().getWithoutQualifiers(),
+          ArrayType builtType = new ArrayType(variablesDeclaration.getBaseType()
+              .getWithoutQualifiers(),
               variableDeclInfo.getArrayInfo());
           if (builtType.hasCanonicalConstant(getCurrentScope())) {
-            variableDeclInfo.setInitializer(new Initializer(builtType.getCanonicalConstant(getCurrentScope())));
+            variableDeclInfo.setInitializer(new Initializer(builtType
+                .getCanonicalConstant(getCurrentScope())));
           }
         } else {
           variableDeclInfo.setInitializer(new Initializer(variablesDeclaration.getBaseType()

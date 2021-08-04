@@ -15,6 +15,7 @@ import com.graphicsfuzz.common.ast.type.BindingLayoutQualifier;
 import com.graphicsfuzz.common.ast.type.LayoutQualifier;
 import com.graphicsfuzz.common.ast.type.LayoutQualifierSequence;
 import com.graphicsfuzz.common.ast.type.LocalSizeLayoutQualifier;
+import com.graphicsfuzz.common.ast.type.Std430LayoutQualifier;
 import com.graphicsfuzz.common.ast.type.Type;
 import com.graphicsfuzz.common.ast.type.TypeQualifier;
 import com.graphicsfuzz.common.ast.type.VoidType;
@@ -122,6 +123,45 @@ public class ShaderTrapStatePrinterTest {
   public void testGetShaderCodeFromHarness() {
     Assert.assertEquals(new ShaderTrapStatePrinter().getShaderCodeFromHarness(minimalProgramText),
         minimalShaderText);
+  }
+
+  @Test
+  public void testGetBuffersFromHarness() {
+    //Test with buffer 2
+    List<Buffer> buffers =  new ShaderTrapStatePrinter().getBuffersFromHarness(
+        buffer2Text + buffer4Text);
+    Buffer buffer2 = buffers.get(0);
+    Assert.assertEquals(buffer2.getName(), "buffer_2");
+    Assert.assertEquals(buffer2.getBinding(), 2);
+    List<LayoutQualifier> layoutSequence = buffer2.getLayoutQualifiers().getLayoutQualifiers();
+    Assert.assertTrue(layoutSequence.get(0) instanceof Std430LayoutQualifier);
+    Assert.assertTrue(layoutSequence.get(1) instanceof BindingLayoutQualifier);
+    Assert.assertEquals(((BindingLayoutQualifier)layoutSequence.get(1)).getIndex(), 2);
+    Assert.assertEquals(buffer2.getMemberNames(), Arrays.asList("ext_0", "ext_1", "ext_2"));
+    List<Type> memberTypes = buffer2.getMemberTypes();
+    Assert.assertEquals(memberTypes.get(0), BasicType.UINT);
+    Assert.assertEquals(memberTypes.get(1), BasicType.INT);
+    Assert.assertEquals(memberTypes.get(2), BasicType.INT);
+
+    //Test with buffer 4
+    Buffer buffer4 = buffers.get(1);
+    Assert.assertEquals(buffer4.getName(), "buffer_4");
+    Assert.assertEquals(buffer4.getBinding(), 4);
+    layoutSequence = buffer4.getLayoutQualifiers().getLayoutQualifiers();
+    Assert.assertTrue(layoutSequence.get(0) instanceof Std430LayoutQualifier);
+    Assert.assertTrue(layoutSequence.get(1) instanceof BindingLayoutQualifier);
+    Assert.assertEquals(((BindingLayoutQualifier)layoutSequence.get(1)).getIndex(), 4);
+    Assert.assertEquals(buffer4.getMemberNames(), Arrays.asList("ext_3", "ext_4"));
+    memberTypes = buffer4.getMemberTypes();
+    ArrayInfo member1Info =
+        new ArrayInfo(Collections.singletonList(Optional.of(new IntConstantExpr("2"))));
+    member1Info.setConstantSizeExpr(0, 2);
+    ArrayInfo member2Info =
+        new ArrayInfo(Collections.singletonList(Optional.of(new IntConstantExpr("7"))));
+    member2Info.setConstantSizeExpr(0, 7);
+
+    Assert.assertEquals(memberTypes.get(0), new ArrayType(BasicType.INT, member1Info));
+    Assert.assertEquals(memberTypes.get(1), new ArrayType(BasicType.UINT, member2Info));
   }
 
 }

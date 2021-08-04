@@ -2,23 +2,32 @@ package com.graphicsfuzz.stateprinters;
 
 import com.graphicsfuzz.Buffer;
 import com.graphicsfuzz.ProgramState;
+import com.graphicsfuzz.common.ast.decl.ArrayInfo;
+import com.graphicsfuzz.common.ast.expr.IntConstantExpr;
 import com.graphicsfuzz.common.ast.type.ArrayType;
 import com.graphicsfuzz.common.ast.type.BasicType;
+import com.graphicsfuzz.common.ast.type.BindingLayoutQualifier;
+import com.graphicsfuzz.common.ast.type.LayoutQualifierSequence;
 import com.graphicsfuzz.common.ast.type.QualifiedType;
+import com.graphicsfuzz.common.ast.type.Std430LayoutQualifier;
 import com.graphicsfuzz.common.ast.type.Type;
+import com.graphicsfuzz.common.ast.type.TypeQualifier;
 import com.graphicsfuzz.common.util.ShaderKind;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-//TODO check support for vector types within shadertrap
 //TODO rewrite without instanceof using UnifiedProxy
 public class ShaderTrapStatePrinter implements StatePrinter {
 
   @Override
   public String changeShaderFromHarness(String harnessText, String newGlslCode) {
     String oldCode = getShaderCodeFromHarness(harnessText);
-    return harnessText.replace(oldCode, newGlslCode);
+    return harnessText.replace(oldCode, newGlslCode + "\n");
   }
 
   @Override
@@ -57,6 +66,77 @@ public class ShaderTrapStatePrinter implements StatePrinter {
     }
   }
 
+  //CREATE_BUFFER buffer_2 SIZE_BYTES 12 INIT_VALUES int -1939323820 uint 0 501873291
+  public List<Buffer> getBuffersFromHarness(String fileContent) {
+    Pattern pattern = Pattern.compile("CREATE_BUFFER ([^ ]+) SIZE_BYTES ([0-9]+) "
+        + "INIT_VALUES (.*)");
+    Pattern typePattern = Pattern.compile("(int|uint)( [0-9]+)+");
+    Matcher matcher = pattern.matcher(fileContent);
+    List<Buffer> buffers = new ArrayList<>();
+    int membersBinding = 0;
+    // Match the next buffer
+    while (matcher.find()) {
+      // Find the name and its complete Size
+      String bufferName = matcher.group(1);
+      int fullSize = Integer.parseInt(matcher.group(2)) / 4;
+
+      // Find its binding point using the name
+      Pattern bindingPattern =
+          Pattern.compile("BIND_SHADER_STORAGE_BUFFER BUFFER " + Pattern.quote(bufferName)
+              + " BINDING ([0-9]+)");
+      Matcher bindingMatcher = bindingPattern.matcher(fileContent);
+      if (bindingMatcher.find()) {
+        int bufferBinding = Integer.parseInt(bindingMatcher.group(1));
+        List<Integer> memberValues = new ArrayList<>();
+        List<String> memberNames = new ArrayList<>();
+        List<Type> memberTypes = new ArrayList<>();
+        Matcher innerMatcher = typePattern.matcher(matcher.group(3));
+        while (innerMatcher.find()) {
+
+          // Match internal values to determine current inner type
+          BasicType type;
+          switch (innerMatcher.group(1)) {
+            case "int":
+              type = BasicType.INT;
+              break;
+            case "uint":
+              type = BasicType.UINT;
+              break;
+            default:
+              type = BasicType.FLOAT;
+          }
+          System.out.println(innerMatcher.group());
+          int innerSize = innerMatcher.group().split(" ").length - 1;
+          fullSize -= innerSize;
+
+          // Build an array type and fold it if necessary
+          if (innerSize != 1) {
+            ArrayInfo arrayInfo = new ArrayInfo(Collections.singletonList(Optional.of(
+                new IntConstantExpr(String.valueOf(innerSize)))));
+            arrayInfo.setConstantSizeExpr(0, innerSize);
+            memberTypes.add(new ArrayType(type, arrayInfo));
+          } else {
+            memberTypes.add(type);
+          }
+
+          // Add a new Member name
+          memberNames.add("ext_" + membersBinding);
+          //TODO parse back the correct values
+          memberValues.add(0);
+          membersBinding++;
+        }
+
+        assert  fullSize == 0;
+        buffers.add(new Buffer(bufferName,
+            new LayoutQualifierSequence(Arrays.asList(new Std430LayoutQualifier(),
+                new BindingLayoutQualifier(bufferBinding))), memberValues, TypeQualifier.BUFFER,
+            memberNames, memberTypes, "", true, bufferBinding));
+      } else {
+        throw new RuntimeException("Buffer " + bufferName + " is not bound to the shader");
+      }
+    }
+    return buffers;
+  }
 
 
   public String parseVersion(String shaderVersion) {
