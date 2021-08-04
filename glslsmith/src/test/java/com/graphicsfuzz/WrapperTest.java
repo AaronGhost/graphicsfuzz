@@ -276,18 +276,19 @@ public class WrapperTest {
 
   @Test
   public void testGenerateBitfieldInsertWrapper() {
-    String intBitfieldInsertText = "int SAFE_BITFIELD_INSERT(int value, int offset, int bits)\n"
+    String intBitfieldInsertText = "int SAFE_BITFIELD_INSERT(int base, int insert, int offset, int "
+        + "bits)\n"
         + "{\n"
         + " int safe_offset = SAFE_ABS(offset) % 32;\n"
         + " int safe_bits = SAFE_ABS(bits) % (32 - safe_offset);\n"
-        + " return bitfieldInsert(value, safe_offset, safe_bits);\n"
+        + " return bitfieldInsert(base, insert, safe_offset, safe_bits);\n"
         + "}\n";
-    String vec4BitfieldInsertText = "ivec4 SAFE_BITFIELD_INSERT(ivec4 value,"
+    String vec4BitfieldInsertText = "ivec4 SAFE_BITFIELD_INSERT(ivec4 base, ivec4 insert,"
         + " int offset, int bits)\n"
         + "{\n"
         + " int safe_offset = SAFE_ABS(offset) % 32;\n"
         + " int safe_bits = SAFE_ABS(bits) % (32 - safe_offset);\n"
-        + " return bitfieldInsert(value, safe_offset, safe_bits);\n"
+        + " return bitfieldInsert(base, insert, safe_offset, safe_bits);\n"
         + "}\n";
     Assert.assertEquals(TestHelper.getText(Wrapper.generateBitInsertWrapper(BasicType.INT, null)),
         intBitfieldInsertText);
@@ -316,4 +317,24 @@ public class WrapperTest {
         null)),
         vec4BitfieldExtractText);
   }
+
+  @Test
+  public void testGenerateClampWrapper() {
+    String intText = "ivec4 SAFE_CLAMP(ivec4 value, int minVal, int maxVal)\n"
+        + "{\n"
+        + " return minVal > maxVal ? clamp(value, min(minVal, maxVal), max(minVal, maxVal)) : "
+        + "clamp(value, minVal, maxVal);\n"
+        + "}\n";
+    String uintText = "uvec2 SAFE_CLAMP(uvec2 value, uvec2 minVal, uvec2 maxVal)\n"
+        + "{\n"
+        + " return any(greaterThan(minVal, maxVal)) ? clamp(value, min(minVal, maxVal), max"
+        + "(minVal, maxVal)) : clamp(value, minVal, maxVal);\n"
+        + "}\n";
+    Assert.assertEquals(TestHelper.getText(Wrapper.generateClampWrapper(BasicType.IVEC4,
+        BasicType.INT)), intText);
+    Assert.assertEquals(TestHelper.getText(Wrapper.generateClampWrapper(BasicType.UVEC2,
+        BasicType.UVEC2)), uintText);
+  }
 }
+
+

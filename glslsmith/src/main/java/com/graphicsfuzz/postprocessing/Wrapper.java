@@ -68,6 +68,33 @@ public abstract class Wrapper {
         new VariableIdentifierExpr(letter), generateConstant(vectorType, constant)));
   }
 
+  public static Declaration generateClampWrapper(BasicType valueType, BasicType extremumType) {
+    Expr comparisonExpr;
+    if (extremumType.isVector()) {
+      comparisonExpr = new FunctionCallExpr("any", new FunctionCallExpr("greaterThan",
+          new VariableIdentifierExpr("minVal"), new VariableIdentifierExpr("maxVal")));
+    } else {
+      comparisonExpr = new BinaryExpr(
+          new VariableIdentifierExpr("minVal"), new VariableIdentifierExpr("maxVal"), BinOp.GT);
+    }
+    Expr returnExpr = new TernaryExpr(
+        comparisonExpr,
+        new FunctionCallExpr("clamp", new VariableIdentifierExpr("value"),
+            new FunctionCallExpr("min", new VariableIdentifierExpr("minVal"),
+                new VariableIdentifierExpr("maxVal")),
+            new FunctionCallExpr("max", new VariableIdentifierExpr("minVal"),
+                new VariableIdentifierExpr("maxVal"))),
+        new FunctionCallExpr("clamp", new VariableIdentifierExpr("value"),
+            new VariableIdentifierExpr("minVal"), new VariableIdentifierExpr("maxVal")));
+
+    return new FunctionDefinition(new FunctionPrototype("SAFE_CLAMP", valueType,
+        Arrays.asList(
+          new ParameterDecl("value", valueType, null),
+          new ParameterDecl("minVal", extremumType, null),
+          new ParameterDecl("maxVal", extremumType, null))),
+        new BlockStmt(Collections.singletonList(new ReturnStmt(returnExpr)), true));
+  }
+
   private static Expr generateDivTestExpr(BasicType typeA, BasicType typeB) {
     if (typeA.getElementType() == BasicType.INT) {
       Expr atestExpr = typeA.isVector() ? generateVectorComparison(typeA, "A",
