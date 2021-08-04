@@ -1,9 +1,11 @@
 package com.graphicsfuzz.postprocessing;
 
+import com.graphicsfuzz.Buffer;
 import com.graphicsfuzz.ProgramState;
 import com.graphicsfuzz.common.ast.TranslationUnit;
 import com.graphicsfuzz.common.util.ParseHelper;
 import com.graphicsfuzz.config.DefaultConfig;
+import java.util.ArrayList;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
@@ -35,7 +37,7 @@ public abstract class CommonPostProcessingTest {
     }
   }
 
-  public ProgramState generateProgramStateForCode(String programText) {
+  public ProgramState generateProgramStateForCode(String programText, List<Buffer> buffers) {
     TranslationUnit unit = null;
     try {
       unit = ParseHelper.parse(programText);
@@ -43,7 +45,14 @@ public abstract class CommonPostProcessingTest {
       e.printStackTrace();
     }
     ProgramState state = new ProgramState(new DefaultConfig());
+    for (Buffer buffer : buffers) {
+      state.addBuffer(buffer);
+    }
     state.programInitialization(unit);
     return state;
+  }
+
+  public ProgramState generateProgramStateForCode(String programText) {
+    return generateProgramStateForCode(programText, new ArrayList<>());
   }
 }

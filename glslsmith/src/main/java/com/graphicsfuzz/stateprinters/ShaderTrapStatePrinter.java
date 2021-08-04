@@ -66,7 +66,7 @@ public class ShaderTrapStatePrinter implements StatePrinter {
     }
   }
 
-  //CREATE_BUFFER buffer_2 SIZE_BYTES 12 INIT_VALUES int -1939323820 uint 0 501873291
+  @Override
   public List<Buffer> getBuffersFromHarness(String fileContent) {
     Pattern pattern = Pattern.compile("CREATE_BUFFER ([^ ]+) SIZE_BYTES ([0-9]+) "
         + "INIT_VALUES (.*)");

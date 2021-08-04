@@ -4,6 +4,7 @@ import com.graphicsfuzz.common.ast.type.LayoutQualifierSequence;
 import com.graphicsfuzz.common.ast.type.Type;
 import com.graphicsfuzz.common.ast.type.TypeQualifier;
 import java.util.List;
+import java.util.ListIterator;
 
 public class Buffer {
   //Buffer elements to generate the interface block
@@ -18,7 +19,7 @@ public class Buffer {
   private final List<? extends Number> values;
   private final boolean input;
 
-
+  //TODO add test for memberType maybe
   public Buffer(String bufferName, LayoutQualifierSequence layoutQualifiers,
                 List<? extends Number> values, TypeQualifier interfaceQualifier,
                 List<String> memberNames, List<Type> memberTypes, String instanceName,
@@ -32,6 +33,22 @@ public class Buffer {
     this.instanceName = instanceName;
     this.input = input;
     this.binding = binding;
+  }
+
+  public boolean memberExist(String name) {
+    return memberNames.contains(name);
+  }
+
+  public Type getMemberType(String name) {
+    assert memberExist(name);
+    ListIterator<Type> typeIterator = memberTypes.listIterator();
+    for (String memberName : memberNames) {
+      Type memberType = typeIterator.next();
+      if (memberName.equals(name)) {
+        return memberType;
+      }
+    }
+    return null;
   }
 
   public String getName() {

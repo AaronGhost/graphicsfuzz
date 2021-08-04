@@ -342,6 +342,10 @@ public class ProgramState {
     bufferTable.put(buffer.getName(), buffer);
   }
 
+  public boolean hasBuffer(String name) {
+    return bufferTable.containsKey(name);
+  }
+
   public Buffer getBuffer(String name) {
     return bufferTable.get(name);
   }
