@@ -20,7 +20,7 @@ import java.util.Optional;
 
 //TODO extend with correct type qualifiers once they are available on buffers
 public class BufferFormatEnforcer extends StandardVisitor implements PostProcessorInterface {
-  private Map<InterfaceBlock, InterfaceBlock> changingInterfaces = new HashMap<>();
+  private final Map<InterfaceBlock, InterfaceBlock> changingInterfaces = new HashMap<>();
 
   @Override
   public void visitInterfaceBlock(InterfaceBlock interfaceBlock) {

@@ -70,7 +70,7 @@ public class ShaderTrapStatePrinter implements StatePrinter {
   public List<Buffer> getBuffersFromHarness(String fileContent) {
     Pattern pattern = Pattern.compile("CREATE_BUFFER ([^ ]+) SIZE_BYTES ([0-9]+) "
         + "INIT_VALUES (.*)");
-    Pattern typePattern = Pattern.compile("(int|uint)( [0-9]+)+");
+    Pattern typePattern = Pattern.compile("(int|uint)( (-?)[0-9]+)+");
     Matcher matcher = pattern.matcher(fileContent);
     List<Buffer> buffers = new ArrayList<>();
     int membersBinding = 0;
@@ -105,7 +105,6 @@ public class ShaderTrapStatePrinter implements StatePrinter {
             default:
               type = BasicType.FLOAT;
           }
-          System.out.println(innerMatcher.group());
           int innerSize = innerMatcher.group().split(" ").length - 1;
           fullSize -= innerSize;
 
