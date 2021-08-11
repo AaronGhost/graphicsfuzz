@@ -31,10 +31,11 @@ public class RandomTypeGenerator implements IRandomType {
   //TODO might need to change the type generation to use former declared constants...
   // or use an overloaded function with given size
   @Override
-  public UnifiedTypeInterface getRandomArrayOrBaseType(boolean restrictToInteger) {
-    BasicType basicType = this.getRandomBaseType(restrictToInteger);
+  public UnifiedTypeInterface getRandomArrayOrBaseType(boolean restrictToScalar) {
+    BasicType basicType = this.getRandomBaseType(restrictToScalar);
     if (randGen.nextBoolean()) {
       int arrayLength = randGen.nextPositiveInt(configuration.getMaxArrayLength());
+
       //Create an empty array info with only the size to generate a size access later
       ArrayInfo arrayInfo =
           new ArrayInfo(Collections.singletonList(Optional.of(
@@ -49,7 +50,9 @@ public class RandomTypeGenerator implements IRandomType {
   @Override
   public UnifiedTypeInterface getRandomQualifiedProxyType() {
     UnifiedTypeInterface typeInterface = getRandomArrayOrBaseType(false);
-    if (randGen.nextBoolean()) {
+    if (randGen.nextBoolean()
+        || (typeInterface.getBaseType().getElementType().equals(BasicType.FLOAT)
+            && configuration.enforceFloatsAsConst())) {
       return new UnifiedTypeProxy(new QualifiedType(typeInterface.getRealType(),
           Collections.singletonList(TypeQualifier.CONST)));
     } else {
@@ -59,9 +62,24 @@ public class RandomTypeGenerator implements IRandomType {
   }
 
   @Override
+  public BasicType getRandomScalarInteger() {
+    return randGen.nextBoolean() ? BasicType.INT : BasicType.UINT;
+  }
+
+  @Override
   public BasicType getRandomTargetType(BasicType baseType) {
     int numElement = randGen.nextPositiveInt(baseType.getNumElements() + 1);
     return BasicType.makeVectorType(baseType.getElementType(), numElement);
+  }
+
+  @Override
+  public BinOp getRandomBaseFloatAssignOp() {
+    switch (randGen.nextInt(2)) {
+      case 0:
+        return BinOp.ASSIGN;
+      default:
+        return BinOp.ADD_ASSIGN;
+    }
   }
 
   @Override
@@ -123,6 +141,18 @@ public class RandomTypeGenerator implements IRandomType {
         return BinOp.LE;
       default:
         return BinOp.LT;
+    }
+  }
+
+  @Override
+  public BinOp getRandomBaseFloatBinaryOp(BasicType returnType, boolean canGenerateAssign) {
+    switch (randGen.nextInt(canGenerateAssign ? 3 : 1)) {
+      case 0:
+        return BinOp.ADD;
+      case 1:
+        return BinOp.ADD_ASSIGN;
+      default:
+        return BinOp.ASSIGN;
     }
   }
 
@@ -225,7 +255,7 @@ public class RandomTypeGenerator implements IRandomType {
       return returnType;
     }
     if (op == BinOp.SHL_ASSIGN || op == BinOp.SHL || op == BinOp.SHR_ASSIGN || op == BinOp.SHR) {
-      return getRandomBaseType();
+      return getRandomScalarInteger();
     } else {
       return leftOperandType;
     }
@@ -250,11 +280,18 @@ public class RandomTypeGenerator implements IRandomType {
   }
 
   @Override
-  public BasicType getRandomBaseType(boolean restrictToInteger) {
-    if (restrictToInteger) {
-      return randGen.nextInt(2) == 1 ? BasicType.UINT : BasicType.INT;
+  public BasicType getRandomBaseType(boolean restrictToScalar) {
+    if (restrictToScalar) {
+      switch (randGen.nextInt(3)) {
+        case 0:
+          return BasicType.INT;
+        case 1:
+          return BasicType.UINT;
+        default:
+          return BasicType.FLOAT;
+      }
     }
-    switch (randGen.nextInt(12)) {
+    switch (randGen.nextInt(13)) {
       case 0:
         return BasicType.INT;
       case 1:
@@ -277,11 +314,31 @@ public class RandomTypeGenerator implements IRandomType {
         return BasicType.BVEC2;
       case 10:
         return BasicType.BVEC3;
+      case 11:
+        return BasicType.FLOAT;
       default:
         return BasicType.BVEC4;
     }
   }
 
+
+  @Override
+  public UnOp getRandomBaseFloatUnaryOp(boolean canGenerateIncrDec) {
+    switch (randGen.nextInt(canGenerateIncrDec ? 6 : 2)) {
+      case 0:
+        return UnOp.MINUS;
+      case 1:
+        return UnOp.PLUS;
+      case 2:
+        return UnOp.POST_DEC;
+      case 3:
+        return UnOp.POST_INC;
+      case 4:
+        return UnOp.PRE_DEC;
+      default:
+        return UnOp.PRE_INC;
+    }
+  }
 
   @Override
   public UnOp getRandomBaseIntUnaryOp(boolean canGenerateIncrDec) {
@@ -341,7 +398,12 @@ public class RandomTypeGenerator implements IRandomType {
     if (!readonlyElement && randGen.nextBoolean()) {
       qualifierList.add(TypeQualifier.WRITEONLY);
     }
-    return new UnifiedTypeProxy(new QualifiedType(getRandomArrayOrBaseType(true).getRealType(),
+    UnifiedTypeInterface proxyType = getRandomArrayOrBaseType(true);
+    if (configuration.enforceFloatsAsConst() && proxyType.getBaseType() == BasicType.FLOAT) {
+      qualifierList.clear();
+      qualifierList.add(TypeQualifier.READONLY);
+    }
+    return new UnifiedTypeProxy(new QualifiedType(proxyType.getRealType(),
         qualifierList));
   }
 

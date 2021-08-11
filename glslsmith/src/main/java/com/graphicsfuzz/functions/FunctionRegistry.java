@@ -36,6 +36,10 @@ public class FunctionRegistry {
     final List<FunctionStruct> bvec2ReturnFunctions = new ArrayList<>();
     final List<FunctionStruct> bvec3ReturnFunctions = new ArrayList<>();
     final List<FunctionStruct> bvec4ReturnFunctions = new ArrayList<>();
+    final List<FunctionStruct> floatReturnFunctions = new ArrayList<>();
+    final List<FunctionStruct> vec2ReturnFunctions = new ArrayList<>();
+    final List<FunctionStruct> vec3ReturnFunctions = new ArrayList<>();
+    final List<FunctionStruct> vec4ReturnFunctions = new ArrayList<>();
     final List<FunctionStruct> voidReturnFunctions = new ArrayList<>();
 
     // Build the std registry
@@ -287,6 +291,16 @@ public class FunctionRegistry {
         new UnifiedTypeProxy(BasicType.IVEC3)));
     ivec4ReturnFunctions.add(new FunctionStruct("abs", new UnifiedTypeProxy(BasicType.IVEC4),
         new UnifiedTypeProxy(BasicType.IVEC4)));
+
+    // abs function for floats
+    floatReturnFunctions.add(new FunctionStruct("abs", new UnifiedTypeProxy(BasicType.FLOAT),
+        new UnifiedTypeProxy(BasicType.FLOAT)));
+    vec2ReturnFunctions.add(new FunctionStruct("abs", new UnifiedTypeProxy(BasicType.VEC2),
+        new UnifiedTypeProxy(BasicType.VEC2)));
+    vec3ReturnFunctions.add(new FunctionStruct("abs", new UnifiedTypeProxy(BasicType.VEC3),
+        new UnifiedTypeProxy(BasicType.VEC3)));
+    vec4ReturnFunctions.add(new FunctionStruct("abs", new UnifiedTypeProxy(BasicType.VEC4),
+        new UnifiedTypeProxy(BasicType.VEC4)));
 
     // sign functions for integers
     intReturnFunctions.add(new FunctionStruct("sign", new UnifiedTypeProxy(BasicType.INT),
@@ -741,6 +755,10 @@ public class FunctionRegistry {
     stdFunctions.put(new UnifiedTypeProxy(BasicType.BVEC2), bvec2ReturnFunctions);
     stdFunctions.put(new UnifiedTypeProxy(BasicType.BVEC3), bvec3ReturnFunctions);
     stdFunctions.put(new UnifiedTypeProxy(BasicType.BVEC4), bvec4ReturnFunctions);
+    stdFunctions.put(new UnifiedTypeProxy(BasicType.FLOAT), floatReturnFunctions);
+    stdFunctions.put(new UnifiedTypeProxy(BasicType.VEC2), vec2ReturnFunctions);
+    stdFunctions.put(new UnifiedTypeProxy(BasicType.VEC3), vec3ReturnFunctions);
+    stdFunctions.put(new UnifiedTypeProxy(BasicType.VEC4), vec4ReturnFunctions);
     stdFunctions.put(new UnifiedTypeProxy(VoidType.VOID), voidReturnFunctions);
   }
 
@@ -750,7 +768,8 @@ public class FunctionRegistry {
       List<FunctionStruct> availableFunctions = stdFunctions.get(returnType);
       return availableFunctions.get(randGen.nextInt(availableFunctions.size()));
     } else {
-      throw new UnsupportedOperationException("No function exists for the given return type");
+      throw new UnsupportedOperationException("No function exists for the given return type: "
+          + returnType);
     }
   }
 

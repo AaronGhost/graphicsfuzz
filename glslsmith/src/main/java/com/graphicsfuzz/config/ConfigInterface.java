@@ -44,6 +44,8 @@ public interface ConfigInterface {
 
   int getMaxWhileScopeLength();
 
+  boolean enforceFloatsAsConst();
+
   ShadingLanguageVersion getShadingLanguageVersion();
 
   ShaderKind getShaderKind();

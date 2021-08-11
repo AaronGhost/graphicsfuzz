@@ -28,24 +28,34 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class ShaderTrapStatePrinterTest {
 
-  Buffer buffer2;
-  String buffer2Text = "CREATE_BUFFER buffer_2 SIZE_BYTES 12 INIT_VALUES uint 12 int 45 int 25\n"
+  static Buffer buffer2;
+  static String buffer2Text = "CREATE_BUFFER buffer_2 SIZE_BYTES 12 INIT_VALUES uint 12 int -45 "
+      + "int 25\n"
       + "BIND_SHADER_STORAGE_BUFFER BUFFER buffer_2 BINDING 2\n\n";
-  Buffer buffer4;
-  String buffer4Text = "CREATE_BUFFER buffer_4 SIZE_BYTES 36 INIT_VALUES int 72 48 uint 78 32 26 "
+
+  static Buffer buffer3;
+  static String buffer3Text = "CREATE_BUFFER buffer_3 SIZE_BYTES 20 INIT_VALUES float 1.0 2.0 int "
+      + "-10 uint "
+      + "3 float 5.0\n"
+      + "BIND_SHADER_STORAGE_BUFFER BUFFER buffer_3 BINDING 3\n\n";
+
+  static Buffer buffer4;
+  static String buffer4Text = "CREATE_BUFFER buffer_4 SIZE_BYTES 36 INIT_VALUES int 72 48 uint 78 "
+      + "32 26 "
       + "21 24 121 110\n"
       + "BIND_SHADER_STORAGE_BUFFER BUFFER buffer_4 BINDING 4\n\n";
-  String minimalShaderText = "#version 310 es\n"
+
+  static String minimalShaderText = "#version 310 es\n"
       + "layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;\n"
       + "void main()\n"
       + "{\n"
       + "}\n";
-  String minimalProgramText = "GLES 3.1\n"
+  static String minimalProgramText = "GLES 3.1\n"
       + "DECLARE_SHADER shader KIND COMPUTE\n"
       + minimalShaderText
       + "END\n\n"
@@ -53,12 +63,26 @@ public class ShaderTrapStatePrinterTest {
       + "CREATE_PROGRAM compute_prog SHADERS shader_compiled\n"
       + "RUN_COMPUTE PROGRAM compute_prog NUM_GROUPS 1 1 1\n";
 
-  @Before
-  public void setup() {
-    List<? extends Number> valueList2 = Arrays.asList(12, 45, 25);
+  @BeforeClass
+  public static void setup() {
+    // Buffer 2
+    List<? extends Number> valueList2 = Arrays.asList(12, -45, 25);
     buffer2 = new Buffer("buffer_2", new LayoutQualifierSequence(new BindingLayoutQualifier(2)),
         valueList2, TypeQualifier.BUFFER, Arrays.asList("uint1", "int1", "int2"),
         Arrays.asList(BasicType.UINT, BasicType.INT, BasicType.INT), "", true, 2);
+
+    // Buffer 3
+    List<? extends Number> valueList3 = Arrays.asList(1., 2., -10, 3, 5.);
+    ArrayInfo floatInfo3 = new ArrayInfo(Collections.singletonList(Optional.of(
+        new IntConstantExpr("2"))));
+    floatInfo3.setConstantSizeExpr(0, 2);
+    List<Type> memberTypes3 = Arrays.asList(new ArrayType(BasicType.FLOAT, floatInfo3),
+        BasicType.INT, BasicType.UINT, BasicType.FLOAT);
+    buffer3 = new Buffer("buffer_3", new LayoutQualifierSequence(new BindingLayoutQualifier(3)),
+        valueList3, TypeQualifier.BUFFER, Arrays.asList("float3", "int3", "uint3", "float4"),
+        memberTypes3, "", false, 3);
+
+    // Buffer 4
     List<? extends Number> valueList4 = Arrays.asList(72, 48, 78, 32, 26, 21, 24, 121, 110);
     ArrayInfo arrayInfo1 = new ArrayInfo(Collections.singletonList(Optional.of(
         new IntConstantExpr(String.valueOf(2)))));
@@ -71,6 +95,7 @@ public class ShaderTrapStatePrinterTest {
     buffer4 = new Buffer("buffer_4", new LayoutQualifierSequence(new BindingLayoutQualifier(4)),
         valueList4, TypeQualifier.BUFFER, Arrays.asList("int4", "uint4"), memberTypes, "", false,
         4);
+
   }
 
   @Test
@@ -104,6 +129,7 @@ public class ShaderTrapStatePrinterTest {
   @Test
   public void testPrintBufferWrapper() {
     Assert.assertEquals(new ShaderTrapStatePrinter().printBufferWrapper(buffer2), buffer2Text);
+    Assert.assertEquals(new ShaderTrapStatePrinter().printBufferWrapper(buffer3), buffer3Text);
     Assert.assertEquals(new ShaderTrapStatePrinter().printBufferWrapper(buffer4), buffer4Text);
   }
 
@@ -114,6 +140,9 @@ public class ShaderTrapStatePrinterTest {
 
   @Test
   public void testDumBufferWithOutputBuffer() {
+    Assert.assertEquals(new ShaderTrapStatePrinter().printDumpBuffer(buffer3),
+        "DUMP_BUFFER_TEXT BUFFER buffer_3 FILE \"buffer_3.txt\" FORMAT \"buffer_3 \" float 2 \" "
+            + "\" int 1 \" \" uint 1 \" \" float 1\n");
     Assert.assertEquals(new ShaderTrapStatePrinter().printDumpBuffer(buffer4),
         "DUMP_BUFFER_TEXT BUFFER buffer_4 FILE \"buffer_4.txt\" FORMAT \"buffer_4 \" int 2 \" \" "
             + "uint 7\n");
@@ -129,7 +158,7 @@ public class ShaderTrapStatePrinterTest {
   public void testGetBuffersFromHarness() {
     //Test with buffer 2
     List<Buffer> buffers =  new ShaderTrapStatePrinter().getBuffersFromHarness(
-        buffer2Text + buffer4Text);
+        buffer2Text + buffer3Text + buffer4Text);
     Buffer buffer2 = buffers.get(0);
     Assert.assertEquals(buffer2.getName(), "buffer_2");
     Assert.assertEquals(buffer2.getBinding(), 2);
@@ -143,23 +172,40 @@ public class ShaderTrapStatePrinterTest {
     Assert.assertEquals(memberTypes.get(1), BasicType.INT);
     Assert.assertEquals(memberTypes.get(2), BasicType.INT);
 
+    //Test with buffer 3
+    Buffer buffer3 = buffers.get(1);
+    Assert.assertEquals(buffer3.getName(), "buffer_3");
+    Assert.assertEquals(buffer3.getBinding(), 3);
+    layoutSequence = buffer3.getLayoutQualifiers().getLayoutQualifiers();
+    Assert.assertTrue(layoutSequence.get(0) instanceof Std430LayoutQualifier);
+    Assert.assertTrue(layoutSequence.get(1) instanceof BindingLayoutQualifier);
+    Assert.assertEquals(((BindingLayoutQualifier)layoutSequence.get(1)).getIndex(), 3);
+    Assert.assertEquals(buffer3.getMemberNames(),
+        Arrays.asList("ext_3", "ext_4", "ext_5", "ext_6"));
+    memberTypes = buffer3.getMemberTypes();
+    ArrayInfo member1Info =
+        new ArrayInfo(Collections.singletonList(Optional.of(new IntConstantExpr("2"))));
+    member1Info.setConstantSizeExpr(0, 2);
+    Assert.assertEquals(memberTypes.get(0), new ArrayType(BasicType.FLOAT, member1Info));
+    Assert.assertEquals(memberTypes.get(1), BasicType.INT);
+    Assert.assertEquals(memberTypes.get(2), BasicType.UINT);
+    Assert.assertEquals(memberTypes.get(3), BasicType.FLOAT);
+
     //Test with buffer 4
-    Buffer buffer4 = buffers.get(1);
+    Buffer buffer4 = buffers.get(2);
     Assert.assertEquals(buffer4.getName(), "buffer_4");
     Assert.assertEquals(buffer4.getBinding(), 4);
     layoutSequence = buffer4.getLayoutQualifiers().getLayoutQualifiers();
     Assert.assertTrue(layoutSequence.get(0) instanceof Std430LayoutQualifier);
     Assert.assertTrue(layoutSequence.get(1) instanceof BindingLayoutQualifier);
     Assert.assertEquals(((BindingLayoutQualifier)layoutSequence.get(1)).getIndex(), 4);
-    Assert.assertEquals(buffer4.getMemberNames(), Arrays.asList("ext_3", "ext_4"));
+    Assert.assertEquals(buffer4.getMemberNames(), Arrays.asList("ext_7", "ext_8"));
     memberTypes = buffer4.getMemberTypes();
-    ArrayInfo member1Info =
-        new ArrayInfo(Collections.singletonList(Optional.of(new IntConstantExpr("2"))));
+    member1Info = new ArrayInfo(Collections.singletonList(Optional.of(new IntConstantExpr("2"))));
     member1Info.setConstantSizeExpr(0, 2);
     ArrayInfo member2Info =
         new ArrayInfo(Collections.singletonList(Optional.of(new IntConstantExpr("7"))));
     member2Info.setConstantSizeExpr(0, 7);
-
     Assert.assertEquals(memberTypes.get(0), new ArrayType(BasicType.INT, member1Info));
     Assert.assertEquals(memberTypes.get(1), new ArrayType(BasicType.UINT, member2Info));
   }

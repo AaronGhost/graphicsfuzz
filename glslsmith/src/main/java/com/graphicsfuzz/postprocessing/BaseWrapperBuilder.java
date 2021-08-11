@@ -21,13 +21,13 @@ public abstract class BaseWrapperBuilder extends StandardVisitor implements Post
     programState = state;
     //Change all necessary binary operators
     visitTranslationUnit(tu);
-    List<ImmutableTriple<Operation, BasicType, BasicType>> necessaryWrappers =
+    List<ImmutableTriple<Wrapper, BasicType, BasicType>> necessaryWrappers =
         new ArrayList<>();
 
     // Checks the wrappers that are necessary to add (prevent from adding twice the same wrapper)
-    for (ImmutableTriple<Operation, BasicType, BasicType> wrapperFunction :
+    for (ImmutableTriple<Wrapper, BasicType, BasicType> wrapperFunction :
         programState.getWrappers()) {
-      FunctionPrototype wrapperPrototype = Wrapper.generateDeclaration(wrapperFunction.left,
+      FunctionPrototype wrapperPrototype = WrapperGenerator.generateDeclaration(wrapperFunction.left,
           wrapperFunction.middle, wrapperFunction.right);
       if (tu.getTopLevelDeclarations().stream()
           .noneMatch(t -> t instanceof FunctionPrototype
@@ -37,14 +37,14 @@ public abstract class BaseWrapperBuilder extends StandardVisitor implements Post
     }
 
     // Add the necessary wrappers prototypes in any order
-    for (ImmutableTriple<Operation, BasicType, BasicType> wrapperFunction :
+    for (ImmutableTriple<Wrapper, BasicType, BasicType> wrapperFunction :
         necessaryWrappers) {
-      tu.addDeclaration(Wrapper.generateDeclaration(wrapperFunction.left,
+      tu.addDeclaration(WrapperGenerator.generateDeclaration(wrapperFunction.left,
           wrapperFunction.middle, wrapperFunction.right));
     }
 
     //Add the necessary wrapper bodies in any order before the main function
-    for (ImmutableTriple<Operation, BasicType, BasicType> wrapperFunction :
+    for (ImmutableTriple<Wrapper, BasicType, BasicType> wrapperFunction :
         necessaryWrappers) {
       tu.addDeclarationBefore(wrapperFunction.left.generator.apply(wrapperFunction.middle,
           wrapperFunction.right), tu.getMainFunction());

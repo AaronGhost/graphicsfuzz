@@ -5,7 +5,7 @@ import com.graphicsfuzz.common.ast.type.BasicType;
 import com.graphicsfuzz.common.tool.PrettyPrinterVisitor;
 import com.graphicsfuzz.common.util.ShaderKind;
 import com.graphicsfuzz.config.ConfigInterface;
-import com.graphicsfuzz.postprocessing.Operation;
+import com.graphicsfuzz.postprocessing.Wrapper;
 import com.graphicsfuzz.scope.FuzzerScope;
 import com.graphicsfuzz.scope.FuzzerScopeEntry;
 import com.graphicsfuzz.scope.UnifiedTypeInterface;
@@ -55,7 +55,7 @@ public class ProgramState {
   private final Set<FuzzerScopeEntry> seenInFunCallArg = new HashSet<>();
 
   //Referencing the necessary safe wrappers for later generation
-  private final Set<ImmutableTriple<Operation, BasicType, BasicType>> necessaryWrappers =
+  private final Set<ImmutableTriple<Wrapper, BasicType, BasicType>> necessaryWrappers =
       new HashSet<>();
 
   //API populated uniforms and buffer
@@ -316,22 +316,22 @@ public class ProgramState {
   }
 
   //Wrappers management
-  public void registerWrapper(Operation op, BasicType typeA, BasicType typeB) {
+  public void registerWrapper(Wrapper op, BasicType typeA, BasicType typeB) {
     necessaryWrappers.add(new ImmutableTriple<>(op, typeA, typeB));
-    if (op == Operation.SAFE_MOD || op == Operation.SAFE_MOD_ASSIGN) {
+    if (op == Wrapper.SAFE_MOD || op == Wrapper.SAFE_MOD_ASSIGN) {
       if (typeA.getElementType() == BasicType.INT) {
-        registerWrapper(Operation.SAFE_ABS, typeA, null);
+        registerWrapper(Wrapper.SAFE_ABS, typeA, null);
       }
       if (typeB != null && typeB.getElementType() == BasicType.INT) {
-        registerWrapper(Operation.SAFE_ABS, typeB, null);
+        registerWrapper(Wrapper.SAFE_ABS, typeB, null);
       }
     }
-    if (op == Operation.SAFE_BITFIELD_EXTRACT || op == Operation.SAFE_BITFIELD_INSERT) {
-      registerWrapper(Operation.SAFE_ABS, BasicType.INT, null);
+    if (op == Wrapper.SAFE_BITFIELD_EXTRACT || op == Wrapper.SAFE_BITFIELD_INSERT) {
+      registerWrapper(Wrapper.SAFE_ABS, BasicType.INT, null);
     }
   }
 
-  public Set<ImmutableTriple<Operation, BasicType, BasicType>> getWrappers() {
+  public Set<ImmutableTriple<Wrapper, BasicType, BasicType>> getWrappers() {
     return necessaryWrappers;
   }
 

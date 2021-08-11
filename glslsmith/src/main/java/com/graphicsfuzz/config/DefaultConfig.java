@@ -121,4 +121,9 @@ public class DefaultConfig implements ConfigInterface {
   public int getMaxWhileScopeLength() {
     return 10;
   }
+
+  @Override
+  public boolean enforceFloatsAsConst() {
+    return false;
+  }
 }

@@ -13,10 +13,16 @@ public interface IRandomType {
 
   BinOp getRandomBaseBoolBinaryOp();
 
+  BinOp getRandomBaseFloatAssignOp();
+
   BinOp getRandomBaseIntAssignOp();
+
+  BinOp getRandomBaseFloatBinaryOp(BasicType returnType, boolean canGenerateAssign);
 
   BinOp getRandomBaseIntBinaryOp(BasicType returnType, BasicType leftType,
                                  boolean canGenerateAssign);
+
+  UnOp getRandomBaseFloatUnaryOp(boolean canGenerateIncrDec);
 
   UnOp getRandomBaseIntUnaryOp(boolean canGenerateIncrDec);
 
@@ -37,6 +43,8 @@ public interface IRandomType {
   UnifiedTypeInterface getRandomArrayOrBaseType(boolean restrictToInteger);
 
   UnifiedTypeInterface getRandomQualifiedProxyType();
+
+  BasicType getRandomScalarInteger();
 
   BasicType getRandomTargetType(BasicType baseType);
 }

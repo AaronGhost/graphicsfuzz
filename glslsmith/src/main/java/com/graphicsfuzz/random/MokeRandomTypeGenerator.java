@@ -15,6 +15,9 @@ public class MokeRandomTypeGenerator implements IRandomType {
   private BasicType typeFromReturn;
   private BinOp boolBinaryOp = BinOp.EQ;
   private BinOp intAssignOp = BinOp.ASSIGN;
+  private BinOp floatBinaryOp = BinOp.ADD;
+  private BinOp floatAssignOp = BinOp.ASSIGN;
+  private UnOp floatUnaryOp = UnOp.MINUS;
   private BinOp noAssignIntBinaryOp = BinOp.ADD;
   private BinOp intVectBinaryOp = BinOp.ADD;
   private BinOp assignIntBinaryOp = BinOp.ASSIGN;
@@ -87,6 +90,10 @@ public class MokeRandomTypeGenerator implements IRandomType {
     this.intVectBinaryOp = intVectBinaryOp;
   }
 
+  public void setFloatBinaryOp(BinOp binaryOp) {
+    this.floatBinaryOp = binaryOp;
+  }
+
   @Override
   public BasicType getAvailableTypeFromOp(BasicType currentType, BinOp op, BasicType returnType) {
     if (rightTypeForOp != null) {
@@ -109,8 +116,18 @@ public class MokeRandomTypeGenerator implements IRandomType {
   }
 
   @Override
+  public BinOp getRandomBaseFloatAssignOp() {
+    return floatAssignOp;
+  }
+
+  @Override
   public BinOp getRandomBaseIntAssignOp() {
     return intAssignOp;
+  }
+
+  @Override
+  public BinOp getRandomBaseFloatBinaryOp(BasicType returnType, boolean canGenerateAssign) {
+    return floatBinaryOp;
   }
 
   @Override
@@ -120,6 +137,11 @@ public class MokeRandomTypeGenerator implements IRandomType {
       return assignIntBinaryOp;
     }
     return noAssignIntBinaryOp;
+  }
+
+  @Override
+  public UnOp getRandomBaseFloatUnaryOp(boolean canGenerateIncrDec) {
+    return floatUnaryOp;
   }
 
   @Override
@@ -167,6 +189,11 @@ public class MokeRandomTypeGenerator implements IRandomType {
   public UnifiedTypeInterface getRandomQualifiedProxyType() {
     return new UnifiedTypeProxy(new QualifiedType(getRandomArrayOrBaseType(false).getRealType(),
         new ArrayList<>()));
+  }
+
+  @Override
+  public BasicType getRandomScalarInteger() {
+    return randomIntType;
   }
 
   @Override

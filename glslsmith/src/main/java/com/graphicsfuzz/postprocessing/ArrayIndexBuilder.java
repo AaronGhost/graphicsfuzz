@@ -28,7 +28,7 @@ public class ArrayIndexBuilder extends BaseWrapperBuilder {
             new BinaryExpr(new LengthExpr(arrayExpr), new IntConstantExpr("1"),
                 BinOp.SUB)));
       } else {
-        programState.registerWrapper(Operation.SAFE_ABS, BasicType.INT, null);
+        programState.registerWrapper(Wrapper.SAFE_ABS, BasicType.INT, null);
         arrayIndexExpr.setIndex(new BinaryExpr(new FunctionCallExpr("SAFE_ABS", indexExpr),
             new LengthExpr(arrayExpr), BinOp.MOD));
       }

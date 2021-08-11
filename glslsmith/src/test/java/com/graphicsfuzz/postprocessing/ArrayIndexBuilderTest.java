@@ -54,8 +54,8 @@ public class ArrayIndexBuilderTest extends CommonPostProcessingTest {
     ProgramState returnState = new ArrayIndexBuilder(false)
         .process(generateProgramStateForCode(linesProgramText));
     Assert.assertTrue(returnState.getWrappers().contains(
-        new ImmutableTriple<Operation, BasicType, BasicType>(
-            Operation.SAFE_ABS, BasicType.INT, null)));
+        new ImmutableTriple<Wrapper, BasicType, BasicType>(
+            Wrapper.SAFE_ABS, BasicType.INT, null)));
     Assert.assertEquals(returnState.getShaderCode(), absLineText);
   }
 }

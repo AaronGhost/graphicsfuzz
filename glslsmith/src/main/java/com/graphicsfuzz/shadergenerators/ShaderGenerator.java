@@ -15,6 +15,7 @@ import com.graphicsfuzz.common.ast.expr.BinOp;
 import com.graphicsfuzz.common.ast.expr.BinaryExpr;
 import com.graphicsfuzz.common.ast.expr.BoolConstantExpr;
 import com.graphicsfuzz.common.ast.expr.Expr;
+import com.graphicsfuzz.common.ast.expr.FloatConstantExpr;
 import com.graphicsfuzz.common.ast.expr.FunctionCallExpr;
 import com.graphicsfuzz.common.ast.expr.IntConstantExpr;
 import com.graphicsfuzz.common.ast.expr.MemberLookupExpr;
@@ -204,6 +205,8 @@ public abstract class ShaderGenerator {
       //Generates a random boolean value
     } else if (type.equals(BasicType.BOOL)) {
       return new BoolConstantExpr(randGen.nextBoolean());
+    } else if (type.equals(BasicType.FLOAT)) {
+      return new FloatConstantExpr(String.format("%.1f", randGen.nextFloat()) + "f");
     } else {
 
       //Generates a int between 0 and 32 if we are on a shift operation else generate on full range
@@ -227,9 +230,13 @@ public abstract class ShaderGenerator {
     }
 
     // Generate an appropriate unary operation (taking into account if the inner expression is a
-    // lvalue
-    final UnOp unOp = randomTypeGenerator.getRandomBaseIntUnaryOp(
-        programState.isSideEffectOpPermitted());
+    // lvalue). Floats are isolated from integers (no ~ operation)
+    UnOp unOp;
+    if (type.getElementType().equals(BasicType.FLOAT)) {
+      unOp = randomTypeGenerator.getRandomBaseFloatUnaryOp(programState.isSideEffectOpPermitted());
+    } else {
+      unOp = randomTypeGenerator.getRandomBaseIntUnaryOp(programState.isSideEffectOpPermitted());
+    }
 
     // Updates the variable state for further actions if the value has been written (++)
     if (unOp.isSideEffecting()) {
@@ -251,13 +258,17 @@ public abstract class ShaderGenerator {
 
     //Find a suitable operation according to return type and left-type
     // return: boolean, left: boolean => boolean operation
+    // return: float => subset of float operation
     // return: boolean, left: int, uint, ... => comparison operation
     // return: vector, left: element type => arithmetic operation without lvalue
     // return: vector, int, uint, left: same type => arithmetic operation with possible lvalue
     BinOp op;
     if (returnType.equals(BasicType.BOOL) && leftType.equals(BasicType.BOOL)) {
       op = randomTypeGenerator.getRandomBaseBoolBinaryOp();
-    } else if (returnType.equals(BasicType.BOOL)) {
+    } else if (returnType.equals(BasicType.FLOAT)) {
+      op = randomTypeGenerator.getRandomBaseFloatBinaryOp(returnType,
+          programState.isSideEffectOpPermitted());
+    } else if (returnType.getElementType().equals(BasicType.BOOL)) {
       op = randomTypeGenerator.getRandomComparisonOp();
     } else if (returnType.isVector() && leftType.isScalar()) {
       op = randomTypeGenerator.getRandomBaseIntVectBinaryOp();
@@ -437,6 +448,8 @@ public abstract class ShaderGenerator {
     BinOp op;
     if (var.getBaseType().getElementType().equals(BasicType.BOOL) || var.isWriteOnly()) {
       op = BinOp.ASSIGN;
+    } else if (var.getBaseType().getElementType().equals(BasicType.FLOAT)) {
+      op = randomTypeGenerator.getRandomBaseFloatAssignOp();
     } else {
       op = randomTypeGenerator.getRandomBaseIntAssignOp();
     }
@@ -539,7 +552,7 @@ public abstract class ShaderGenerator {
   //TODO generate special switch statement with consecutive expression and clamping
   //TODO optional switch cases not introducing a new scope (needs changes in prettyprinter)
   protected Stmt generateSwitchStmt() {
-    BasicType switchType = randomTypeGenerator.getRandomBaseType();
+    BasicType switchType = randomTypeGenerator.getRandomScalarInteger();
     Expr switchExpr = generateBaseExpr(switchType);
     List<Stmt> switchBody = new ArrayList<>();
     List<Expr> existingCases = new ArrayList<>();
@@ -612,7 +625,7 @@ public abstract class ShaderGenerator {
       Stmt stmt;
       int actionIndex =
           randGen.nextInt(programState.getScopeDepth() < configuration.getMaxScopeDepth() ? 10 : 5);
-      if (actionIndex < 3) {
+      if (actionIndex < 3 && programState.getWriteAvailableEntries().size() > 0) {
         stmt = new ExprStmt(generateProgramAssignmentLine());
       } else if (actionIndex == 6) {
         stmt = generateIfStmt();

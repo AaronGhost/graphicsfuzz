@@ -91,8 +91,10 @@ public class ComputeShaderGenerator extends ShaderGenerator {
         Type baseType = proxy.getBaseType();
         if (baseType.equals(BasicType.INT)) {
           values.add(randGen.nextInt(FuzzerConstants.MIN_INT_VALUE, FuzzerConstants.MAX_INT_VALUE));
-        } else {
+        } else if (baseType.equals(BasicType.UINT)) {
           values.add(randGen.nextLong(FuzzerConstants.MAX_UINT_VALUE));
+        } else {
+          values.add(randGen.nextFloat());
         }
       }
       //Adds the variable to the scope

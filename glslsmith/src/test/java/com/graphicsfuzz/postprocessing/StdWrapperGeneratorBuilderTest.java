@@ -7,7 +7,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 
-public class StdWrapperBuilderTest extends CommonPostProcessingTest {
+public class StdWrapperGeneratorBuilderTest extends CommonPostProcessingTest {
 
   String singleLineProgramText = "#version 320 es\n"
       + "void main()\n"

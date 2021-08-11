@@ -8,13 +8,13 @@ import org.junit.Test;
 
 public class ArithmeticWrapperBuilderTest extends CommonPostProcessingTest {
 
-  String singleLineProgramText = "#version 320 es\n"
+  String singleIntLineProgramText = "#version 320 es\n"
       + "void main()\n"
       + "{\n"
       + "ivec2 var_0 = ivec2(3) << 5;"
       + "}\n";
 
-  String wrapperLineProgramText =  "#version 320 es\n"
+  String wrapperIntLineProgramText =  "#version 320 es\n"
       + "ivec2 SAFE_LSHIFT(ivec2 p0, int p1);\n"
       + "ivec2 SAFE_LSHIFT(ivec2 A, int B)\n"
       + "{\n"
@@ -25,15 +25,45 @@ public class ArithmeticWrapperBuilderTest extends CommonPostProcessingTest {
       + " ivec2 var_0 = SAFE_LSHIFT(ivec2(3), 5);\n"
       + "}\n";
 
-  String multipleArithmeticProgramText = "#version 320 es\n"
+  String multipleIntArithmeticProgramText = "#version 320 es\n"
       + "void main()\n"
       + "{\n"
       + "ivec2 var_0 = ivec2(3) << 5 / 3;"
       + "}\n";
 
-  String multipleWrappersMainText = "void main()\n"
+  String multipleIntWrappersMainText = "void main()\n"
       + "{\n"
       + " ivec2 var_0 = SAFE_LSHIFT(ivec2(3), SAFE_DIV(5, 3));\n"
+      + "}\n";
+
+  String singleFloatLineProgramText = "#version 320 es\n"
+      + "void main()\n"
+      + "{\n"
+      + "float var_0 = 5.0f + 3.0f;"
+      + "}\n";
+
+  String singleFloatWrapperProgramText = "#version 320 es\n"
+      + "float SAFE_FLOAT_RESULT(float p0);\n"
+      + "float SAFE_FLOAT_RESULT(float A)\n"
+      + "{\n"
+      + " return abs(A) >= 16777216.0f || abs(A) < 1.0f ? A = 10.0f : A;\n"
+      + "}\n"
+      + "void main()\n"
+      + "{\n"
+      + " float var_0 = SAFE_FLOAT_RESULT(5.0f + 3.0f);\n"
+      + "}\n";
+
+  String multipleFloatArithmeticProgramText = "#version 320 es\n"
+      + "void main()\n"
+      + "{\n"
+      + "float var_0 = 3.0f;"
+      + "float var_1 = (var_0++) + -- var_0;"
+      + "}\n";
+
+  String multipleFloatWrappersMainText = "void main()\n"
+      + "{\n"
+      + " float var_0 = 3.0f;\n"
+      + " float var_1 = SAFE_FLOAT_RESULT((SAFE_POST_INC(var_0)) + SAFE_PRE_DEC(var_0));\n"
       + "}\n";
 
   @Override
@@ -42,16 +72,32 @@ public class ArithmeticWrapperBuilderTest extends CommonPostProcessingTest {
   }
 
   @Test
-  public void testProcessWithSingleLineShader() {
+  public void testProcessWithSingleIntLineShader() {
     ProgramState returnState = new ArithmeticWrapperBuilder()
-        .process(generateProgramStateForCode(singleLineProgramText));
-    Assert.assertEquals(returnState.getShaderCode(), wrapperLineProgramText);
+        .process(generateProgramStateForCode(singleIntLineProgramText));
+    Assert.assertEquals(returnState.getShaderCode(), wrapperIntLineProgramText);
   }
 
   @Test
-  public void testProcessWithMultipleArithmeticShader() {
+  public void testProcessWithMultipleIntArithmeticShader() {
     ProgramState returnState = new ArithmeticWrapperBuilder()
-        .process(generateProgramStateForCode(multipleArithmeticProgramText));
-    Assert.assertTrue(returnState.getShaderCode().contains(multipleWrappersMainText));
+        .process(generateProgramStateForCode(multipleIntArithmeticProgramText));
+    Assert.assertTrue(returnState.getShaderCode().contains(multipleIntWrappersMainText));
   }
+
+  @Test
+  public void testProcessWithFloatSingleLineShader() {
+    ProgramState returnState = new ArithmeticWrapperBuilder()
+        .process(generateProgramStateForCode(singleFloatLineProgramText));
+    Assert.assertEquals(returnState.getShaderCode(), singleFloatWrapperProgramText);
+  }
+
+  @Test
+  public void testProcessWithMultipleFloatArithmeticShader() {
+    ProgramState returnState = new ArithmeticWrapperBuilder()
+        .process(generateProgramStateForCode(multipleFloatArithmeticProgramText));
+    Assert.assertTrue(returnState.getShaderCode().contains(multipleFloatWrappersMainText));
+  }
+
+
 }

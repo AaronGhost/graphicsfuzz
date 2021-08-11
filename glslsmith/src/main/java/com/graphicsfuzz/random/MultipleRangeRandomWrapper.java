@@ -93,4 +93,15 @@ public class MultipleRangeRandomWrapper extends RandomWrapper {
       return super.nextLong(bound);
     }
   }
+
+  // Enforces that all float literals are multiple from 1.0 in range ]-2^24;2^24[ (0 excluded)
+  // TODO refactor to get this to a proper place probably not overriding the generator nextFloat
+  @Override
+  public Float nextFloat() {
+    int possibleValue =  nextInt(1 << 24);
+    while (possibleValue == 0) {
+      possibleValue = nextInt(1 << 24);
+    }
+    return (float) possibleValue;
+  }
 }

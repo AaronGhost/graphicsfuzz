@@ -70,7 +70,7 @@ public class ShaderTrapStatePrinter implements StatePrinter {
   public List<Buffer> getBuffersFromHarness(String fileContent) {
     Pattern pattern = Pattern.compile("CREATE_BUFFER ([^ ]+) SIZE_BYTES ([0-9]+) "
         + "INIT_VALUES (.*)");
-    Pattern typePattern = Pattern.compile("(int|uint)( (-?)[0-9]+)+");
+    Pattern typePattern = Pattern.compile("(int|uint|float)( (-?)[0-9]+(\\.[0-9]+)?)+");
     Matcher matcher = pattern.matcher(fileContent);
     List<Buffer> buffers = new ArrayList<>();
     int membersBinding = 0;
@@ -148,6 +148,13 @@ public class ShaderTrapStatePrinter implements StatePrinter {
     }
   }
 
+  private String correctlyPrintNumber(Number value) {
+    if (value instanceof Float) {
+      return String.format("%.1f", value);
+    }
+    return String.valueOf(value);
+  }
+
   public String printBufferWrapper(Buffer buffer) {
     List<? extends Number> values = buffer.getValues();
     StringBuilder createInstruction = new StringBuilder("CREATE_BUFFER " + buffer.getName() + " "
@@ -163,13 +170,13 @@ public class ShaderTrapStatePrinter implements StatePrinter {
         createInstruction.append(arrayType.getBaseType().getText()).append(" ");
         for (int j = 0; j < arrayType.getArrayInfo().getDimensionality(); j++) {
           for (int i = 0; i < arrayType.getArrayInfo().getConstantSize(j); i++) {
-            createInstruction.append(values.get(offset)).append(" ");
+            createInstruction.append(correctlyPrintNumber(values.get(offset))).append(" ");
             offset++;
           }
         }
       } else if (type instanceof BasicType) {
         createInstruction.append(type).append(" ");
-        createInstruction.append(values.get(offset)).append(" ");
+        createInstruction.append(correctlyPrintNumber(values.get(offset))).append(" ");
         offset++;
       }
     }
