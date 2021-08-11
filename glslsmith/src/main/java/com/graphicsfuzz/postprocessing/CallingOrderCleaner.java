@@ -8,6 +8,7 @@ import com.graphicsfuzz.common.ast.decl.ParameterDecl;
 import com.graphicsfuzz.common.ast.decl.VariableDeclInfo;
 import com.graphicsfuzz.common.ast.decl.VariablesDeclaration;
 import com.graphicsfuzz.common.ast.expr.ArrayConstructorExpr;
+import com.graphicsfuzz.common.ast.expr.ArrayIndexExpr;
 import com.graphicsfuzz.common.ast.expr.BinaryExpr;
 import com.graphicsfuzz.common.ast.expr.Expr;
 import com.graphicsfuzz.common.ast.expr.FunctionCallExpr;
@@ -53,6 +54,17 @@ public class CallingOrderCleaner extends StandardVisitor implements PostProcesso
   private final Stack<Set<String>> seenFunCallEntries = new Stack<>();
   private final Set<String> seenFunCallEntriesInThatArg = new HashSet<>();
   private final Map<String, Pair<String, Type>> tempInitMap = new HashMap<>();
+
+  @Override
+  public void visitArrayIndexExpr(ArrayIndexExpr arrayIndexExpr) {
+    super.visitChildFromParent(arrayIndexExpr.getArray(), arrayIndexExpr);
+    // Save the current writing context before entering the index expression
+    final boolean wasExprSideEffecting = isExprSideEffecting;
+    isExprSideEffecting = false;
+    super.visitChildFromParent(arrayIndexExpr.getIndex(), arrayIndexExpr);
+    // Restore the current writing context
+    isExprSideEffecting = wasExprSideEffecting;
+  }
 
   @Override
   public void visitFunctionCallExpr(FunctionCallExpr functionCallExpr) {
