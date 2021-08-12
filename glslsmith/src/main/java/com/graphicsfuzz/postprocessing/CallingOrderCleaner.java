@@ -46,7 +46,12 @@ public class CallingOrderCleaner extends StandardVisitor implements PostProcesso
   private int tempCounter = 0;
   private int initializerCounter = 0;
   private int funCounter = 0;
+  private int exprCounter = 0;
   private Typer typer;
+  private final Set<String> currentExprReadEntries = new HashSet<>();
+  private final Set<String> currentExprWrittenEntries = new HashSet<>();
+  private final Set<String> seenExprReadEntries = new HashSet<>();
+  private final Set<String> seenExprWrittenEntries = new HashSet<>();
   private final Set<String> currentInitExprReadEntries = new HashSet<>();
   private final Set<String> currentInitExprWrittenEntries = new HashSet<>();
   private final Set<String> seenInitReadEntries = new HashSet<>();
@@ -100,72 +105,69 @@ public class CallingOrderCleaner extends StandardVisitor implements PostProcesso
     funCounter++;
   }
 
+  private void updateVariable(String tempName, String variableName, VariableIdentifierExpr variableIdentifierExpr)  {
+    tempInitMap.put(tempName, new ImmutablePair<>(variableName,
+        typer.lookupType(variableIdentifierExpr)));
+    variableIdentifierExpr.setName(tempName);
+  }
+
   @Override
   public void visitVariableIdentifierExpr(VariableIdentifierExpr variableIdentifierExpr) {
     final String variableName = variableIdentifierExpr.getName();
 
-    // Handle initializers
+    // We always deal with side-effecting operations in sub-expressions
+    boolean rewriteFromWriteExpr = isExprSideEffecting
+        && (seenExprReadEntries.contains(variableName)
+            || seenExprWrittenEntries.contains(variableName));
+    boolean rewriteFromReadExpr = !rewriteFromWriteExpr
+        && seenExprWrittenEntries.contains(variableName);
+    boolean rewriteFromWrittenInit = isExprSideEffecting
+        && (seenInitReadEntries.contains(variableName)
+            || seenInitWrittenEntries.contains(variableName));
+    boolean rewriteFromReadInit = !rewriteFromWrittenInit
+        && (seenInitWrittenEntries.contains(variableName));
+    boolean rewriteFromFunction =
+        isFunCall > 0 && isOut && seenFunCallEntries.peek().contains(variableName);
+
+    String tempName = null;
+    if (rewriteFromWriteExpr) {
+      tempName = variableName + "_temp_" + exprCounter;
+      exprCounter += 1;
+    } else if (rewriteFromReadExpr) {
+      tempName = variableName + "_temp_read";
+    } else if (rewriteFromWrittenInit) {
+      tempName = variableName + "_init_" + initializerCounter + "_temp_" + tempCounter;
+      tempCounter += 1;
+    } else if (rewriteFromReadInit) {
+      tempName = variableName + "_init_" + initializerCounter + "_temp_read";
+    } else if (rewriteFromFunction) {
+      tempName = variableName + "_func_" + funCounter + "_temp_" + tempCounter;
+      tempCounter += 1;
+    }
+
+    if (tempName != null) {
+      updateVariable(tempName, variableName, variableIdentifierExpr);
+    }
+
+    // Always add to the expr sets
+    if (isExprSideEffecting) {
+      currentExprWrittenEntries.add(variableName);
+    } else {
+      currentExprReadEntries.add(variableName);
+    }
+
+    // If in an initializer add to the initializer sets
     if (isInitializer > 0) {
-
-      // Current expression is a write operation and the value is already read / written left from
-      // current initializer expression
-      if (isExprSideEffecting && (seenInitReadEntries.contains(variableName)
-          || seenInitWrittenEntries.contains(variableName))) {
-        // Allocate the new name
-        String tempName = variableName + "_init_" + initializerCounter + "_temp_" + tempCounter;
-        tempCounter += 1;
-
-        // Save the data to link the temp variable to the real one
-        tempInitMap.put(tempName, new ImmutablePair<>(variableName,
-            typer.lookupType(variableIdentifierExpr)));
-        variableIdentifierExpr.setName(tempName);
-
-        // Variable registering for FunCalls and early exit (no double rewriting of variables)
-        if (isFunCall > 0 && isOut) {
-          seenFunCallEntriesInThatArg.add(variableName);
-        }
-        return;
-
-        // Current expression is a read after a write, we create a temp if necessary and rewrites
-        // the variable identifier
-      } else if (seenInitWrittenEntries.contains(variableName)) {
-        String tempName = variableName + "_init_" + initializerCounter + "_temp_read";
-        if (!tempInitMap.containsKey(tempName)) {
-          tempInitMap.put(tempName, new ImmutablePair<>(variableName,
-              typer.lookupType(variableIdentifierExpr)));
-        }
-        variableIdentifierExpr.setName(tempName);
-
-        // Variable registering for FunCalls and early exit (no double rewriting of variables)
-        if (isFunCall > 0 && isOut) {
-          seenFunCallEntriesInThatArg.add(variableName);
-        }
-        return;
-
-        // Current expression is something that has not been seen yet so we add it to either the
-        // read or write in current Expr
-      } else if (isExprSideEffecting) {
+      if (isExprSideEffecting) {
         currentInitExprWrittenEntries.add(variableName);
       } else {
         currentInitExprReadEntries.add(variableName);
       }
     }
 
-    // Handle Funcall: As initializers has been before, we check that the
+    // If in a Funcall add to the current funcall set
     if (isFunCall > 0 && isOut) {
-      // Current expression has been already seen in an out param before so we rewrite it
-      if (seenFunCallEntries.peek().contains(variableName)) {
-        String tempName = variableName + "_func_" + funCounter + "_temp_" + tempCounter;
-        tempCounter += 1;
-        // Save the data to link the temp variable to the real one
-        tempInitMap.put(tempName, new ImmutablePair<>(variableName,
-            typer.lookupType(variableIdentifierExpr)));
-        variableIdentifierExpr.setName(tempName);
-
-        // Current expression is an unseen out param
-      } else {
-        seenFunCallEntriesInThatArg.add(variableName);
-      }
+      seenFunCallEntriesInThatArg.add(variableName);
     }
   }
 
