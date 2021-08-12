@@ -105,48 +105,33 @@ public class CallingOrderCleaner extends StandardVisitor implements PostProcesso
     funCounter++;
   }
 
-  private void updateVariable(String tempName, String variableName, VariableIdentifierExpr variableIdentifierExpr)  {
-    tempInitMap.put(tempName, new ImmutablePair<>(variableName,
-        typer.lookupType(variableIdentifierExpr)));
-    variableIdentifierExpr.setName(tempName);
-  }
-
   @Override
   public void visitVariableIdentifierExpr(VariableIdentifierExpr variableIdentifierExpr) {
     final String variableName = variableIdentifierExpr.getName();
 
-    // We always deal with side-effecting operations in sub-expressions
-    boolean rewriteFromWriteExpr = isExprSideEffecting
-        && (seenExprReadEntries.contains(variableName)
-            || seenExprWrittenEntries.contains(variableName));
-    boolean rewriteFromReadExpr = !rewriteFromWriteExpr
-        && seenExprWrittenEntries.contains(variableName);
-    boolean rewriteFromWrittenInit = isExprSideEffecting
-        && (seenInitReadEntries.contains(variableName)
-            || seenInitWrittenEntries.contains(variableName));
-    boolean rewriteFromReadInit = !rewriteFromWrittenInit
-        && (seenInitWrittenEntries.contains(variableName));
-    boolean rewriteFromFunction =
-        isFunCall > 0 && isOut && seenFunCallEntries.peek().contains(variableName);
-
     String tempName = null;
-    if (rewriteFromWriteExpr) {
+    if (isExprSideEffecting && (seenExprReadEntries.contains(variableName)
+        || seenExprWrittenEntries.contains(variableName))) {
       tempName = variableName + "_temp_" + exprCounter;
       exprCounter += 1;
-    } else if (rewriteFromReadExpr) {
+    } else if (seenExprWrittenEntries.contains(variableName)) {
       tempName = variableName + "_temp_read";
-    } else if (rewriteFromWrittenInit) {
+    } else if (isInitializer > 0 && isExprSideEffecting && (seenInitReadEntries.contains(variableName)
+        || seenInitWrittenEntries.contains(variableName))) {
       tempName = variableName + "_init_" + initializerCounter + "_temp_" + tempCounter;
       tempCounter += 1;
-    } else if (rewriteFromReadInit) {
+    } else if (isInitializer > 0 && (seenInitWrittenEntries.contains(variableName))) {
       tempName = variableName + "_init_" + initializerCounter + "_temp_read";
-    } else if (rewriteFromFunction) {
+    } else if (isFunCall > 0 && isOut && seenFunCallEntries.peek().contains(variableName)) {
       tempName = variableName + "_func_" + funCounter + "_temp_" + tempCounter;
       tempCounter += 1;
     }
 
+    // Updates the variable if any condition is reached before
     if (tempName != null) {
-      updateVariable(tempName, variableName, variableIdentifierExpr);
+      tempInitMap.put(tempName, new ImmutablePair<>(variableName,
+          typer.lookupType(variableIdentifierExpr)));
+      variableIdentifierExpr.setName(tempName);
     }
 
     // Always add to the expr sets
