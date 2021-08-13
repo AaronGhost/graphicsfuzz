@@ -9,17 +9,22 @@ import com.graphicsfuzz.common.ast.decl.VariableDeclInfo;
 import com.graphicsfuzz.common.ast.decl.VariablesDeclaration;
 import com.graphicsfuzz.common.ast.expr.ArrayConstructorExpr;
 import com.graphicsfuzz.common.ast.expr.ArrayIndexExpr;
+import com.graphicsfuzz.common.ast.expr.BinOp;
 import com.graphicsfuzz.common.ast.expr.BinaryExpr;
 import com.graphicsfuzz.common.ast.expr.Expr;
 import com.graphicsfuzz.common.ast.expr.FunctionCallExpr;
+import com.graphicsfuzz.common.ast.expr.TernaryExpr;
 import com.graphicsfuzz.common.ast.expr.UnaryExpr;
 import com.graphicsfuzz.common.ast.expr.VariableIdentifierExpr;
 import com.graphicsfuzz.common.ast.stmt.BlockStmt;
 import com.graphicsfuzz.common.ast.stmt.DeclarationStmt;
 import com.graphicsfuzz.common.ast.stmt.DoStmt;
+import com.graphicsfuzz.common.ast.stmt.ExprStmt;
 import com.graphicsfuzz.common.ast.stmt.ForStmt;
 import com.graphicsfuzz.common.ast.stmt.IfStmt;
+import com.graphicsfuzz.common.ast.stmt.ReturnStmt;
 import com.graphicsfuzz.common.ast.stmt.Stmt;
+import com.graphicsfuzz.common.ast.stmt.SwitchStmt;
 import com.graphicsfuzz.common.ast.stmt.WhileStmt;
 import com.graphicsfuzz.common.ast.type.ArrayType;
 import com.graphicsfuzz.common.ast.type.QualifiedType;
@@ -35,6 +40,7 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
+import java.util.TreeSet;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -48,10 +54,10 @@ public class CallingOrderCleaner extends StandardVisitor implements PostProcesso
   private int funCounter = 0;
   private int exprCounter = 0;
   private Typer typer;
-  private final Set<String> currentExprReadEntries = new HashSet<>();
-  private final Set<String> currentExprWrittenEntries = new HashSet<>();
-  private final Set<String> seenExprReadEntries = new HashSet<>();
-  private final Set<String> seenExprWrittenEntries = new HashSet<>();
+  private final Set<String> tempExprReadEntries = new TreeSet<>();
+  private final Set<String> tempExprWrittenEntries = new TreeSet<>();
+  private final Set<String> seenExprReadEntries = new TreeSet<>();
+  private final Set<String> seenExprWrittenEntries = new TreeSet<>();
   private final Set<String> currentInitExprReadEntries = new HashSet<>();
   private final Set<String> currentInitExprWrittenEntries = new HashSet<>();
   private final Set<String> seenInitReadEntries = new HashSet<>();
@@ -62,6 +68,7 @@ public class CallingOrderCleaner extends StandardVisitor implements PostProcesso
 
   @Override
   public void visitArrayIndexExpr(ArrayIndexExpr arrayIndexExpr) {
+    // Save the original context of entry
     super.visitChildFromParent(arrayIndexExpr.getArray(), arrayIndexExpr);
     // Save the current writing context before entering the index expression
     final boolean wasExprSideEffecting = isExprSideEffecting;
@@ -99,6 +106,10 @@ public class CallingOrderCleaner extends StandardVisitor implements PostProcesso
       isExprSideEffecting = false;
       seenFunCallEntries.peek().addAll(seenFunCallEntriesInThatArg);
       seenFunCallEntriesInThatArg.clear();
+
+      // Clear the expressions sets
+      seenExprReadEntries.clear();
+      seenExprWrittenEntries.clear();
     }
     isFunCall--;
     seenFunCallEntries.pop();
@@ -106,22 +117,43 @@ public class CallingOrderCleaner extends StandardVisitor implements PostProcesso
   }
 
   @Override
+  public void visitInitializer(Initializer initializer) {
+    super.visitInitializer(initializer);
+
+    // Clear the expressions sets
+    seenExprReadEntries.clear();
+    seenExprWrittenEntries.clear();
+  }
+
+  @Override
   public void visitVariableIdentifierExpr(VariableIdentifierExpr variableIdentifierExpr) {
     final String variableName = variableIdentifierExpr.getName();
 
+    // Check if rewriting is necessary and provide the rewriting name
     String tempName = null;
+
+    // Write after read/ write in the same expr
     if (isExprSideEffecting && (seenExprReadEntries.contains(variableName)
         || seenExprWrittenEntries.contains(variableName))) {
-      tempName = variableName + "_temp_" + exprCounter;
+      tempName = variableName + "_expr_temp_" + exprCounter;
       exprCounter += 1;
+
+    // read after write in the same expr
     } else if (seenExprWrittenEntries.contains(variableName)) {
-      tempName = variableName + "_temp_read";
-    } else if (isInitializer > 0 && isExprSideEffecting && (seenInitReadEntries.contains(variableName)
+      tempName = variableName + "_expr_temp_read";
+
+    // Write after read/ write in a different member of an initializer
+    } else if (isInitializer > 0 && isExprSideEffecting
+        && (seenInitReadEntries.contains(variableName)
         || seenInitWrittenEntries.contains(variableName))) {
       tempName = variableName + "_init_" + initializerCounter + "_temp_" + tempCounter;
       tempCounter += 1;
+
+    // Read after write in a different member of an initializer
     } else if (isInitializer > 0 && (seenInitWrittenEntries.contains(variableName))) {
       tempName = variableName + "_init_" + initializerCounter + "_temp_read";
+
+    // Write after write as out paramters of a function
     } else if (isFunCall > 0 && isOut && seenFunCallEntries.peek().contains(variableName)) {
       tempName = variableName + "_func_" + funCounter + "_temp_" + tempCounter;
       tempCounter += 1;
@@ -136,9 +168,9 @@ public class CallingOrderCleaner extends StandardVisitor implements PostProcesso
 
     // Always add to the expr sets
     if (isExprSideEffecting) {
-      currentExprWrittenEntries.add(variableName);
+      seenExprWrittenEntries.add(variableName);
     } else {
-      currentExprReadEntries.add(variableName);
+      seenExprReadEntries.add(variableName);
     }
 
     // If in an initializer add to the initializer sets
@@ -156,15 +188,87 @@ public class CallingOrderCleaner extends StandardVisitor implements PostProcesso
     }
   }
 
+
+  private void updateTempEntriesAndRestore(Set<String> seenWrittenEntriesBeforeExpr,
+                                                      Set<String> seenReadEntriesBeforeExpr,
+                                                      boolean clearSets) {
+    // Clear the temp Sets before adding current values to them
+    if (clearSets) {
+      tempExprReadEntries.clear();
+      tempExprWrittenEntries.clear();
+    }
+
+    // Store the current values of the entries to the temp
+    tempExprReadEntries.addAll(seenExprReadEntries);
+    tempExprWrittenEntries.addAll(seenExprWrittenEntries);
+
+    // Restore with the values provided as arguments
+    seenExprWrittenEntries.clear();
+    seenExprWrittenEntries.addAll(seenWrittenEntriesBeforeExpr);
+    seenExprReadEntries.clear();
+    seenExprReadEntries.addAll(seenReadEntriesBeforeExpr);
+  }
+
+  @Override
+  public void visitTernaryExpr(TernaryExpr ternaryExpr) {
+
+    // Save the forbidden expressions for all inner expressions
+    final Set<String> seenWrittenEntriesBeforeOp = new TreeSet<>(seenExprWrittenEntries);
+    final Set<String> seenReadEntriesBeforeOp = new TreeSet<>(seenExprReadEntries);
+
+    // Visit test
+    visitChildFromParent(ternaryExpr.getTest(), ternaryExpr);
+    System.out.println("Reached");
+
+    // Reset temp entries and add test expressions to it
+    updateTempEntriesAndRestore(seenWrittenEntriesBeforeOp, seenReadEntriesBeforeOp,
+        true);
+
+    // Visit left operand
+    visitChildFromParent(ternaryExpr.getThenExpr(), ternaryExpr);
+
+    // Add left expressions to the temp Entries
+    updateTempEntriesAndRestore(seenWrittenEntriesBeforeOp, seenReadEntriesBeforeOp, false);
+
+    // Visit right operand
+    visitChildFromParent(ternaryExpr.getElseExpr(), ternaryExpr);
+
+    // Add the value from the temp to the entries
+    seenExprReadEntries.addAll(tempExprReadEntries);
+    seenExprWrittenEntries.addAll(tempExprWrittenEntries);
+  }
+
   @Override
   public void visitBinaryExpr(BinaryExpr binaryExpr) {
-    // Examine if op is side-effecting and updates visitor state for the left operand
-    if (binaryExpr.getOp().isSideEffecting()) {
-      isExprSideEffecting = true;
+    BinOp binOp = binaryExpr.getOp();
+
+    // Check if the expression has a well-defined evaluation order
+    if (binOp.isSideEffecting() || binOp == BinOp.LAND || binOp == BinOp.LOR
+        || binOp == BinOp.COMMA) {
+      // Save the forbidden expressions for both left and right operands on binary operator with
+      // defined evaluation order
+      final Set<String> seenWrittenEntriesBeforeOp = new TreeSet<>(seenExprWrittenEntries);
+      final Set<String> seenReadEntriesBeforeOp = new TreeSet<>(seenExprReadEntries);
+
+      // Examine if op is side-effecting and updates visitor state for the left operand
+      if (binOp.isSideEffecting()) {
+        isExprSideEffecting = true;
+      }
+      visitChildFromParent(binaryExpr.getLhs(), binaryExpr);
+
+      // Store the expressions of the left operand and restore the list of forbidden expressions
+      updateTempEntriesAndRestore(seenWrittenEntriesBeforeOp, seenReadEntriesBeforeOp, true);
+
+      isExprSideEffecting = false;
+      visitChildFromParent(binaryExpr.getRhs(), binaryExpr);
+
+      // Add back the removed expressions from the left expression
+      seenExprWrittenEntries.addAll(tempExprWrittenEntries);
+      seenExprReadEntries.addAll(tempExprReadEntries);
+
+    } else {
+      super.visitBinaryExpr(binaryExpr);
     }
-    visitChildFromParent(binaryExpr.getLhs(), binaryExpr);
-    isExprSideEffecting = false;
-    visitChildFromParent(binaryExpr.getRhs(), binaryExpr);
   }
 
   @Override
@@ -180,14 +284,28 @@ public class CallingOrderCleaner extends StandardVisitor implements PostProcesso
   public void visitArrayConstructorExpr(ArrayConstructorExpr arrayConstructorExpr) {
     isInitializer++;
     // Enter an initializer
+    boolean firstArg = true;
+
+    // Store the forbidden expression from the beginning of the expression first
+    final Set<String> seenExprWrittenEntriesBeforeOp = new TreeSet<>(seenExprWrittenEntries);
+    final Set<String> seenExprReadEntriesBeforeOp = new TreeSet<>(seenExprReadEntries);
     for (Expr e : arrayConstructorExpr.getArgs()) {
       visitChildFromParent(e, arrayConstructorExpr);
       seenInitWrittenEntries.addAll(currentInitExprWrittenEntries);
       seenInitReadEntries.addAll(currentInitExprReadEntries);
       currentInitExprReadEntries.clear();
       currentInitExprWrittenEntries.clear();
+
+      // Update the temp expr with the expr from the current value
+      updateTempEntriesAndRestore(seenExprWrittenEntriesBeforeOp, seenExprReadEntriesBeforeOp,
+          firstArg);
+      firstArg = false;
     }
     // Exit initializer
+    seenExprWrittenEntries.addAll(tempExprWrittenEntries);
+    seenExprReadEntries.addAll(tempExprReadEntries);
+
+    // update counters
     initializerCounter++;
     isInitializer--;
     // If we are out of the initializer we clear current rewriting
@@ -195,6 +313,13 @@ public class CallingOrderCleaner extends StandardVisitor implements PostProcesso
       seenInitWrittenEntries.clear();
       seenInitReadEntries.clear();
     }
+  }
+
+  @Override
+  public void visitExprStmt(ExprStmt exprStmt) {
+    super.visitExprStmt(exprStmt);
+    seenExprWrittenEntries.clear();
+    seenExprReadEntries.clear();
   }
 
   @Override
@@ -216,6 +341,11 @@ public class CallingOrderCleaner extends StandardVisitor implements PostProcesso
   @Override
   public void visitIfStmt(IfStmt ifStmt) {
     visitChildFromParent(ifStmt.getCondition(), ifStmt);
+
+    // Clear the expressions sets
+    seenExprReadEntries.clear();
+    seenExprWrittenEntries.clear();
+
     visitChildFromParent(ifStmt.getThenStmt(), ifStmt);
     if (!tempInitMap.isEmpty()) {
       ifStmt.setThenStmt(buildBlockStmt(ifStmt.getThenStmt(), tempInitMap));
@@ -232,7 +362,13 @@ public class CallingOrderCleaner extends StandardVisitor implements PostProcesso
 
   @Override
   public void visitWhileStmt(WhileStmt whileStmt) {
-    super.visitWhileStmt(whileStmt);
+    visitChildFromParent(whileStmt.getCondition(), whileStmt);
+
+    // Clear the expressions sets
+    seenExprReadEntries.clear();
+    seenExprWrittenEntries.clear();
+
+    visitChildFromParent(whileStmt.getBody(), whileStmt);
     // We can't have an array constructor in the condition part
     if (!tempInitMap.isEmpty()) {
       whileStmt.setBody(buildBlockStmt(whileStmt.getBody(),
@@ -243,7 +379,21 @@ public class CallingOrderCleaner extends StandardVisitor implements PostProcesso
 
   @Override
   public void visitForStmt(ForStmt forStmt) {
-    super.visitForStmt(forStmt);
+    visitChildFromParent(forStmt.getInit(), forStmt);
+
+    visitChildFromParent(forStmt.getIncrement(), forStmt);
+
+    // Clear the expressions sets
+    seenExprReadEntries.clear();
+    seenExprWrittenEntries.clear();
+
+    visitChildFromParent(forStmt.getCondition(), forStmt);
+
+    // Clear the expressions sets
+    seenExprReadEntries.clear();
+    seenExprWrittenEntries.clear();
+
+    visitChildFromParent(forStmt.getBody(), forStmt);
     if (!tempInitMap.isEmpty()) {
       forStmt.setBody(buildBlockStmt(forStmt.getBody(),
           tempInitMap));
@@ -251,14 +401,41 @@ public class CallingOrderCleaner extends StandardVisitor implements PostProcesso
     }
   }
 
+
+  @Override
+  public void visitSwitchStmt(SwitchStmt switchStmt) {
+    visitChildFromParent(switchStmt.getExpr(), switchStmt);
+
+    // Clear the expressions sets
+    seenExprReadEntries.clear();
+    seenExprWrittenEntries.clear();
+
+    visitChildFromParent(switchStmt.getBody(), switchStmt);
+  }
+
   @Override
   public void visitDoStmt(DoStmt doStmt) {
-    super.visitDoStmt(doStmt);
+    visitChildFromParent(doStmt.getCondition(), doStmt);
+
+    // Clear the expressions sets
+    seenExprReadEntries.clear();
+    seenExprWrittenEntries.clear();
+
+    visitChildFromParent(doStmt.getBody(), doStmt);
     if (!tempInitMap.isEmpty()) {
       doStmt.setBody(buildBlockStmt(doStmt.getBody(),
           tempInitMap));
       tempInitMap.clear();
     }
+  }
+
+  @Override
+  public void visitReturnStmt(ReturnStmt returnStmt) {
+    super.visitReturnStmt(returnStmt);
+
+    // Clear the expressions sets
+    seenExprReadEntries.clear();
+    seenExprWrittenEntries.clear();
   }
 
   private VariablesDeclaration buildCopyVarDecl(String newName, String oldName,
