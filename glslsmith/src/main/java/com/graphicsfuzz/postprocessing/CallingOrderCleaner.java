@@ -218,7 +218,6 @@ public class CallingOrderCleaner extends StandardVisitor implements PostProcesso
 
     // Visit test
     visitChildFromParent(ternaryExpr.getTest(), ternaryExpr);
-    System.out.println("Reached");
 
     // Reset temp entries and add test expressions to it
     updateTempEntriesAndRestore(seenWrittenEntriesBeforeOp, seenReadEntriesBeforeOp,
