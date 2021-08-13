@@ -248,9 +248,9 @@ public class CallingOrderCleanerTest extends CommonPostProcessingTest {
         + "void main()\n"
         + "{\n"
         + " int x = 1;\n"
-        + " int x_expr_temp_0 = x;\n"
-        + " int x_expr_temp_1 = x;\n"
-        + " int y = x + x_expr_temp_0 ++ + (x_expr_temp_1 += 5);\n"
+        + " int x_expr_1_temp_0 = x;\n"
+        + " int x_expr_1_temp_1 = x;\n"
+        + " int y = x + x_expr_1_temp_0 ++ + (x_expr_1_temp_1 += 5);\n"
         + "}\n";
 
     ProgramState returnState = new CallingOrderCleaner()
@@ -275,13 +275,13 @@ public class CallingOrderCleanerTest extends CommonPostProcessingTest {
         + "{\n"
         + " int x = 1;\n"
         + " int y = 1;\n"
-        + " int y_expr_temp_0 = y;\n"
-        + " int z = (x += (y + x)) + (y + 3) + y_expr_temp_0 ++;\n"
-        + " int y_expr_temp_read = y;\n"
-        + " int y_expr_temp_2 = y;\n"
-        + " int y_expr_temp_1 = y;\n"
-        + " int w = (y += 1) + ((x += 1) != (y_expr_temp_1 += 1) ? y_expr_temp_2 += 2 : x + "
-        + "y_expr_temp_read) + y_expr_temp_read;\n"
+        + " int y_expr_2_temp_0 = y;\n"
+        + " int z = (x += (y + x)) + (y + 3) + y_expr_2_temp_0 ++;\n"
+        + " int y_expr_3_temp_read = y;\n"
+        + " int y_expr_3_temp_1 = y;\n"
+        + " int y_expr_3_temp_2 = y;\n"
+        + " int w = (y += 1) + ((x += 1) != (y_expr_3_temp_1 += 1) ? y_expr_3_temp_2 += 2 : x + "
+        + "y_expr_3_temp_read) + y_expr_3_temp_read;\n"
         + "}\n";
     ProgramState returnState = new CallingOrderCleaner()
         .process(generateProgramStateForCode(exprWithTernaryUbText));
