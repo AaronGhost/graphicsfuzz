@@ -27,8 +27,8 @@ public abstract class BaseWrapperBuilder extends StandardVisitor implements Post
     // Checks the wrappers that are necessary to add (prevent from adding twice the same wrapper)
     for (ImmutableTriple<Wrapper, BasicType, BasicType> wrapperFunction :
         programState.getWrappers()) {
-      FunctionPrototype wrapperPrototype = WrapperGenerator.generateDeclaration(wrapperFunction.left,
-          wrapperFunction.middle, wrapperFunction.right);
+      FunctionPrototype wrapperPrototype = WrapperGenerator.generateDeclaration(
+          wrapperFunction.left, wrapperFunction.middle, wrapperFunction.right);
       if (tu.getTopLevelDeclarations().stream()
           .noneMatch(t -> t instanceof FunctionPrototype
               && (((FunctionPrototype) t).matches(wrapperPrototype)))) {
