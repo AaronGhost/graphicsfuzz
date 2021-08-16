@@ -14,11 +14,17 @@ public enum Wrapper {
   SAFE_RSHIFT_ASSIGN(WrapperGenerator::generateRShiftAssignWrapper, "SAFE_RSHIFT_ASSIGN", true),
   SAFE_MOD(WrapperGenerator::generateModWrapper, "SAFE_MOD", false),
   SAFE_MOD_ASSIGN(WrapperGenerator::generateModAssignWrapper, "SAFE_MOD_ASSIGN", true),
+
+  // STD undefined behaviours
   SAFE_BITFIELD_INSERT(WrapperGenerator::generateBitInsertWrapper, "SAFE_BITFIELD_INSERT", false),
   SAFE_BITFIELD_EXTRACT(WrapperGenerator::generateBitExtractWrapper, "SAFE_BITFIELD_EXTRACT",
       false),
   SAFE_CLAMP(WrapperGenerator::generateClampWrapper, "SAFE_CLAMP", false),
+
+  // Float undefined behaviours
   SAFE_ADD_ASSIGN(WrapperGenerator::generateAddAssignWrapper, "SAFE_ADD_ASSIGN", true),
+  SAFE_SUB_ASSIGN(WrapperGenerator::generateSubAssignWrapper, "SAFE_SUB_ASSIGN", true),
+  SAFE_MUL_ASSIGN(WrapperGenerator::generateMulAssignWrapper, "SAFE_MUL_ASSIGN", true),
   SAFE_PRE_INC(WrapperGenerator::generatePreIncWrapper, "SAFE_PRE_INC", true),
   SAFE_PRE_DEC(WrapperGenerator::generatePreDecWrapper, "SAFE_PRE_DEC", true),
   SAFE_POST_INC(WrapperGenerator::generatePostIncWrapper, "SAFE_POST_INC", true),

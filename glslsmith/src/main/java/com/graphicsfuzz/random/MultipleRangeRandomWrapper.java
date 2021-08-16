@@ -98,9 +98,11 @@ public class MultipleRangeRandomWrapper extends RandomWrapper {
   // TODO refactor to get this to a proper place probably not overriding the generator nextFloat
   @Override
   public Float nextFloat() {
-    int possibleValue =  nextInt(1 << 24);
+    // The full range is 1 << 24, but we generate smaller values so that we can at least have one
+    // operation before reaching the default behaviour
+    int possibleValue =  nextInt(1 << 12);
     while (possibleValue == 0) {
-      possibleValue = nextInt(1 << 24);
+      possibleValue = nextInt(1 << 12);
     }
     return (float) possibleValue;
   }

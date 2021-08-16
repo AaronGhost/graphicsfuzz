@@ -74,11 +74,15 @@ public class RandomTypeGenerator implements IRandomType {
 
   @Override
   public BinOp getRandomBaseFloatAssignOp() {
-    switch (randGen.nextInt(2)) {
+    switch (randGen.nextInt(4)) {
       case 0:
         return BinOp.ASSIGN;
-      default:
+      case 1:
         return BinOp.ADD_ASSIGN;
+      case 2:
+        return BinOp.SUB_ASSIGN;
+      default:
+        return BinOp.MUL_ASSIGN;
     }
   }
 
@@ -146,11 +150,19 @@ public class RandomTypeGenerator implements IRandomType {
 
   @Override
   public BinOp getRandomBaseFloatBinaryOp(BasicType returnType, boolean canGenerateAssign) {
-    switch (randGen.nextInt(canGenerateAssign ? 3 : 1)) {
+    switch (randGen.nextInt(canGenerateAssign ? 7 : 3)) {
       case 0:
         return BinOp.ADD;
       case 1:
+        return BinOp.SUB;
+      case 2:
+        return BinOp.MUL;
+      case 3:
         return BinOp.ADD_ASSIGN;
+      case 4:
+        return BinOp.SUB_ASSIGN;
+      case 5:
+        return BinOp.MUL_ASSIGN;
       default:
         return BinOp.ASSIGN;
     }
@@ -315,9 +327,15 @@ public class RandomTypeGenerator implements IRandomType {
       case 10:
         return BasicType.BVEC3;
       case 11:
-        return BasicType.FLOAT;
-      default:
         return BasicType.BVEC4;
+      case 12:
+        return BasicType.FLOAT;
+      case 13:
+        return BasicType.VEC2;
+      case 14:
+        return BasicType.VEC3;
+      default:
+        return BasicType.VEC4;
     }
   }
 

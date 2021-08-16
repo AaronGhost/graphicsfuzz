@@ -104,9 +104,9 @@ public abstract class WrapperGenerator {
           String.valueOf(FuzzerConstants.MIN_INT_VALUE)) :
           new BinaryExpr(new VariableIdentifierExpr("A"),
               new IntConstantExpr(String.valueOf(FuzzerConstants.MIN_INT_VALUE)), BinOp.EQ);
-      Expr btest0Expr = typeB.isVector() ? generateVectorComparison(typeB, "B", "-1") :
+      Expr btest0Expr = typeB.isVector() ? generateVectorComparison(typeB, "B", "0") :
           new BinaryExpr(new VariableIdentifierExpr("B"), new IntConstantExpr("0"), BinOp.EQ);
-      Expr btest1Expr = typeB.isVector() ? generateVectorComparison(typeB, "B", "0") :
+      Expr btest1Expr = typeB.isVector() ? generateVectorComparison(typeB, "B", "-1") :
           new BinaryExpr(new VariableIdentifierExpr("B"), new IntConstantExpr("-1"), BinOp.EQ);
       return new BinaryExpr(btest0Expr, new BinaryExpr(atestExpr, btest1Expr,
           BinOp.LAND), BinOp.LOR);
@@ -340,44 +340,80 @@ public abstract class WrapperGenerator {
         new BlockStmt(body, true));
   }
 
-  private static Expr generateFloatTestExpr(Expr innerTestExpr) {
-    return new BinaryExpr(new BinaryExpr(new FunctionCallExpr("abs", innerTestExpr.clone()),
-        new FloatConstantExpr((1 << 24) + ".0f"), BinOp.GE),
-        new BinaryExpr(new FunctionCallExpr("abs", innerTestExpr.clone()), new FloatConstantExpr(
-            "1.0f"), BinOp.LT), BinOp.LOR);
+  private static Expr generateFloatTestExpr(Expr innerTestExpr, BasicType resultType) {
+    if (resultType.equals(BasicType.FLOAT)) {
+      return new BinaryExpr(new BinaryExpr(new FunctionCallExpr("abs", innerTestExpr.clone()),
+          new FloatConstantExpr((1 << 24) + ".0f"), BinOp.GE),
+          new BinaryExpr(new FunctionCallExpr("abs", innerTestExpr.clone()), new FloatConstantExpr(
+              "1.0f"), BinOp.LT), BinOp.LOR);
+    } else {
+      return new BinaryExpr(
+          new FunctionCallExpr("any", new FunctionCallExpr("moreThanEqual",
+            innerTestExpr.clone(), new FloatConstantExpr((1<< 24) + ".0f"))),
+          new FunctionCallExpr("any", new FunctionCallExpr("lessThan", innerTestExpr.clone(),
+          new FloatConstantExpr("1.0f"))), BinOp.LOR);
+    }
   }
 
-  //TODO add support for float-based vector and matrices (erk)
+  // Add support for matrices
   public static Declaration generateAddAssignWrapper(BasicType leftType, BasicType rightType) {
-    assert leftType == rightType;
-    assert leftType == BasicType.FLOAT;
     Expr addAssignExpr =
         new TernaryExpr(generateFloatTestExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
-            new VariableIdentifierExpr("B"), BinOp.ADD)),
-            new BinaryExpr(new VariableIdentifierExpr("A"), new FloatConstantExpr("10.0f"),
+            new VariableIdentifierExpr("B"), BinOp.ADD), leftType),
+            new BinaryExpr(new VariableIdentifierExpr("A"), new FloatConstantExpr("8.0f"),
                 BinOp.ASSIGN),
             new ParenExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
                 new VariableIdentifierExpr("B"), BinOp.ADD_ASSIGN)));
-    return new FunctionDefinition(new FunctionPrototype("SAFE_ADD_ASSIGN", BasicType.FLOAT,
-        Arrays.asList(new ParameterDecl("A", new QualifiedType(BasicType.FLOAT,
+    return new FunctionDefinition(new FunctionPrototype("SAFE_ADD_ASSIGN", leftType,
+        Arrays.asList(new ParameterDecl("A", new QualifiedType(leftType,
             Collections.singletonList(TypeQualifier.INOUT_PARAM)), null),
-          new ParameterDecl("B", BasicType.FLOAT, null))),
+          new ParameterDecl("B", rightType, null))),
         new BlockStmt(Collections.singletonList(new ReturnStmt(addAssignExpr)), true));
   }
 
+  public static Declaration generateSubAssignWrapper(BasicType leftType, BasicType rightType) {
+    Expr subAssignExpr =
+        new TernaryExpr(generateFloatTestExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
+            new VariableIdentifierExpr("B"), BinOp.SUB), leftType),
+            new BinaryExpr(new VariableIdentifierExpr("A"), new FloatConstantExpr("5.0f"),
+                BinOp.ASSIGN),
+            new ParenExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
+                new VariableIdentifierExpr("B"), BinOp.SUB_ASSIGN)));
+    return new FunctionDefinition(new FunctionPrototype("SAFE_SUB_ASSIGN", leftType,
+        Arrays.asList(new ParameterDecl("A", new QualifiedType(leftType,
+                Collections.singletonList(TypeQualifier.INOUT_PARAM)), null),
+            new ParameterDecl("B", rightType, null))),
+        new BlockStmt(Collections.singletonList(new ReturnStmt(subAssignExpr)), true));
+  }
+
+  public static Declaration generateMulAssignWrapper(BasicType leftType, BasicType rightType) {
+    Expr mulAssignExpr =
+        new TernaryExpr(generateFloatTestExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
+            new VariableIdentifierExpr("B"), BinOp.MUL), leftType),
+            new BinaryExpr(new VariableIdentifierExpr("A"), new FloatConstantExpr("12.0f"),
+                BinOp.ASSIGN),
+            new ParenExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
+                new VariableIdentifierExpr("B"), BinOp.MUL_ASSIGN)));
+    return new FunctionDefinition(new FunctionPrototype("SAFE_MUL_ASSIGN", leftType,
+        Arrays.asList(new ParameterDecl("A", new QualifiedType(leftType,
+                Collections.singletonList(TypeQualifier.INOUT_PARAM)), null),
+            new ParameterDecl("B", rightType, null))),
+        new BlockStmt(Collections.singletonList(new ReturnStmt(mulAssignExpr)), true));
+  }
+
+
   //TODO add support for float-based vector and matrices (erk)
   private static Declaration generateCommonUnaryWrapper(String functionName, BasicType operandType,
-                                                        Expr testOperand,
+                                                        Expr testOperand, Expr defaultOperand,
                                                         Expr correctReturn) {
-    assert operandType == BasicType.FLOAT;
     Expr unaryExpr = new TernaryExpr(
-        generateFloatTestExpr(testOperand),
-        new BinaryExpr(new VariableIdentifierExpr("A"), new FloatConstantExpr("10.0f"),
+        generateFloatTestExpr(testOperand, operandType),
+        new BinaryExpr(new VariableIdentifierExpr("A"), defaultOperand,
             BinOp.ASSIGN),
         correctReturn);
     return new FunctionDefinition(new FunctionPrototype(functionName,
         BasicType.FLOAT,
-        Collections.singletonList(new ParameterDecl("A", new QualifiedType(BasicType.FLOAT,
+        Collections.singletonList(new ParameterDecl("A", new QualifiedType(operandType,
         Collections.singletonList(TypeQualifier.INOUT_PARAM)), null))),
             new BlockStmt(Collections.singletonList(new ReturnStmt(unaryExpr)), true));
   }
@@ -385,41 +421,47 @@ public abstract class WrapperGenerator {
   public static Declaration generatePreDecWrapper(BasicType operandType, BasicType useless) {
     return generateCommonUnaryWrapper("SAFE_PRE_DEC", operandType,
         new BinaryExpr(new VariableIdentifierExpr("A"),
-          new FloatConstantExpr("1.0f"), BinOp.SUB), new UnaryExpr(new VariableIdentifierExpr("A"),
+          new FloatConstantExpr("1.0f"), BinOp.SUB),
+        new FloatConstantExpr("3.0f"),
+        new UnaryExpr(new VariableIdentifierExpr("A"),
         UnOp.PRE_DEC));
   }
 
   public static Declaration generatePreIncWrapper(BasicType operandType, BasicType useless) {
     return generateCommonUnaryWrapper("SAFE_PRE_INC", operandType,
         new BinaryExpr(new VariableIdentifierExpr("A"),
-          new FloatConstantExpr("1.0f"), BinOp.ADD), new UnaryExpr(new VariableIdentifierExpr("A"),
-        UnOp.PRE_INC));
+          new FloatConstantExpr("1.0f"), BinOp.ADD),
+        new FloatConstantExpr("7.0f"),
+        new UnaryExpr(new VariableIdentifierExpr("A"), UnOp.PRE_INC));
   }
 
   public static Declaration generatePostDecWrapper(BasicType operandType, BasicType useless) {
     return generateCommonUnaryWrapper("SAFE_POST_DEC", operandType,
         new BinaryExpr(new VariableIdentifierExpr("A"),
-          new FloatConstantExpr("1.0f"), BinOp.SUB), new UnaryExpr(new VariableIdentifierExpr("A"),
+          new FloatConstantExpr("1.0f"), BinOp.SUB),
+        new FloatConstantExpr("2.0f"),
+        new UnaryExpr(new VariableIdentifierExpr("A"),
         UnOp.POST_DEC));
   }
 
   public static Declaration generatePostIncWrapper(BasicType operandType, BasicType useless) {
     return generateCommonUnaryWrapper("SAFE_POST_INC", operandType,
         new BinaryExpr(new VariableIdentifierExpr("A"),
-          new FloatConstantExpr("1.0f"), BinOp.ADD), new UnaryExpr(new VariableIdentifierExpr("A"),
+          new FloatConstantExpr("1.0f"), BinOp.ADD),
+        new FloatConstantExpr("1.0f"),
+        new UnaryExpr(new VariableIdentifierExpr("A"),
         UnOp.POST_INC));
   }
 
-  //TODO add support for float-based vector and matrices (erk)
+  //TODO add support for matrices
   public static Declaration generateFloatResultWrapper(BasicType basicType, BasicType useless) {
-    assert basicType == BasicType.FLOAT;
-    Expr addAssignExpr =
-        new TernaryExpr(generateFloatTestExpr(new VariableIdentifierExpr("A")),
-            new BinaryExpr(new VariableIdentifierExpr("A"), new FloatConstantExpr("10.0f"),
-                BinOp.ASSIGN),
-            new VariableIdentifierExpr("A"));
-    return new FunctionDefinition(new FunctionPrototype("SAFE_FLOAT_RESULT", BasicType.FLOAT,
-        Collections.singletonList(new ParameterDecl("A", BasicType.FLOAT, null))),
-        new BlockStmt(Collections.singletonList(new ReturnStmt(addAssignExpr)), true));
+    Expr assignExpr =
+          new TernaryExpr(generateFloatTestExpr(new VariableIdentifierExpr("A"), basicType),
+              new BinaryExpr(new VariableIdentifierExpr("A"), new FloatConstantExpr("10.0f"),
+                  BinOp.ASSIGN),
+              new VariableIdentifierExpr("A"));
+    return new FunctionDefinition(new FunctionPrototype("SAFE_FLOAT_RESULT", basicType,
+        Collections.singletonList(new ParameterDecl("A", basicType, null))),
+        new BlockStmt(Collections.singletonList(new ReturnStmt(assignExpr)), true));
   }
 }

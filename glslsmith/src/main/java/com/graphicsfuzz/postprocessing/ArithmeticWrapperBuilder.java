@@ -32,6 +32,8 @@ public class ArithmeticWrapperBuilder extends BaseWrapperBuilder {
 
     // Operations that need dedicated wrappers for float based operations
     floatBaseOpMap.put(BinOp.ADD_ASSIGN, Wrapper.SAFE_ADD_ASSIGN);
+    floatBaseOpMap.put(BinOp.SUB_ASSIGN, Wrapper.SAFE_SUB_ASSIGN);
+    floatBaseOpMap.put(BinOp.MUL_ASSIGN, Wrapper.SAFE_MUL_ASSIGN);
     floatBaseOpMap.put(UnOp.POST_INC, Wrapper.SAFE_POST_INC);
     floatBaseOpMap.put(UnOp.POST_DEC, Wrapper.SAFE_POST_DEC);
     floatBaseOpMap.put(UnOp.PRE_INC, Wrapper.SAFE_PRE_INC);
