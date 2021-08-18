@@ -650,7 +650,7 @@ public abstract class ShaderGenerator {
     List<Stmt> stmts = new ArrayList<>();
 
     // Decide of the available actions in current context
-    List<Integer> options = new ArrayList<>(Arrays.asList(0, 1, 5));
+    List<Integer> options = new ArrayList<>(Arrays.asList(0, 0, 0, 0, 1, 1, 1, 1, 5));
     if (programState.getScopeDepth() < configuration.getMaxScopeDepth()) {
       options.addAll(Arrays.asList(2, 3, 4));
     }
