@@ -387,8 +387,15 @@ public class WrapperGeneratorTest {
         + "{\n"
         + " return abs(A - 1.0f) >= 16777216.0f || abs(A - 1.0f) < 1.0f ? A = 3.0f : -- A;\n"
         + "}\n";
+    String vec2Text = "vec2 SAFE_PRE_DEC(inout vec2 A)\n"
+        + "{\n"
+        + " return any(greaterThanEqual(A - 1.0f, vec2(16777216.0f))) || any(lessThan(A - 1.0f, "
+        + "vec2(1.0f))) ? A = vec2(3.0f) : -- A;\n"
+        + "}\n";
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generatePreDecWrapper(BasicType.FLOAT,
         null)), floatText);
+    Assert.assertEquals(TestHelper.getText(WrapperGenerator.generatePreDecWrapper(BasicType.VEC2,
+        null)), vec2Text);
   }
 
   @Test
@@ -408,9 +415,17 @@ public class WrapperGeneratorTest {
         + "{\n"
         + " return abs(A - B) >= 16777216.0f || abs(A - B) < 1.0f ? A = 5.0f : (A -= B);\n"
         + "}\n";
+    String vec2Text = "vec2 SAFE_SUB_ASSIGN(inout vec2 A, vec2 B)\n"
+        + "{\n"
+        + " return any(greaterThanEqual(A - B, vec2(16777216.0f))) || any(lessThan(A - B, "
+        + "vec2(1.0f))) ? A = vec2(5.0f) : (A -= B);\n"
+        + "}\n";
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateSubAssignWrapper(
         BasicType.FLOAT,
         BasicType.FLOAT)), floatText);
+    Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateSubAssignWrapper(
+        BasicType.VEC2,
+        BasicType.VEC2)), vec2Text);
   }
 
   @Test
@@ -419,22 +434,37 @@ public class WrapperGeneratorTest {
         + "{\n"
         + " return abs(A * B) >= 16777216.0f || abs(A * B) < 1.0f ? A = 12.0f : (A *= B);\n"
         + "}\n";
+    String vec3Text = "vec3 SAFE_MUL_ASSIGN(inout vec3 A, float B)\n"
+        + "{\n"
+        + " return any(greaterThanEqual(A * B, vec3(16777216.0f))) || any(lessThan(A * B, "
+        + "vec3(1.0f))) ? A = vec3(12.0f) : (A *= B);\n"
+        + "}\n";
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateMulAssignWrapper(
         BasicType.FLOAT,
         BasicType.FLOAT)), floatText);
+    Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateMulAssignWrapper(
+        BasicType.VEC3,
+        BasicType.FLOAT)), vec3Text);
   }
 
   @Test
   public void testGenerateFloatResultWrapper() {
     String floatText = "float SAFE_FLOAT_RESULT(float A)\n"
         + "{\n"
-        + " return abs(A) >= 16777216.0f || abs(A) < 1.0f ? A = 10.0f : A;\n"
+        + " return abs(A) >= 16777216.0f || abs(A) < 1.0f ? 10.0f : A;\n"
+        + "}\n";
+    String vec4Text = "vec4 SAFE_FLOAT_RESULT(vec4 A)\n"
+        + "{\n"
+        + " return any(greaterThanEqual(A, vec4(16777216.0f))) || any(lessThan(A, vec4(1.0f))) ? "
+        + "vec4(10.0f) : A;\n"
         + "}\n";
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateFloatResultWrapper(
         BasicType.FLOAT,
         null)), floatText);
+    Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateFloatResultWrapper(
+        BasicType.VEC4,
+        null)), vec4Text);
   }
-
 }
 
 

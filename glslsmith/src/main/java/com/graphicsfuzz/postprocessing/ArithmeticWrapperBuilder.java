@@ -50,8 +50,8 @@ public class ArithmeticWrapperBuilder extends BaseWrapperBuilder {
   @Override
   public void visitBinaryExpr(BinaryExpr binaryExpr) {
     BinOp op = binaryExpr.getOp();
-    Type lhsType = typer.lookupType(binaryExpr.getLhs()).getWithoutQualifiers();
-    Type rhsType = typer.lookupType(binaryExpr.getRhs()).getWithoutQualifiers();
+    final Type lhsType = typer.lookupType(binaryExpr.getLhs()).getWithoutQualifiers();
+    final Type rhsType = typer.lookupType(binaryExpr.getRhs()).getWithoutQualifiers();
     // We look for the operation and cast the two operand to their real type
     if (lhsType instanceof BasicType && rhsType instanceof BasicType) {
       BasicType leftType = (BasicType) lhsType;
@@ -90,15 +90,21 @@ public class ArithmeticWrapperBuilder extends BaseWrapperBuilder {
         // We apply the default wrapper on the result for FLOAT based value (all side-effecting
         // assign supported are already dealt with)
       } else if (leftType.getElementType().equals(BasicType.FLOAT) && !op.isSideEffecting()) {
-        programState.registerWrapper(Wrapper.SAFE_FLOAT_RESULT, leftType, null);
-        // Build the replacement Expr and exchange the child on the AST using the reference in
-        // the map
-        Expr replacementExpr = new FunctionCallExpr(Wrapper.SAFE_FLOAT_RESULT.name, binaryExpr);
-        parentMap.get(binaryExpr).replaceChild(binaryExpr, replacementExpr);
-        // Rebuild the map for the current binaryExpr so that its parent is the newly declared
-        // expression
-        parentMap.put(replacementExpr, parentMap.get(binaryExpr));
-        parentMap.replace(binaryExpr, replacementExpr);
+        final Type rType = typer.lookupType(binaryExpr).getWithoutQualifiers();
+        if (rType instanceof BasicType) {
+          final BasicType resultType = (BasicType) rType;
+          if (resultType.getElementType().equals(BasicType.FLOAT)) {
+            programState.registerWrapper(Wrapper.SAFE_FLOAT_RESULT, resultType, null);
+            // Build the replacement Expr and exchange the child on the AST using the reference in
+            // the map
+            Expr replacementExpr = new FunctionCallExpr(Wrapper.SAFE_FLOAT_RESULT.name, binaryExpr);
+            parentMap.get(binaryExpr).replaceChild(binaryExpr, replacementExpr);
+            // Rebuild the map for the current binaryExpr so that its parent is the newly declared
+            // expression
+            parentMap.put(replacementExpr, parentMap.get(binaryExpr));
+            parentMap.replace(binaryExpr, replacementExpr);
+          }
+        }
       }
     }
     super.visitBinaryExpr(binaryExpr);

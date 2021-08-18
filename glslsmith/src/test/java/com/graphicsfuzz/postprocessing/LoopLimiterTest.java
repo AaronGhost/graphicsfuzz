@@ -37,17 +37,17 @@ public class LoopLimiterTest extends CommonPostProcessingTest {
       + "{\n"
       + " while(true)\n"
       + "  {\n"
-      + "   ivec2 var_0 = ivec2(0);\n"
-      + "   while(false)\n"
-      + "    {\n"
-      + "     ivec3 var_1 = ivec3(1);\n"
-      + "     global_limiter ++;\n"
-      + "     if(global_limiter > 10)\n"
-      + "      break;\n"
-      + "    }\n"
       + "   global_limiter ++;\n"
       + "   if(global_limiter > 10)\n"
       + "    break;\n"
+      + "   ivec2 var_0 = ivec2(0);\n"
+      + "   while(false)\n"
+      + "    {\n"
+      + "     global_limiter ++;\n"
+      + "     if(global_limiter > 10)\n"
+      + "      break;\n"
+      + "     ivec3 var_1 = ivec3(1);\n"
+      + "    }\n"
       + "  }\n"
       + "}\n";
 
@@ -58,10 +58,10 @@ public class LoopLimiterTest extends CommonPostProcessingTest {
       + "{\n"
       + " while(true)\n"
       + "  {\n"
-      + "   ivec2 var_0 = ivec2(0);\n"
       + "   global_limiter ++;\n"
       + "   if(global_limiter > 10)\n"
       + "    break;\n"
+      + "   ivec2 var_0 = ivec2(0);\n"
       + "  }\n"
       + "}\n";
 
@@ -72,32 +72,33 @@ public class LoopLimiterTest extends CommonPostProcessingTest {
       + "{\n"
       + " while(true)\n"
       + "  {\n"
-      + "   ivec2 var_0 = ivec2(0);\n"
       + "   local_limiter_0 ++;\n"
       + "   if(local_limiter_0 > 10)\n"
       + "    break;\n"
+      + "   ivec2 var_0 = ivec2(0);\n"
       + "  }\n"
       + "}\n";
 
   String localLimitedComplexWhileProgramText = "#version 320 es\n"
       + "int local_limiter_0 = 0;\n"
+      + "\n"
       + "int local_limiter_1 = 0;\n"
       + "\n"
       + "void main()\n"
       + "{\n"
       + " while(true)\n"
       + "  {\n"
+      + "   local_limiter_1 ++;\n"
+      + "   if(local_limiter_1 > 10)\n"
+      + "    break;\n"
       + "   ivec2 var_0 = ivec2(0);\n"
       + "   while(false)\n"
       + "    {\n"
-      + "     ivec3 var_1 = ivec3(1);\n"
-      + "     local_limiter_1 ++;\n"
-      + "     if(local_limiter_1 > 10)\n"
+      + "     local_limiter_0 ++;\n"
+      + "     if(local_limiter_0 > 10)\n"
       + "      break;\n"
+      + "     ivec3 var_1 = ivec3(1);\n"
       + "    }\n"
-      + "   local_limiter_0 ++;\n"
-      + "   if(local_limiter_0 > 10)\n"
-      + "    break;\n"
       + "  }\n"
       + "}\n";
 
@@ -125,5 +126,12 @@ public class LoopLimiterTest extends CommonPostProcessingTest {
     ProgramState returnState = new LoopLimiter(true, 10)
         .process(generateProgramStateForCode(complexWhileProgramTest));
     Assert.assertEquals(returnState.getShaderCode(), globalLimitedComplexWhileProgramText);
+  }
+
+  @Test
+  public void testComplexWhileWithLocalLimiters() {
+    ProgramState returnState = new LoopLimiter(false, 10)
+        .process(generateProgramStateForCode(complexWhileProgramTest));
+    Assert.assertEquals(returnState.getShaderCode(), localLimitedComplexWhileProgramText);
   }
 }

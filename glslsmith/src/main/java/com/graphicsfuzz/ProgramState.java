@@ -46,7 +46,11 @@ public class ProgramState {
   private int funCall = 0;
   private boolean outParam = false;
   private int swizzleDepth = 0;
+  private int switchDepth = 0;
+  private int loopDepth = 0;
   private FuzzerScopeEntry currentLValueVariable = null;
+
+  // Variables to handle the undefined behaviour on calling orders
   private final Set<FuzzerScopeEntry> currentInitExprReadEntries = new HashSet<>();
   private final Set<FuzzerScopeEntry> currentInitExprWrittenEntries = new HashSet<>();
   private final Set<FuzzerScopeEntry> seenInitReadEntries = new HashSet<>();
@@ -69,6 +73,14 @@ public class ProgramState {
 
   public ConfigInterface getConfigInterface() {
     return configInterface;
+  }
+
+  public int getLoopDepth() {
+    return loopDepth;
+  }
+
+  public int getSwitchDepth() {
+    return switchDepth;
   }
 
   public TranslationUnit getTranslationUnit() {
@@ -171,6 +183,22 @@ public class ProgramState {
   public List<FuzzerScopeEntry> getWriteAvailableEntries() {
     List<FuzzerScopeEntry> scopeEntries = currentScope.getWriteAvailableEntries();
     return filterWriteAvailableEntries(scopeEntries);
+  }
+
+  public void enterLoop() {
+    this.loopDepth++;
+  }
+
+  public void exitLoop() {
+    this.loopDepth--;
+  }
+
+  public void enterSwitch() {
+    this.switchDepth++;
+  }
+
+  public void exitSwitch() {
+    this.switchDepth--;
   }
 
   private List<FuzzerScopeEntry> filterWriteAvailableEntries(List<FuzzerScopeEntry> scopeEntries) {

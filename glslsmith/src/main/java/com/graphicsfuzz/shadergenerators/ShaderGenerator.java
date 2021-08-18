@@ -28,6 +28,7 @@ import com.graphicsfuzz.common.ast.expr.UnaryExpr;
 import com.graphicsfuzz.common.ast.expr.VariableIdentifierExpr;
 import com.graphicsfuzz.common.ast.stmt.BlockStmt;
 import com.graphicsfuzz.common.ast.stmt.BreakStmt;
+import com.graphicsfuzz.common.ast.stmt.ContinueStmt;
 import com.graphicsfuzz.common.ast.stmt.DeclarationStmt;
 import com.graphicsfuzz.common.ast.stmt.DefaultCaseLabel;
 import com.graphicsfuzz.common.ast.stmt.ExprCaseLabel;
@@ -265,11 +266,15 @@ public abstract class ShaderGenerator {
     BinOp op;
     if (returnType.equals(BasicType.BOOL) && leftType.equals(BasicType.BOOL)) {
       op = randomTypeGenerator.getRandomBaseBoolBinaryOp();
-    } else if (returnType.equals(BasicType.FLOAT)) {
-      op = randomTypeGenerator.getRandomBaseFloatBinaryOp(returnType,
-          programState.isSideEffectOpPermitted());
     } else if (returnType.getElementType().equals(BasicType.BOOL)) {
       op = randomTypeGenerator.getRandomComparisonOp();
+    } else if (returnType.getElementType().equals(BasicType.FLOAT)) {
+      if (returnType.isVector() && leftType.isScalar()) {
+        op = randomTypeGenerator.getRandomBaseFloatBinaryOp(returnType, false);
+      } else {
+        op = randomTypeGenerator.getRandomBaseFloatBinaryOp(returnType,
+            programState.isSideEffectOpPermitted());
+      }
     } else if (returnType.isVector() && leftType.isScalar()) {
       op = randomTypeGenerator.getRandomBaseIntVectBinaryOp();
     } else {
@@ -550,26 +555,38 @@ public abstract class ShaderGenerator {
   }
 
   //TODO generate special switch statement with consecutive expression and clamping
-  //TODO optional switch cases not introducing a new scope (needs changes in prettyprinter)
-  protected Stmt generateSwitchStmt() {
+  protected Stmt generateSwitchStmt(boolean enforceCases) {
+    // Generate the switch expr
     BasicType switchType = randomTypeGenerator.getRandomScalarInteger();
-    Expr switchExpr = generateBaseExpr(switchType);
-    List<Stmt> switchBody = new ArrayList<>();
-    List<Expr> existingCases = new ArrayList<>();
-    List<Integer> casePositions = new ArrayList<>();
+    final Expr switchExpr = generateBaseExpr(switchType);
+    programState.enterSwitch();
+    // Prepares the body of the expression, already seen cases and the position of case stmts in
+    // the switch (to generate default)
+    final List<Stmt> switchBody = new ArrayList<>();
+    final List<Expr> existingCases = new ArrayList<>();
+    final List<Integer> casePositions = new ArrayList<>();
+
     int currentPos = 0;
+
+    // Generates a random length
     int switchLength = randGen.nextInt(configuration.allowEmptySwitch() ? 0 : 1,
         configuration.getMaxSwitchScopeLength());
+
     for (int i = 0; i < switchLength; i++) {
+      // Generate a base constant and ensures that the constant is not already used in a case
       Expr possibleBaseConstantExpr = generateBaseConstantExpr(switchType);
       while (existingCases.contains(possibleBaseConstantExpr)) {
         possibleBaseConstantExpr = generateBaseConstantExpr(switchType);
       }
       casePositions.add(currentPos);
+
+      // Build the case stmt
       switchBody.add(new ExprCaseLabel(possibleBaseConstantExpr));
       switchBody.add(new BlockStmt(generateScope(i == switchLength - 1 ? 1 : 0,
           configuration.getMaxSwitchScopeLength()),
           true));
+
+      // Move the cursor to add the next stmt and randomly add a breakStmt
       currentPos += 2;
       if (randGen.nextBoolean()) {
         switchBody.add(new BreakStmt());
@@ -577,7 +594,11 @@ public abstract class ShaderGenerator {
       }
       existingCases.add(possibleBaseConstantExpr);
     }
+
+    // Randomly add a default case to the switch
     if (configuration.enforceDefaultCase() || randGen.nextBoolean()) {
+
+      // Add in an empty Switch directly and randomly add a break
       if (switchBody.isEmpty()) {
         switchBody.add(new DefaultCaseLabel());
         switchBody.add(new BlockStmt(generateScope(1, configuration.getMaxSwitchScopeLength()),
@@ -586,6 +607,9 @@ public abstract class ShaderGenerator {
           switchBody.add(new BreakStmt());
         }
       } else {
+
+        // Pick a position randomly in the switch to add the default statement (after a complete
+        // case stmt)
         int defaultIndex = randGen.nextInt(casePositions.size());
         switchBody.add(casePositions.get(defaultIndex), new DefaultCaseLabel());
         switchBody.add(new BlockStmt(generateScope(defaultIndex == casePositions.size() - 1 ? 1
@@ -595,13 +619,17 @@ public abstract class ShaderGenerator {
         }
       }
     }
+
+    programState.exitSwitch();
     return new SwitchStmt(switchExpr, new BlockStmt(switchBody, true));
   }
 
 
   protected LoopStmt generateWhileLoop() {
     Expr condExpr = generateBaseExpr(BasicType.BOOL);
+    programState.enterLoop();
     Stmt bodyStmt = new BlockStmt(generateScope(1, configuration.getMaxWhileScopeLength()), true);
+    programState.exitLoop();
     return new WhileStmt(condExpr, bodyStmt);
   }
 
@@ -620,25 +648,52 @@ public abstract class ShaderGenerator {
   protected List<Stmt> generateScope(int minScopeLength, int maxScopeLength) {
     programState.addScope();
     List<Stmt> stmts = new ArrayList<>();
-    int randomActionBound = randGen.nextInt(minScopeLength, maxScopeLength);
-    for (int i = 0; i < randomActionBound; i++) {
+
+    // Decide of the available actions in current context
+    List<Integer> options = new ArrayList<>(Arrays.asList(0, 1, 5));
+    if (programState.getScopeDepth() < configuration.getMaxScopeDepth()) {
+      options.addAll(Arrays.asList(2, 3, 4));
+    }
+    if (programState.getSwitchDepth() > 0 || programState.getLoopDepth() > 0) {
+      options.add(6);
+    }
+    if (programState.getLoopDepth() > 0) {
+      options.add(7);
+    }
+
+    // Choose the number of stmts in the current scope
+    final int stmtNumber = randGen.nextInt(minScopeLength, maxScopeLength);
+    for (int i = 0; i < stmtNumber; i++) {
       Stmt stmt;
-      int actionIndex =
-          randGen.nextInt(programState.getScopeDepth() < configuration.getMaxScopeDepth() ? 10 : 5);
-      if (actionIndex < 3 && programState.getWriteAvailableEntries().size() > 0) {
-        stmt = new ExprStmt(generateProgramAssignmentLine());
-      } else if (actionIndex == 6) {
-        stmt = generateIfStmt();
-      } else if (actionIndex == 7) {
-        stmt = generateSwitchStmt();
-      } else if (actionIndex == 8) {
-        stmt = generateWhileLoop();
-      } else if (actionIndex == 9) {
-        stmt = generateVoidFunCall();
-      } else {
-        stmt = new DeclarationStmt(generateRandomTypedVarDecls(
-            randGen.nextPositiveInt(configuration.getMaxVardeclElements()),
-            true));
+      // Choose the action to perform
+      int actionIndex = options.get(randGen.nextInt(options.size()));
+      switch (actionIndex) {
+        case 1:
+          stmt = new ExprStmt(generateProgramAssignmentLine());
+          break;
+        case 2:
+          stmt = generateIfStmt();
+          break;
+        case 3:
+          stmt = generateSwitchStmt(false);
+          break;
+        case 4:
+          stmt = generateWhileLoop();
+          break;
+        case 5:
+          stmt = generateVoidFunCall();
+          break;
+        case 6:
+          stmt = new BreakStmt();
+          break;
+        case 7:
+          stmt = new ContinueStmt();
+          break;
+        default:
+          stmt = new DeclarationStmt(generateRandomTypedVarDecls(
+              randGen.nextPositiveInt(configuration.getMaxVardeclElements()),
+              true));
+          break;
       }
       stmts.add(stmt);
     }

@@ -210,8 +210,7 @@ public class RandomTypeGenerator implements IRandomType {
           return BinOp.ASSIGN;
       }
     } else {
-      switch (randGen.nextInt(canGenerateAssign ? 21
-          : 10)) {
+      switch (randGen.nextInt(canGenerateAssign ? 21 : 10)) {
         case 0:
           return BinOp.MOD;
         case 1:
@@ -276,13 +275,15 @@ public class RandomTypeGenerator implements IRandomType {
   @Override
   public BasicType getAvailableTypeFromReturnType(BasicType returnType) {
     if (returnType.equals(BasicType.BOOL)) {
-      switch (randGen.nextInt(3)) {
+      switch (randGen.nextInt(4)) {
         case 0:
           return BasicType.BOOL;
         case 1:
           return BasicType.INT;
-        default:
+        case 2:
           return BasicType.UINT;
+        default:
+          return BasicType.FLOAT;
       }
     }
     if (returnType.isVector()) {
@@ -303,7 +304,7 @@ public class RandomTypeGenerator implements IRandomType {
           return BasicType.FLOAT;
       }
     }
-    switch (randGen.nextInt(13)) {
+    switch (randGen.nextInt(16)) {
       case 0:
         return BasicType.INT;
       case 1:

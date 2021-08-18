@@ -55,8 +55,14 @@ public abstract class WrapperGenerator {
   }
 
   public static Expr generateConstant(BasicType type, String constant) {
-    Expr constantExpr = type.getElementType() == BasicType.INT ? new IntConstantExpr(constant) :
-        new UIntConstantExpr(constant + "u");
+    Expr constantExpr;
+    if (type.getElementType().equals(BasicType.INT)) {
+      constantExpr = new IntConstantExpr(constant);
+    } else if (type.getElementType().equals(BasicType.FLOAT)) {
+      constantExpr = new FloatConstantExpr(constant + "f");
+    } else {
+      constantExpr = new UIntConstantExpr(constant + "u");
+    }
     return type.isScalar() ? constantExpr : new TypeConstructorExpr(type.getText(), constantExpr);
   }
 
@@ -348,19 +354,19 @@ public abstract class WrapperGenerator {
               "1.0f"), BinOp.LT), BinOp.LOR);
     } else {
       return new BinaryExpr(
-          new FunctionCallExpr("any", new FunctionCallExpr("moreThanEqual",
-            innerTestExpr.clone(), new FloatConstantExpr((1<< 24) + ".0f"))),
+          new FunctionCallExpr("any", new FunctionCallExpr("greaterThanEqual",
+            innerTestExpr.clone(), generateConstant(resultType, (1 << 24) + ".0"))),
           new FunctionCallExpr("any", new FunctionCallExpr("lessThan", innerTestExpr.clone(),
-          new FloatConstantExpr("1.0f"))), BinOp.LOR);
+              generateConstant(resultType, "1.0"))), BinOp.LOR);
     }
   }
 
-  // Add support for matrices
+  // TODO Add support for matrices
   public static Declaration generateAddAssignWrapper(BasicType leftType, BasicType rightType) {
     Expr addAssignExpr =
         new TernaryExpr(generateFloatTestExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
             new VariableIdentifierExpr("B"), BinOp.ADD), leftType),
-            new BinaryExpr(new VariableIdentifierExpr("A"), new FloatConstantExpr("8.0f"),
+            new BinaryExpr(new VariableIdentifierExpr("A"), generateConstant(leftType, "8.0"),
                 BinOp.ASSIGN),
             new ParenExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
                 new VariableIdentifierExpr("B"), BinOp.ADD_ASSIGN)));
@@ -375,7 +381,7 @@ public abstract class WrapperGenerator {
     Expr subAssignExpr =
         new TernaryExpr(generateFloatTestExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
             new VariableIdentifierExpr("B"), BinOp.SUB), leftType),
-            new BinaryExpr(new VariableIdentifierExpr("A"), new FloatConstantExpr("5.0f"),
+            new BinaryExpr(new VariableIdentifierExpr("A"), generateConstant(leftType, "5.0"),
                 BinOp.ASSIGN),
             new ParenExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
                 new VariableIdentifierExpr("B"), BinOp.SUB_ASSIGN)));
@@ -390,7 +396,7 @@ public abstract class WrapperGenerator {
     Expr mulAssignExpr =
         new TernaryExpr(generateFloatTestExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
             new VariableIdentifierExpr("B"), BinOp.MUL), leftType),
-            new BinaryExpr(new VariableIdentifierExpr("A"), new FloatConstantExpr("12.0f"),
+            new BinaryExpr(new VariableIdentifierExpr("A"), generateConstant(leftType, "12.0"),
                 BinOp.ASSIGN),
             new ParenExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
                 new VariableIdentifierExpr("B"), BinOp.MUL_ASSIGN)));
@@ -402,7 +408,7 @@ public abstract class WrapperGenerator {
   }
 
 
-  //TODO add support for float-based vector and matrices (erk)
+  //TODO add suuport for matrices
   private static Declaration generateCommonUnaryWrapper(String functionName, BasicType operandType,
                                                         Expr testOperand, Expr defaultOperand,
                                                         Expr correctReturn) {
@@ -412,7 +418,7 @@ public abstract class WrapperGenerator {
             BinOp.ASSIGN),
         correctReturn);
     return new FunctionDefinition(new FunctionPrototype(functionName,
-        BasicType.FLOAT,
+        operandType,
         Collections.singletonList(new ParameterDecl("A", new QualifiedType(operandType,
         Collections.singletonList(TypeQualifier.INOUT_PARAM)), null))),
             new BlockStmt(Collections.singletonList(new ReturnStmt(unaryExpr)), true));
@@ -422,7 +428,7 @@ public abstract class WrapperGenerator {
     return generateCommonUnaryWrapper("SAFE_PRE_DEC", operandType,
         new BinaryExpr(new VariableIdentifierExpr("A"),
           new FloatConstantExpr("1.0f"), BinOp.SUB),
-        new FloatConstantExpr("3.0f"),
+        generateConstant(operandType, "3.0"),
         new UnaryExpr(new VariableIdentifierExpr("A"),
         UnOp.PRE_DEC));
   }
@@ -431,7 +437,7 @@ public abstract class WrapperGenerator {
     return generateCommonUnaryWrapper("SAFE_PRE_INC", operandType,
         new BinaryExpr(new VariableIdentifierExpr("A"),
           new FloatConstantExpr("1.0f"), BinOp.ADD),
-        new FloatConstantExpr("7.0f"),
+        generateConstant(operandType, "7.0"),
         new UnaryExpr(new VariableIdentifierExpr("A"), UnOp.PRE_INC));
   }
 
@@ -439,7 +445,7 @@ public abstract class WrapperGenerator {
     return generateCommonUnaryWrapper("SAFE_POST_DEC", operandType,
         new BinaryExpr(new VariableIdentifierExpr("A"),
           new FloatConstantExpr("1.0f"), BinOp.SUB),
-        new FloatConstantExpr("2.0f"),
+        generateConstant(operandType, "2.0"),
         new UnaryExpr(new VariableIdentifierExpr("A"),
         UnOp.POST_DEC));
   }
@@ -448,7 +454,7 @@ public abstract class WrapperGenerator {
     return generateCommonUnaryWrapper("SAFE_POST_INC", operandType,
         new BinaryExpr(new VariableIdentifierExpr("A"),
           new FloatConstantExpr("1.0f"), BinOp.ADD),
-        new FloatConstantExpr("1.0f"),
+        generateConstant(operandType, "1.0"),
         new UnaryExpr(new VariableIdentifierExpr("A"),
         UnOp.POST_INC));
   }
@@ -457,8 +463,7 @@ public abstract class WrapperGenerator {
   public static Declaration generateFloatResultWrapper(BasicType basicType, BasicType useless) {
     Expr assignExpr =
           new TernaryExpr(generateFloatTestExpr(new VariableIdentifierExpr("A"), basicType),
-              new BinaryExpr(new VariableIdentifierExpr("A"), new FloatConstantExpr("10.0f"),
-                  BinOp.ASSIGN),
+              generateConstant(basicType, "10.0"),
               new VariableIdentifierExpr("A"));
     return new FunctionDefinition(new FunctionPrototype("SAFE_FLOAT_RESULT", basicType,
         Collections.singletonList(new ParameterDecl("A", basicType, null))),

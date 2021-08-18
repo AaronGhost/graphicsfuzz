@@ -48,11 +48,11 @@ public class LoopLimiter extends StandardVisitor implements PostProcessorInterfa
     Stmt bodyStmt = whileStmt.getBody();
     if (bodyStmt instanceof BlockStmt) {
       BlockStmt bodyBlockStmt = ((BlockStmt) bodyStmt);
-      bodyBlockStmt.addStmt(incrStmt);
-      bodyBlockStmt.addStmt(limiterStmt);
+      bodyBlockStmt.insertStmt(0, incrStmt);
+      bodyBlockStmt.insertStmt(1, limiterStmt);
       return;
     }
-    Stmt newBodyStmt = new BlockStmt(Arrays.asList(bodyStmt, incrStmt, limiterStmt), false);
+    Stmt newBodyStmt = new BlockStmt(Arrays.asList(incrStmt, limiterStmt, bodyStmt), false);
     whileStmt.setBody(newBodyStmt);
   }
 
