@@ -46,7 +46,7 @@ public class ArithmeticWrapperBuilderTest extends CommonPostProcessingTest {
       + "float SAFE_FLOAT_RESULT(float p0);\n"
       + "float SAFE_FLOAT_RESULT(float A)\n"
       + "{\n"
-      + " return abs(A) >= 16777216.0f || abs(A) < 1.0f ? A = 10.0f : A;\n"
+      + " return abs(A) >= 16777216.0f || abs(A) < 1.0f ? 10.0f : A;\n"
       + "}\n"
       + "void main()\n"
       + "{\n"

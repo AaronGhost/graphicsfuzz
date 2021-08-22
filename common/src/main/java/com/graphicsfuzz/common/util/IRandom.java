@@ -32,6 +32,16 @@ public interface IRandom {
 
   Float nextFloat();
 
+  default Float nextFloat(float bound) {
+    assert bound > 0;
+    return nextFloat(0, bound);
+  }
+
+  default Float nextFloat(float origin, float bound) {
+    float r = nextFloat() * (bound) + origin;
+    return (r >= bound) ? Math.nextDown(r) : r;
+  }
+
   default int nextPositiveInt(int bound) {
     return nextInt(bound - 1) + 1;
   }

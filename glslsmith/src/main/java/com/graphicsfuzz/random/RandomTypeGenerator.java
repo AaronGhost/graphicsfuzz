@@ -449,4 +449,18 @@ public class RandomTypeGenerator implements IRandomType {
     }
   }
 
+  @Override
+  public BinOp getRandomForOp(BasicType initType) {
+    switch (randGen.nextInt(initType.equals(BasicType.FLOAT) ? 3 : 4)) {
+      case 0:
+        return BinOp.ADD;
+      case 1:
+        return BinOp.SUB;
+      case 2:
+        return BinOp.MUL;
+      default:
+        return BinOp.DIV;
+    }
+  }
+
 }

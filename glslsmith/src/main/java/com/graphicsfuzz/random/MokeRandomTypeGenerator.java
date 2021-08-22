@@ -181,6 +181,11 @@ public class MokeRandomTypeGenerator implements IRandomType {
   }
 
   @Override
+  public BinOp getRandomForOp(BasicType initType) {
+    return BinOp.ADD_ASSIGN;
+  }
+
+  @Override
   public UnifiedTypeInterface getRandomArrayOrBaseType(boolean restrictToInteger) {
     return randomNewType;
   }

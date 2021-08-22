@@ -94,6 +94,10 @@ public class CallingOrderCleaner extends StandardVisitor implements PostProcesso
           + functionCallExpr.getCallee());
     }
     ListIterator<Expr> parametersIterator = functionCallExpr.getArgs().listIterator();
+    // Save the forbidden expressions for all inner expressions
+    final Set<String> seenWrittenEntriesBeforeFunCall = new TreeSet<>(seenExprWrittenEntries);
+    final Set<String> seenReadEntriesBeforeFunCall = new TreeSet<>(seenExprReadEntries);
+
     for (ParameterDecl formalParameter : correctPrototype.getParameters()) {
       Expr realParameter = parametersIterator.next();
       if (formalParameter.getType().hasQualifier(TypeQualifier.OUT_PARAM)
@@ -107,11 +111,15 @@ public class CallingOrderCleaner extends StandardVisitor implements PostProcesso
       seenFunCallEntries.peek().addAll(seenFunCallEntriesInThatArg);
       seenFunCallEntriesInThatArg.clear();
 
-      // Clear the expressions sets
-      seenExprReadEntries.clear();
-      seenExprWrittenEntries.clear();
+      // Reset temp entries and add test expressions to it
+      updateTempEntriesAndRestore(seenWrittenEntriesBeforeFunCall, seenReadEntriesBeforeFunCall,
+          !parametersIterator.hasPrevious());
       exprCounter++;
     }
+    // Add the value from the temp to the entries
+    seenExprReadEntries.addAll(tempExprReadEntries);
+    seenExprWrittenEntries.addAll(tempExprWrittenEntries);
+
     isFunCall--;
     seenFunCallEntries.pop();
     funCounter++;
@@ -393,14 +401,18 @@ public class CallingOrderCleaner extends StandardVisitor implements PostProcesso
 
     visitChildFromParent(forStmt.getInit(), forStmt);
 
-    visitChildFromParent(forStmt.getIncrement(), forStmt);
+    if (forStmt.hasIncrement()) {
+      visitChildFromParent(forStmt.getIncrement(), forStmt);
+    }
 
     // Clear the expressions sets
     seenExprReadEntries.clear();
     seenExprWrittenEntries.clear();
     exprCounter++;
 
-    visitChildFromParent(forStmt.getCondition(), forStmt);
+    if (forStmt.hasCondition()) {
+      visitChildFromParent(forStmt.getCondition(), forStmt);
+    }
 
     // Clear the expressions sets
     seenExprReadEntries.clear();

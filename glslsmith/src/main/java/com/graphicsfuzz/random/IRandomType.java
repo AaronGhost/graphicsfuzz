@@ -40,6 +40,8 @@ public interface IRandomType {
 
   Type getRandomIntType();
 
+  BinOp getRandomForOp(BasicType initType);
+
   UnifiedTypeInterface getRandomArrayOrBaseType(boolean restrictToInteger);
 
   UnifiedTypeInterface getRandomQualifiedProxyType();

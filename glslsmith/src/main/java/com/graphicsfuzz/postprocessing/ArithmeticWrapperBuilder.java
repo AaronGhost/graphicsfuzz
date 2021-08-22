@@ -46,6 +46,18 @@ public class ArithmeticWrapperBuilder extends BaseWrapperBuilder {
     super.visitChildFromParent(child, parent);
   }
 
+  protected void wrapFloatResult(Expr expr, BasicType floatType) {
+    programState.registerWrapper(Wrapper.SAFE_FLOAT_RESULT, floatType, null);
+    // Build the replacement Expr and exchange the child on the AST using the reference in
+    // the map
+    Expr replacementExpr = new FunctionCallExpr(Wrapper.SAFE_FLOAT_RESULT.name, expr);
+    parentMap.get(expr).replaceChild(expr, replacementExpr);
+    // Rebuild the map for the current binaryExpr so that its parent is the newly declared
+    // expression
+    parentMap.put(replacementExpr, parentMap.get(expr));
+    parentMap.replace(expr, replacementExpr);
+  }
+
   //TODO handle constant cases for left and right operands where the wrappers are not necessary
   @Override
   public void visitBinaryExpr(BinaryExpr binaryExpr) {
@@ -94,20 +106,25 @@ public class ArithmeticWrapperBuilder extends BaseWrapperBuilder {
         if (rType instanceof BasicType) {
           final BasicType resultType = (BasicType) rType;
           if (resultType.getElementType().equals(BasicType.FLOAT)) {
-            programState.registerWrapper(Wrapper.SAFE_FLOAT_RESULT, resultType, null);
-            // Build the replacement Expr and exchange the child on the AST using the reference in
-            // the map
-            Expr replacementExpr = new FunctionCallExpr(Wrapper.SAFE_FLOAT_RESULT.name, binaryExpr);
-            parentMap.get(binaryExpr).replaceChild(binaryExpr, replacementExpr);
-            // Rebuild the map for the current binaryExpr so that its parent is the newly declared
-            // expression
-            parentMap.put(replacementExpr, parentMap.get(binaryExpr));
-            parentMap.replace(binaryExpr, replacementExpr);
+            wrapFloatResult(binaryExpr, resultType);
           }
         }
       }
     }
     super.visitBinaryExpr(binaryExpr);
+  }
+
+  @Override
+  public void visitFunctionCallExpr(FunctionCallExpr functionCallExpr) {
+    super.visitFunctionCallExpr(functionCallExpr);
+    Type funCallType = typer.lookupType(functionCallExpr).getWithoutQualifiers();
+
+    if (funCallType instanceof BasicType) {
+      BasicType returnType = (BasicType) funCallType;
+      if (returnType.getElementType().equals(BasicType.FLOAT)) {
+        wrapFloatResult(functionCallExpr, returnType);
+      }
+    }
   }
 
   // Expr are necessary on unary expr only in the case of float-based operands

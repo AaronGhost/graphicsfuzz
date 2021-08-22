@@ -81,6 +81,16 @@ public class DefaultConfig implements ConfigInterface {
   }
 
   @Override
+  public Long getMaxForIncrement() {
+    return 10L;
+  }
+
+  @Override
+  public int getMaxForLength() {
+    return 25;
+  }
+
+  @Override
   public int getMaxGlobalDecls() {
     return 0;
   }

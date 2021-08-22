@@ -13,8 +13,11 @@ import com.graphicsfuzz.common.ast.expr.UnaryExpr;
 import com.graphicsfuzz.common.ast.expr.VariableIdentifierExpr;
 import com.graphicsfuzz.common.ast.stmt.BlockStmt;
 import com.graphicsfuzz.common.ast.stmt.BreakStmt;
+import com.graphicsfuzz.common.ast.stmt.DoStmt;
 import com.graphicsfuzz.common.ast.stmt.ExprStmt;
+import com.graphicsfuzz.common.ast.stmt.ForStmt;
 import com.graphicsfuzz.common.ast.stmt.IfStmt;
+import com.graphicsfuzz.common.ast.stmt.LoopStmt;
 import com.graphicsfuzz.common.ast.stmt.Stmt;
 import com.graphicsfuzz.common.ast.stmt.WhileStmt;
 import com.graphicsfuzz.common.ast.type.BasicType;
@@ -34,9 +37,7 @@ public class LoopLimiter extends StandardVisitor implements PostProcessorInterfa
     this.loopCounter = 0;
   }
 
-  @Override
-  public void visitWhileStmt(WhileStmt whileStmt) {
-    super.visitWhileStmt(whileStmt);
+  protected void applyLoopLimiter(LoopStmt loopStmt) {
     String limiterText = isGlobalLimiter ? "global_limiter" :
         "local_limiter_" + loopCounter;
     loopCounter++;
@@ -45,7 +46,7 @@ public class LoopLimiter extends StandardVisitor implements PostProcessorInterfa
     Stmt thenStmt = new BreakStmt();
     Stmt limiterStmt = new IfStmt(new BinaryExpr(new VariableIdentifierExpr(limiterText),
         new IntConstantExpr(String.valueOf(maxLoopBudget)), BinOp.GT), thenStmt, null);
-    Stmt bodyStmt = whileStmt.getBody();
+    Stmt bodyStmt = loopStmt.getBody();
     if (bodyStmt instanceof BlockStmt) {
       BlockStmt bodyBlockStmt = ((BlockStmt) bodyStmt);
       bodyBlockStmt.insertStmt(0, incrStmt);
@@ -53,7 +54,25 @@ public class LoopLimiter extends StandardVisitor implements PostProcessorInterfa
       return;
     }
     Stmt newBodyStmt = new BlockStmt(Arrays.asList(incrStmt, limiterStmt, bodyStmt), false);
-    whileStmt.setBody(newBodyStmt);
+    loopStmt.setBody(newBodyStmt);
+  }
+
+  @Override
+  public void visitWhileStmt(WhileStmt whileStmt) {
+    super.visitWhileStmt(whileStmt);
+    applyLoopLimiter(whileStmt);
+  }
+
+  @Override
+  public void visitForStmt(ForStmt forStmt) {
+    super.visitForStmt(forStmt);
+    applyLoopLimiter(forStmt);
+  }
+
+  @Override
+  public void visitDoStmt(DoStmt doStmt) {
+    super.visitDoStmt(doStmt);
+    applyLoopLimiter(doStmt);
   }
 
   @Override

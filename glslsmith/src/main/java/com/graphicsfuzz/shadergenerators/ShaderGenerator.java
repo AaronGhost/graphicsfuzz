@@ -33,8 +33,10 @@ import com.graphicsfuzz.common.ast.stmt.DeclarationStmt;
 import com.graphicsfuzz.common.ast.stmt.DefaultCaseLabel;
 import com.graphicsfuzz.common.ast.stmt.ExprCaseLabel;
 import com.graphicsfuzz.common.ast.stmt.ExprStmt;
+import com.graphicsfuzz.common.ast.stmt.ForStmt;
 import com.graphicsfuzz.common.ast.stmt.IfStmt;
 import com.graphicsfuzz.common.ast.stmt.LoopStmt;
+import com.graphicsfuzz.common.ast.stmt.NullStmt;
 import com.graphicsfuzz.common.ast.stmt.Stmt;
 import com.graphicsfuzz.common.ast.stmt.SwitchStmt;
 import com.graphicsfuzz.common.ast.stmt.WhileStmt;
@@ -56,6 +58,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 
 public abstract class ShaderGenerator {
   protected IRandom randGen;
@@ -175,6 +179,48 @@ public abstract class ShaderGenerator {
     return new VariablesDeclaration(proxy.getRealType(), varDeclInfos);
   }
 
+  protected Pair<Expr, Number> generateScalarConstantExprValue(BasicType type) {
+    return generateScalarConstantExprValue(type, 0L);
+  }
+
+  protected Pair<Expr, Number> generateScalarConstantExprValue(BasicType type, Long bound) {
+    assert type.isScalar();
+    if (type.equals(BasicType.UINT)) {
+      if (programState.isShiftOperation()) {
+        Integer value = randGen.nextInt(32);
+        return new ImmutablePair<>(new UIntConstantExpr(value + "u"), value);
+      } else if (bound != 0L) {
+        Long value = randGen.nextLong(bound);
+        return new ImmutablePair<>(new UIntConstantExpr(value + "u"), value);
+      } else {
+        Long value = randGen.nextLong(FuzzerConstants.MAX_UINT_VALUE);
+        return new ImmutablePair<>(new UIntConstantExpr(value + "u"), value);
+      }
+    } else if (type.equals(BasicType.FLOAT)) {
+      Float value;
+      if (bound != 0L) {
+        value = randGen.nextFloat(bound.floatValue());
+      } else {
+        value = randGen.nextFloat(FuzzerConstants.MAX_PERMITTED_FLOAT);
+      }
+      return new ImmutablePair<>(new FloatConstantExpr(String.format("%.1f", value) + "f"), value);
+    } else {
+
+      //Generates a int between 0 and 32 if we are on a shift operation else generate on full range
+      assert type.equals(BasicType.INT);
+      Integer value;
+      if (programState.isShiftOperation()) {
+        value = randGen.nextInt(32);
+      } else if (bound != 0L) {
+        value = randGen.nextInt(bound.intValue());
+      }  else {
+        value = randGen.nextInt(FuzzerConstants.MIN_INT_VALUE, FuzzerConstants.MAX_INT_VALUE);
+      }
+      return new ImmutablePair<>(new IntConstantExpr(String.valueOf(value)), value);
+    }
+
+  }
+
   //Arithmetic Base generation
   protected Expr generateBaseConstantExpr(BasicType type) {
     // Sets the correct flags in the program state for further recursive call (ie: no lvalue +
@@ -196,27 +242,10 @@ public abstract class ShaderGenerator {
 
       //Generates a uint between 0u and 32u if we are on a shift operation else generate on full
       // range (uint are represented by longs in java)
-    } else if (type.equals(BasicType.UINT)) {
-      if (programState.isShiftOperation()) {
-        return new UIntConstantExpr(randGen.nextInt(32) + "u");
-      } else {
-        return new UIntConstantExpr(randGen.nextLong(FuzzerConstants.MAX_UINT_VALUE) + "u");
-      }
-
-      //Generates a random boolean value
     } else if (type.equals(BasicType.BOOL)) {
       return new BoolConstantExpr(randGen.nextBoolean());
-    } else if (type.equals(BasicType.FLOAT)) {
-      return new FloatConstantExpr(String.format("%.1f", randGen.nextFloat()) + "f");
     } else {
-
-      //Generates a int between 0 and 32 if we are on a shift operation else generate on full range
-      assert type.equals(BasicType.INT);
-      if (programState.isShiftOperation()) {
-        return new IntConstantExpr(String.valueOf(randGen.nextInt(32)));
-      }
-      return new IntConstantExpr(String.valueOf(randGen.nextInt(FuzzerConstants.MIN_INT_VALUE,
-          FuzzerConstants.MAX_INT_VALUE)));
+      return generateScalarConstantExprValue(type).getLeft();
     }
   }
 
@@ -554,16 +583,16 @@ public abstract class ShaderGenerator {
     return new IfStmt(ifExpr, ifStmt, elseStmt);
   }
 
-  //TODO generate special switch statement with consecutive expression and clamping
   protected Stmt generateSwitchStmt(boolean enforceCases) {
     // Generate the switch expr
     BasicType switchType = randomTypeGenerator.getRandomScalarInteger();
-    final Expr switchExpr = generateBaseExpr(switchType);
+    Expr switchExpr = generateBaseExpr(switchType);
+
     programState.enterSwitch();
     // Prepares the body of the expression, already seen cases and the position of case stmts in
     // the switch (to generate default)
     final List<Stmt> switchBody = new ArrayList<>();
-    final List<Expr> existingCases = new ArrayList<>();
+    final List<Integer> existingCases = new ArrayList<>();
     final List<Integer> casePositions = new ArrayList<>();
 
     int currentPos = 0;
@@ -572,11 +601,39 @@ public abstract class ShaderGenerator {
     int switchLength = randGen.nextInt(configuration.allowEmptySwitch() ? 0 : 1,
         configuration.getMaxSwitchScopeLength());
 
+    long offset = 0;
+    if (enforceCases) {
+      if (switchType.equals(BasicType.INT)) {
+        offset = randGen.nextInt(FuzzerConstants.MIN_INT_VALUE, FuzzerConstants.MAX_INT_VALUE);
+        switchExpr = new BinaryExpr(new IntConstantExpr(String.valueOf(offset)),
+            new ParenExpr(new BinaryExpr(new FunctionCallExpr("abs", switchExpr),
+                new IntConstantExpr(String.valueOf(switchLength)), BinOp.MOD)), BinOp.ADD);
+      } else {
+        offset = randGen.nextLong(FuzzerConstants.MAX_UINT_VALUE);
+        switchExpr = new BinaryExpr(new IntConstantExpr(offset + "u"),
+            new ParenExpr(new BinaryExpr(switchExpr,
+                new UIntConstantExpr(switchLength + "u"), BinOp.MOD)), BinOp.ADD);
+      }
+    }
+
     for (int i = 0; i < switchLength; i++) {
       // Generate a base constant and ensures that the constant is not already used in a case
-      Expr possibleBaseConstantExpr = generateBaseConstantExpr(switchType);
-      while (existingCases.contains(possibleBaseConstantExpr)) {
-        possibleBaseConstantExpr = generateBaseConstantExpr(switchType);
+      Expr possibleBaseConstantExpr;
+      if (enforceCases) {
+        if (switchType.equals(BasicType.INT)) {
+          possibleBaseConstantExpr =
+              new IntConstantExpr(String.valueOf((offset + i) % FuzzerConstants.MAX_INT_VALUE));
+        } else {
+          possibleBaseConstantExpr =
+              new UIntConstantExpr(((offset + i) % FuzzerConstants.MAX_UINT_VALUE) + "u");
+        }
+      } else {
+        Pair<Expr, Number> possibleBaseConstantPair = generateScalarConstantExprValue(switchType);
+        while (existingCases.contains(possibleBaseConstantPair.getRight().intValue())) {
+          possibleBaseConstantPair = generateScalarConstantExprValue(switchType);
+        }
+        possibleBaseConstantExpr = possibleBaseConstantPair.getLeft();
+        existingCases.add(possibleBaseConstantPair.getRight().intValue());
       }
       casePositions.add(currentPos);
 
@@ -592,7 +649,7 @@ public abstract class ShaderGenerator {
         switchBody.add(new BreakStmt());
         currentPos++;
       }
-      existingCases.add(possibleBaseConstantExpr);
+
     }
 
     // Randomly add a default case to the switch
@@ -613,7 +670,7 @@ public abstract class ShaderGenerator {
         int defaultIndex = randGen.nextInt(casePositions.size());
         switchBody.add(casePositions.get(defaultIndex), new DefaultCaseLabel());
         switchBody.add(new BlockStmt(generateScope(defaultIndex == casePositions.size() - 1 ? 1
-                : 0, configuration.getMaxSwitchScopeLength()), true));
+            : 0, configuration.getMaxSwitchScopeLength()), true));
         if (randGen.nextBoolean()) {
           switchBody.add(new BreakStmt());
         }
@@ -624,7 +681,6 @@ public abstract class ShaderGenerator {
     return new SwitchStmt(switchExpr, new BlockStmt(switchBody, true));
   }
 
-
   protected LoopStmt generateWhileLoop() {
     Expr condExpr = generateBaseExpr(BasicType.BOOL);
     programState.enterLoop();
@@ -633,26 +689,161 @@ public abstract class ShaderGenerator {
     return new WhileStmt(condExpr, bodyStmt);
   }
 
+  protected LoopStmt generateForLoop(boolean enforceInduction) {
+    Stmt initStmt = new NullStmt();
+    Expr condExpr = null;
+    Expr incrExpr = null;
+
+    // Scopes correctly the loop indexes
+    programState.addScope();
+    programState.enterLoop();
+
+    if (enforceInduction) {
+      // Get a name and a random type
+      final String inductionVarName = "for_" + programState.getAvailableNoShadowName();
+      final BasicType inductionType = randomTypeGenerator.getRandomBaseType(true);
+      programState.addVariable(inductionVarName, new UnifiedTypeProxy(inductionType), false, false);
+
+      // Generate an offset, the number of executed step and choose an operation
+      final Pair<Expr, Number> exprValuePair = generateScalarConstantExprValue(inductionType);
+      final Number offset = exprValuePair.getRight();
+      final Expr offsetExpr = exprValuePair.getLeft();
+
+      final Number maxStep = randGen.nextInt(configuration.getMaxForLength());
+      final BinOp inductionOp = randomTypeGenerator.getRandomForOp(inductionType);
+
+      // Build the statements
+      initStmt = new DeclarationStmt(new VariablesDeclaration(inductionType,
+              new VariableDeclInfo(inductionVarName, null, new Initializer(offsetExpr))));
+
+      // Computes the increment operand type
+      Number step;
+      if ((inductionOp.equals(BinOp.ADD) || inductionOp.equals(BinOp.SUB))
+          && randGen.nextBoolean()) {
+
+        // Generate an increment / decrement
+        step = 1;
+        if (inductionOp.equals(BinOp.ADD)) {
+          incrExpr = new UnaryExpr(new VariableIdentifierExpr(inductionVarName),
+              randGen.nextBoolean() ? UnOp.POST_INC : UnOp.PRE_INC);
+        } else {
+          incrExpr = new UnaryExpr(new VariableIdentifierExpr(inductionVarName),
+              randGen.nextBoolean() ? UnOp.POST_DEC : UnOp.PRE_DEC);
+        }
+      } else {
+        // Generate a value
+        BinOp assignOp = BinOp.valueOf(inductionOp + "_ASSIGN");
+        Pair<Expr, Number> incrementExprValuePair = generateScalarConstantExprValue(inductionType,
+            configuration.getMaxForIncrement());
+        incrExpr = new BinaryExpr(new VariableIdentifierExpr(inductionVarName),
+            incrementExprValuePair.getLeft(), assignOp);
+        step = incrementExprValuePair.getRight();
+      }
+
+      // Generate the correct comparison operand for the test
+      BinOp comparisonOp;
+      // Less than (we increment the value)
+      if (inductionOp.equals(BinOp.ADD) || inductionOp.equals(BinOp.MUL)) {
+        if (randGen.nextBoolean()) {
+          comparisonOp = BinOp.LT;
+        } else {
+          comparisonOp = BinOp.LE;
+        }
+
+        // More than we decrement the value
+      } else {
+        if (randGen.nextBoolean()) {
+          comparisonOp = BinOp.GT;
+        } else {
+          comparisonOp = BinOp.GE;
+        }
+      }
+
+      // Generate the correct max value for the increment operand
+      Number maxValue = 0;
+      long bound = (maxStep.longValue() * step.longValue());
+      switch (inductionOp) {
+        case ADD:
+          maxValue = offset.longValue() + bound;
+          break;
+        case SUB:
+          maxValue = offset.longValue() - bound;
+          break;
+        case DIV:
+          maxValue = offset.longValue() / ((bound == 0) ? 1 : bound);
+          break;
+        case MUL:
+          maxValue = offset.longValue() * bound;
+          break;
+        default:
+          assert false;
+          break;
+      }
+
+      final Expr maxExpr = inductionType.equals(BasicType.FLOAT)
+          ? new FloatConstantExpr(
+              maxValue.longValue() % FuzzerConstants.MAX_PERMITTED_FLOAT + ".0f")
+          : inductionType.equals(BasicType.INT)
+          ? new IntConstantExpr(String.valueOf(
+              maxValue.longValue() % FuzzerConstants.MAX_INT_VALUE))
+          : new UIntConstantExpr(maxValue.longValue() % FuzzerConstants.MAX_UINT_VALUE + "u");
+      // Generate the conditionExpr using the value of the increment
+      condExpr = new BinaryExpr(new VariableIdentifierExpr(inductionVarName), maxExpr,
+          comparisonOp);
+
+    } else {
+      // Randomly creates a declaration or an expression on an existing value or nothing
+      if (randGen.nextBoolean()) {
+        if (randGen.nextBoolean()) {
+          initStmt = new DeclarationStmt(generateRandomTypedVarDecls(0, true));
+        } else {
+          initStmt = new ExprStmt(generateBaseExpr(randomTypeGenerator.getRandomBaseType()));
+        }
+      }
+      // Randomly creates a condition or nothing
+      if (randGen.nextBoolean()) {
+        condExpr = generateBaseExpr(BasicType.BOOL);
+      }
+
+      // Randomly creates an increment or nothing
+      if (randGen.nextBoolean()) {
+        incrExpr = generateBaseExpr(randomTypeGenerator.getRandomBaseType());
+      }
+    }
+    ForStmt loopStmt = new ForStmt(initStmt, condExpr, incrExpr, new BlockStmt(generateScope(1,
+        configuration.getMaxWhileScopeLength(), false), false));
+    programState.exitLoop();
+    programState.exitScope();
+    return loopStmt;
+  }
+
+
 
   protected ExprStmt generateVoidFunCall() {
     return new ExprStmt(generateFunCallExpr(new UnifiedTypeProxy(VoidType.VOID)));
   }
 
+  protected List<Stmt> generateScope(int minScopeLength, int maxScopeLength) {
+    return generateScope(minScopeLength, maxScopeLength, true);
+  }
+
 
   protected List<Stmt> generateScope() {
-    return generateScope(1, configuration.getMaxMainLength());
+    return generateScope(1, configuration.getMaxMainLength(), true);
   }
 
   //TODO ensure at this stage that some function exists that has a void return type and does not
   // necessit out params
-  protected List<Stmt> generateScope(int minScopeLength, int maxScopeLength) {
-    programState.addScope();
+  protected List<Stmt> generateScope(int minScopeLength, int maxScopeLength, boolean induceScope) {
+    if (induceScope) {
+      programState.addScope();
+    }
     List<Stmt> stmts = new ArrayList<>();
 
-    // Decide of the available actions in current context
-    List<Integer> options = new ArrayList<>(Arrays.asList(0, 0, 0, 0, 1, 1, 1, 1, 5));
+    // Decide of the available actions in current context and skew the probability for assignments
+    List<Integer> options = new ArrayList<>(Arrays.asList(0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 5, 5, 5));
     if (programState.getScopeDepth() < configuration.getMaxScopeDepth()) {
-      options.addAll(Arrays.asList(2, 3, 4));
+      options.addAll(Arrays.asList(2, 2, 3, 4, 4, 8, 9, 10));
     }
     if (programState.getSwitchDepth() > 0 || programState.getLoopDepth() > 0) {
       options.add(6);
@@ -689,6 +880,15 @@ public abstract class ShaderGenerator {
         case 7:
           stmt = new ContinueStmt();
           break;
+        case 8:
+          stmt = generateSwitchStmt(true);
+          break;
+        case 9:
+          stmt = generateForLoop(false);
+          break;
+        case 10:
+          stmt = generateForLoop(true);
+          break;
         default:
           stmt = new DeclarationStmt(generateRandomTypedVarDecls(
               randGen.nextPositiveInt(configuration.getMaxVardeclElements()),
@@ -697,7 +897,9 @@ public abstract class ShaderGenerator {
       }
       stmts.add(stmt);
     }
-    programState.exitScope();
+    if (induceScope) {
+      programState.exitScope();
+    }
     return stmts;
   }
 }

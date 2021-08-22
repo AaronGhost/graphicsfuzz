@@ -39,19 +39,22 @@ import java.util.List;
 
 public abstract class WrapperGenerator {
 
-  public static FunctionPrototype generateDeclaration(Wrapper op, BasicType typeA,
+  public static FunctionPrototype generateDeclaration(Wrapper wrapper, BasicType typeA,
                                                       BasicType typeB) {
-    Type parArgA = typeA;
-    if (op.inoutA) {
-      parArgA = new QualifiedType(typeA, Collections.singletonList(TypeQualifier.INOUT_PARAM));
+    final List<ParameterDecl> parameterDecls = new ArrayList<>();
+    for (int i = 0; i < wrapper.nbA; i++) {
+      Type parArgA = typeA;
+      if (wrapper.inoutA) {
+        parArgA = new QualifiedType(typeA, Collections.singletonList(TypeQualifier.INOUT_PARAM));
+      }
+      parameterDecls.add(new ParameterDecl("p" + i, parArgA, null));
     }
-    if (typeB == null) {
-      return new FunctionPrototype(op.name, typeA, parArgA);
+
+    for (int i = wrapper.nbA; i < wrapper.nbA + wrapper.nbB; i++) {
+      parameterDecls.add(new ParameterDecl("p" + i, typeB, null));
     }
-    if (! typeA.isVector() && typeB.isVector()) {
-      return new FunctionPrototype(op.name, typeB, parArgA, typeB);
-    }
-    return new FunctionPrototype(op.name, typeA, parArgA, typeB);
+    BasicType returnType = typeA.isScalar() && typeB != null && typeB.isVector() ? typeB : typeA;
+    return new FunctionPrototype(wrapper.name, returnType, parameterDecls);
   }
 
   public static Expr generateConstant(BasicType type, String constant) {

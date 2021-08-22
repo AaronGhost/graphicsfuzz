@@ -12,4 +12,5 @@ public class FuzzerConstants {
   public static final int MIN_SMALL = -128;
   public static final int MIN_HIGH = MAX_INT_VALUE - (MAX_INT_VALUE >> 3);
   public static final int MAX_HIGH = MIN_INT_VALUE - (MIN_INT_VALUE >> 3);
+  public static final int MAX_PERMITTED_FLOAT = (1 << 24) - 1;
 }

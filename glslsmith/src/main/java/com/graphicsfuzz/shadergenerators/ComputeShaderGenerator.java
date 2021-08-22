@@ -94,7 +94,7 @@ public class ComputeShaderGenerator extends ShaderGenerator {
         } else if (baseType.equals(BasicType.UINT)) {
           values.add(randGen.nextLong(FuzzerConstants.MAX_UINT_VALUE));
         } else {
-          values.add(randGen.nextFloat());
+          values.add(randGen.nextFloat(-1 << 12, 1 << 12));
         }
       }
       //Adds the variable to the scope

@@ -18,6 +18,10 @@ public interface ConfigInterface {
 
   int getMaxExprDepth();
 
+  Long getMaxForIncrement();
+
+  int getMaxForLength();
+
   int getMaxGlobalDecls();
 
   int getMaxInputBuffers();

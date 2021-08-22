@@ -30,7 +30,7 @@ public class PostProcessingHandler {
       new BufferFormatEnforcer(),
       new InitializerEnforcer(),
       new CallingOrderCleaner(),
-      new LoopLimiter(true, 100),
+      new LoopLimiter(false, 10),
       new ArithmeticWrapperBuilder(),
       new StdWrapperBuilder(),
       new ArrayIndexBuilder(false)
