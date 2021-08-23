@@ -31,6 +31,7 @@ import com.graphicsfuzz.common.ast.stmt.BreakStmt;
 import com.graphicsfuzz.common.ast.stmt.ContinueStmt;
 import com.graphicsfuzz.common.ast.stmt.DeclarationStmt;
 import com.graphicsfuzz.common.ast.stmt.DefaultCaseLabel;
+import com.graphicsfuzz.common.ast.stmt.DoStmt;
 import com.graphicsfuzz.common.ast.stmt.ExprCaseLabel;
 import com.graphicsfuzz.common.ast.stmt.ExprStmt;
 import com.graphicsfuzz.common.ast.stmt.ForStmt;
@@ -98,7 +99,7 @@ public abstract class ShaderGenerator {
   //TODO update with the qualifiers on the interface
   protected InterfaceBlock generateInterfaceBlockFromBuffer(Buffer buffer) {
     return new InterfaceBlock(Optional.ofNullable(buffer.getLayoutQualifiers()),
-        Collections.singletonList(buffer.getInterfaceQualifier()),
+        buffer.getInterfaceQualifiers(),
         buffer.getName(),
         buffer.getMemberNames(),
         buffer.getMemberTypes(),
@@ -162,7 +163,9 @@ public abstract class ShaderGenerator {
     // program state
     for (int i = 0; i < varDeclNumber; i++) {
       String name;
-      if (programState.isAShadowNameStillAvailable() && randGen.nextBoolean()) {
+      // forbidden shadowing in loops for llvmpipe defect
+      if (programState.isAShadowNameStillAvailable() && randGen.nextBoolean()
+          && programState.getForDepth() == 0) {
         name = programState.getAvailableShadowName();
         programState.addVariable(name, proxy, false, true);
       } else {
@@ -682,12 +685,26 @@ public abstract class ShaderGenerator {
   }
 
   protected LoopStmt generateWhileLoop() {
-    Expr condExpr = generateBaseExpr(BasicType.BOOL);
+    final Expr condExpr = generateBaseExpr(BasicType.BOOL);
     programState.enterLoop();
-    Stmt bodyStmt = new BlockStmt(generateScope(1, configuration.getMaxWhileScopeLength()), true);
+    final Stmt bodyStmt = new BlockStmt(generateScope(1, configuration.getMaxWhileScopeLength()),
+        true);
     programState.exitLoop();
     return new WhileStmt(condExpr, bodyStmt);
   }
+
+  protected LoopStmt generateDoWhileLoop() {
+    programState.enterLoop();
+    programState.enterFor();
+    final Stmt bodyStmt = new BlockStmt(generateScope(1, configuration.getMaxWhileScopeLength()),
+        true);
+    programState.enterFor();
+    programState.exitLoop();
+    final Expr condExpr = generateBaseExpr(BasicType.BOOL);
+    return new DoStmt(bodyStmt, condExpr);
+  }
+
+
 
   protected LoopStmt generateForLoop(boolean enforceInduction) {
     Stmt initStmt = new NullStmt();
@@ -697,6 +714,7 @@ public abstract class ShaderGenerator {
     // Scopes correctly the loop indexes
     programState.addScope();
     programState.enterLoop();
+    programState.enterFor();
 
     if (enforceInduction) {
       // Get a name and a random type
@@ -810,13 +828,15 @@ public abstract class ShaderGenerator {
         incrExpr = generateBaseExpr(randomTypeGenerator.getRandomBaseType());
       }
     }
-    ForStmt loopStmt = new ForStmt(initStmt, condExpr, incrExpr, new BlockStmt(generateScope(1,
+    final ForStmt loopStmt = new ForStmt(initStmt, condExpr, incrExpr,
+        new BlockStmt(generateScope(1,
         configuration.getMaxWhileScopeLength(), false), false));
+
+    programState.exitFor();
     programState.exitLoop();
     programState.exitScope();
     return loopStmt;
   }
-
 
 
   protected ExprStmt generateVoidFunCall() {
@@ -841,9 +861,10 @@ public abstract class ShaderGenerator {
     List<Stmt> stmts = new ArrayList<>();
 
     // Decide of the available actions in current context and skew the probability for assignments
-    List<Integer> options = new ArrayList<>(Arrays.asList(0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 5, 5, 5));
+    List<Integer> options = new ArrayList<>(Arrays.asList(0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 5, 5,
+        5));
     if (programState.getScopeDepth() < configuration.getMaxScopeDepth()) {
-      options.addAll(Arrays.asList(2, 2, 3, 4, 4, 8, 9, 10));
+      options.addAll(Arrays.asList(2, 2, 3, 4, 4, 8, 9, 10, 11));
     }
     if (programState.getSwitchDepth() > 0 || programState.getLoopDepth() > 0) {
       options.add(6);
@@ -888,6 +909,9 @@ public abstract class ShaderGenerator {
           break;
         case 10:
           stmt = generateForLoop(true);
+          break;
+        case 11:
+          stmt = generateDoWhileLoop();
           break;
         default:
           stmt = new DeclarationStmt(generateRandomTypedVarDecls(

@@ -48,6 +48,7 @@ public class ProgramState {
   private int swizzleDepth = 0;
   private int switchDepth = 0;
   private int loopDepth = 0;
+  private int forDepth = 0;
   private FuzzerScopeEntry currentLValueVariable = null;
 
   // Variables to handle the undefined behaviour on calling orders
@@ -77,6 +78,10 @@ public class ProgramState {
 
   public int getLoopDepth() {
     return loopDepth;
+  }
+
+  public int getForDepth() {
+    return forDepth;
   }
 
   public int getSwitchDepth() {
@@ -189,8 +194,16 @@ public class ProgramState {
     this.loopDepth++;
   }
 
+  public void enterFor() {
+    this.forDepth++;
+  }
+
   public void exitLoop() {
     this.loopDepth--;
+  }
+
+  public void exitFor() {
+    this.forDepth--;
   }
 
   public void enterSwitch() {

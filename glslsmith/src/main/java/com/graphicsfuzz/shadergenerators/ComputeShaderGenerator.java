@@ -63,27 +63,36 @@ public class ComputeShaderGenerator extends ShaderGenerator {
     int newMembers = randGen.nextPositiveInt(configuration.getMaxBufferElements());
 
     //Buffer internal values holders
-    List<Number> values = new ArrayList<>();
-    List<Type> memberTypes = new ArrayList<>();
-    List<String> memberNames = new ArrayList<>();
+    final List<Number> values = new ArrayList<>();
+    final List<Type> memberTypes = new ArrayList<>();
+    final List<TypeQualifier> qualifiers = new ArrayList<>();
+    final List<String> memberNames = new ArrayList<>();
 
     // Buffers that are bound can be coherent, readonly or writeonly (reandonly / writeonly is
     // permitted but not useful at current step)
     // For convenience we choose to have no readonly output buffers
     // TODO support everything for readonly + writeonly buffers
-    // TODO support interface level memory qualifiers when the support will be added to the AST
     // Randomly pick if the full buffer is coherent
     // For now the following code is useless
-    /*
-    boolean coherentBuffer = randGen.nextBoolean();
-    boolean readonlyBuffer = isInBuffer && randGen.nextBoolean();
-    boolean writeonlyBuffer = !readonlyBuffer && randGen.nextBoolean();
-     */
+
+    final boolean coherentBuffer = randGen.nextBoolean();
+    if (coherentBuffer) {
+      qualifiers.add(TypeQualifier.COHERENT);
+    }
+    final boolean readonlyBuffer = isInBuffer && randGen.nextBoolean();
+    if (readonlyBuffer) {
+      qualifiers.add(TypeQualifier.READONLY);
+    }
+    final boolean writeonlyBuffer = !readonlyBuffer && randGen.nextBoolean();
+    if (writeonlyBuffer) {
+      qualifiers.add(TypeQualifier.WRITEONLY);
+    }
 
     //Randomly populate internal values
     for (int memberIndex = 0; memberIndex < newMembers; memberIndex++) {
       // Elements can be declared as coherent, readonly or/ and writeonly
-      UnifiedTypeInterface proxy = randomTypeGenerator.getBufferElementType(!isInBuffer);
+      UnifiedTypeInterface proxy =
+          randomTypeGenerator.getBufferElementType(!isInBuffer || writeonlyBuffer);
       memberTypes.add(proxy.getRealType());
       String name = programState.getNextUniformBufferName();
       memberNames.add(name);
@@ -97,16 +106,28 @@ public class ComputeShaderGenerator extends ShaderGenerator {
           values.add(randGen.nextFloat(-1 << 12, 1 << 12));
         }
       }
-      //Adds the variable to the scope
+
+      //Adds the buffer qualifiers to the member qualifiers for scope purpose
+      if (coherentBuffer) {
+        proxy.setCoherent(true);
+      }
+      if (readonlyBuffer) {
+        proxy.setReadOnly(true);
+      }
+      if (writeonlyBuffer) {
+        proxy.setWriteOnly(true);
+      }
       programState.addUniformBufferVariable(name, proxy);
     }
+
+    qualifiers.add(TypeQualifier.BUFFER);
 
     //Create the correct buffer object
     Buffer inputBuffer = new Buffer("buffer_" + programState.getBindingOffset(),
         //Std430 ensures that all buffers are always stored the same way in the interface blocks
         new LayoutQualifierSequence(new Std430LayoutQualifier(),
             new BindingLayoutQualifier(programState.getBindingOffset())),
-        values, TypeQualifier.BUFFER, memberNames, memberTypes, "",
+        values, qualifiers, memberNames, memberTypes, "",
         isInBuffer, programState.getBindingOffset());
     programState.addBuffer(inputBuffer);
   }

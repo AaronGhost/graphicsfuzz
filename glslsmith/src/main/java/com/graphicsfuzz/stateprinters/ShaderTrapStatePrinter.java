@@ -128,7 +128,8 @@ public class ShaderTrapStatePrinter implements StatePrinter {
         assert  fullSize == 0;
         buffers.add(new Buffer(bufferName,
             new LayoutQualifierSequence(Arrays.asList(new Std430LayoutQualifier(),
-                new BindingLayoutQualifier(bufferBinding))), memberValues, TypeQualifier.BUFFER,
+                new BindingLayoutQualifier(bufferBinding))), memberValues,
+            Collections.singletonList(TypeQualifier.BUFFER),
             memberNames, memberTypes, "", true, bufferBinding));
       } else {
         throw new RuntimeException("Buffer " + bufferName + " is not bound to the shader");

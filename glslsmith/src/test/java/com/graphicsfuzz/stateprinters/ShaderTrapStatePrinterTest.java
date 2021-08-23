@@ -68,7 +68,8 @@ public class ShaderTrapStatePrinterTest {
     // Buffer 2
     List<? extends Number> valueList2 = Arrays.asList(12, -45, 25);
     buffer2 = new Buffer("buffer_2", new LayoutQualifierSequence(new BindingLayoutQualifier(2)),
-        valueList2, TypeQualifier.BUFFER, Arrays.asList("uint1", "int1", "int2"),
+        valueList2, Collections.singletonList(TypeQualifier.BUFFER),
+        Arrays.asList("uint1", "int1", "int2"),
         Arrays.asList(BasicType.UINT, BasicType.INT, BasicType.INT), "", true, 2);
 
     // Buffer 3
@@ -79,7 +80,8 @@ public class ShaderTrapStatePrinterTest {
     List<Type> memberTypes3 = Arrays.asList(new ArrayType(BasicType.FLOAT, floatInfo3),
         BasicType.INT, BasicType.UINT, BasicType.FLOAT);
     buffer3 = new Buffer("buffer_3", new LayoutQualifierSequence(new BindingLayoutQualifier(3)),
-        valueList3, TypeQualifier.BUFFER, Arrays.asList("float3", "int3", "uint3", "float4"),
+        valueList3, Collections.singletonList(TypeQualifier.BUFFER),
+        Arrays.asList("float3", "int3", "uint3", "float4"),
         memberTypes3, "", false, 3);
 
     // Buffer 4
@@ -93,7 +95,8 @@ public class ShaderTrapStatePrinterTest {
     List<Type> memberTypes = Arrays.asList(new ArrayType(BasicType.INT, arrayInfo1),
         new ArrayType(BasicType.UINT, arrayInfo2));
     buffer4 = new Buffer("buffer_4", new LayoutQualifierSequence(new BindingLayoutQualifier(4)),
-        valueList4, TypeQualifier.BUFFER, Arrays.asList("int4", "uint4"), memberTypes, "", false,
+        valueList4, Collections.singletonList(TypeQualifier.BUFFER),
+        Arrays.asList("int4", "uint4"), memberTypes, "", false,
         4);
 
   }

@@ -61,7 +61,7 @@ public class BufferFormatEnforcerTest extends CommonPostProcessingTest {
         new LayoutQualifierSequence(Arrays.asList(new Std430LayoutQualifier(),
             new BindingLayoutQualifier(1))),
         Arrays.asList(1, 1, 1, 1, 1, 1, 1, 1, 1),
-        TypeQualifier.BUFFER,
+        Collections.singletonList(TypeQualifier.BUFFER),
         Arrays.asList("ext_0", "ext_1", "ext_2"),
         Arrays.asList(BasicType.INT, memberType2, memberType3), "", true,
         1);

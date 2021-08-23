@@ -10,7 +10,7 @@ public class Buffer {
   //Buffer elements to generate the interface block
   private final String bufferName;
   private final LayoutQualifierSequence layoutQualifiers;
-  private final TypeQualifier interfaceQualifier;
+  private final List<TypeQualifier> interfaceQualifiers;
   private final List<String> memberNames;
   private final List<Type> memberTypes;
   private final String instanceName;
@@ -21,13 +21,13 @@ public class Buffer {
 
   //TODO add test for memberType maybe
   public Buffer(String bufferName, LayoutQualifierSequence layoutQualifiers,
-                List<? extends Number> values, TypeQualifier interfaceQualifier,
+                List<? extends Number> values, List<TypeQualifier> interfaceQualifier,
                 List<String> memberNames, List<Type> memberTypes, String instanceName,
                 boolean input, int binding) {
     this.layoutQualifiers = layoutQualifiers;
     this.bufferName = bufferName;
     this.values = values;
-    this.interfaceQualifier = interfaceQualifier;
+    this.interfaceQualifiers = interfaceQualifier;
     this.memberNames = memberNames;
     this.memberTypes = memberTypes;
     this.instanceName = instanceName;
@@ -55,8 +55,8 @@ public class Buffer {
     return bufferName;
   }
 
-  public TypeQualifier getInterfaceQualifier() {
-    return interfaceQualifier;
+  public List<TypeQualifier> getInterfaceQualifiers() {
+    return interfaceQualifiers;
   }
 
   public LayoutQualifierSequence getLayoutQualifiers() {
