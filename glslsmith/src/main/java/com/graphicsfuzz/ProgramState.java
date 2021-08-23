@@ -185,9 +185,21 @@ public class ProgramState {
     return scopeEntries;
   }
 
+  public List<FuzzerScopeEntry> getReadEntriesOfCompatibleType(BasicType baseType,
+                                                               int baseTypeSize) {
+    return getReadEntriesOfCompatibleType(baseType).stream()
+        .filter(t -> t.getBaseTypeSize() == baseTypeSize
+            && t.getBaseType() == baseType).collect(Collectors.toList());
+  }
+
   public List<FuzzerScopeEntry> getWriteAvailableEntries() {
     List<FuzzerScopeEntry> scopeEntries = currentScope.getWriteAvailableEntries();
     return filterWriteAvailableEntries(scopeEntries);
+  }
+
+  public List<FuzzerScopeEntry> getWriteAvailableArrayEntries() {
+    return getWriteAvailableEntries().stream()
+        .filter(t -> t.getBaseTypeSize() > 1).collect(Collectors.toList());
   }
 
   public void enterLoop() {

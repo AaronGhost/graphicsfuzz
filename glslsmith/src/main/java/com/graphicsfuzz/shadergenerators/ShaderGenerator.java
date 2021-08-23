@@ -96,7 +96,6 @@ public abstract class ShaderGenerator {
 
   //All generate instructions return classes inherited from IASTNodes
   //TODO support named instance
-  //TODO update with the qualifiers on the interface
   protected InterfaceBlock generateInterfaceBlockFromBuffer(Buffer buffer) {
     return new InterfaceBlock(Optional.ofNullable(buffer.getLayoutQualifiers()),
         buffer.getInterfaceQualifiers(),
@@ -105,6 +104,28 @@ public abstract class ShaderGenerator {
         buffer.getMemberTypes(),
         Optional.of("")
     );
+  }
+
+  protected Expr generateArrayConstructorExpr(BasicType elementType, int arraySize,
+                                              boolean constOnly) {
+    List<Expr> initializerExprs = new ArrayList<>();
+
+    // Taint generation to prevent from generating read / write access in initializers
+    programState.enterInitializer();
+    for (int i = 0; i < arraySize; i++) {
+      if (constOnly) {
+        initializerExprs.add(generateBaseConstantExpr(elementType));
+      } else {
+        initializerExprs.add(generateBaseExpr(elementType));
+      }
+      programState.finishInitParam();
+    }
+    programState.exitInitializer();
+
+    return new ArrayConstructorExpr(new ArrayType(elementType,
+        new ArrayInfo(Collections.singletonList(Optional.of(
+            new IntConstantExpr(String.valueOf(arraySize)))))),
+        initializerExprs);
   }
 
   //Generate a Variable declaration
@@ -124,25 +145,9 @@ public abstract class ShaderGenerator {
 
       // Initializer for the arrays
       if (proxy.isArray()) {
-        List<Expr> initializerExprs = new ArrayList<>();
-
-        // Taint generation to prevent from generating read / write access in initializers
-        programState.enterInitializer();
-        for (int i = 0; i < proxy.getBaseTypeSize(); i++) {
-          if (proxy.isConstOnly()) {
-            initializerExprs.add(generateBaseConstantExpr(baseType));
-          } else {
-            initializerExprs.add(generateBaseExpr(baseType));
-          }
-          programState.finishInitParam();
-        }
-        programState.exitInitializer();
-
         //Build a complete array declaration
-        initializer = new Initializer(new ArrayConstructorExpr(new ArrayType(proxy.getBaseType(),
-            new ArrayInfo(Collections.singletonList(Optional.of(
-                new IntConstantExpr(String.valueOf(proxy.getBaseTypeSize())))))),
-            initializerExprs));
+        initializer = new Initializer(generateArrayConstructorExpr(proxy.getBaseType(),
+            proxy.getBaseTypeSize(), proxy.isConstOnly()));
       } else {
         // Generate any random expression available from the underlying basic type
         if (proxy.isConstOnly()) {
@@ -477,7 +482,38 @@ public abstract class ShaderGenerator {
     }
   }
 
+  protected Expr generateArrayAssignmentLine() {
+    // Obtain an array which can be written to
+    List<FuzzerScopeEntry> arrayScopeEntries = programState.getWriteAvailableArrayEntries();
+    FuzzerScopeEntry var = arrayScopeEntries.get(randGen.nextInt(arrayScopeEntries.size()));
+
+    // Check if a second array of the same type and size exists
+    List<FuzzerScopeEntry> readableEntries =
+        programState.getReadEntriesOfCompatibleType(var.getBaseType(), var.getBaseTypeSize());
+
+    if (!readableEntries.isEmpty() && randGen.nextBoolean()) {
+      // Randomly add a copy operation
+      return new BinaryExpr(new VariableIdentifierExpr(var.getName()),
+          new VariableIdentifierExpr(
+              readableEntries.get(randGen.nextInt(readableEntries.size())).getName()),
+          BinOp.ASSIGN);
+    } else {
+      // Write an array access
+      return new BinaryExpr(new VariableIdentifierExpr(var.getName()),
+          generateArrayConstructorExpr(var.getBaseType(), var.getBaseTypeSize(),
+              randGen.nextBoolean()), BinOp.ASSIGN);
+    }
+  }
+
   protected Expr generateProgramAssignmentLine() {
+    if (programState.getWriteAvailableArrayEntries().size() > 0 && randGen.nextInt(7) < 2) {
+      return generateArrayAssignmentLine();
+    } else {
+      return generateBaseTypeAssignmentLine();
+    }
+  }
+
+  protected Expr generateBaseTypeAssignmentLine() {
     programState.setConstant(false);
     programState.setLvalue(false, null);
     List<FuzzerScopeEntry> scopeEntries = programState.getWriteAvailableEntries();
@@ -861,8 +897,8 @@ public abstract class ShaderGenerator {
     List<Stmt> stmts = new ArrayList<>();
 
     // Decide of the available actions in current context and skew the probability for assignments
-    List<Integer> options = new ArrayList<>(Arrays.asList(0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 5, 5,
-        5));
+    List<Integer> options = new ArrayList<>(Arrays.asList(0, 0, 0, 0, 0, 0, 0, 0,  1, 1, 1, 1, 1,
+        1, 5, 5, 5));
     if (programState.getScopeDepth() < configuration.getMaxScopeDepth()) {
       options.addAll(Arrays.asList(2, 2, 3, 4, 4, 8, 9, 10, 11));
     }
