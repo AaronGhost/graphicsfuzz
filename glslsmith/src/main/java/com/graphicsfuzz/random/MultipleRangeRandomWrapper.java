@@ -99,9 +99,6 @@ public class MultipleRangeRandomWrapper extends RandomWrapper {
     // The full range is 1 << 24, but we generate smaller values so that we can at least have one
     // operation before reaching the default behaviour
     int possibleValue =  nextInt((int) origin, (int) bound);
-    while (possibleValue == 0) {
-      possibleValue = nextInt(1 << 12);
-    }
     return (float) possibleValue;
   }
 
@@ -111,9 +108,6 @@ public class MultipleRangeRandomWrapper extends RandomWrapper {
     // The full range is 1 << 24, but we generate smaller values so that we can at least have one
     // operation before reaching the default behaviour
     int possibleValue =  nextInt((int) bound);
-    while (possibleValue == 0) {
-      possibleValue = nextInt(1 << 12);
-    }
     return (float) possibleValue;
   }
 }

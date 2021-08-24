@@ -60,7 +60,7 @@ public class ComputeShaderGenerator extends ShaderGenerator {
   }
 
   private void internalGenerateBuffer(boolean isInBuffer) {
-    int newMembers = randGen.nextPositiveInt(configuration.getMaxBufferElements());
+    final int newMembers = randGen.nextPositiveInt(configuration.getMaxBufferElements());
 
     //Buffer internal values holders
     final List<Number> values = new ArrayList<>();
@@ -103,7 +103,8 @@ public class ComputeShaderGenerator extends ShaderGenerator {
         } else if (baseType.equals(BasicType.UINT)) {
           values.add(randGen.nextLong(FuzzerConstants.MAX_UINT_VALUE));
         } else {
-          values.add(randGen.nextFloat(-1 << 12, 1 << 12));
+          //TODO add Fuzzer constants
+          values.add(randGen.nextFloat(-(1 << 12), (1 << 12)));
         }
       }
 

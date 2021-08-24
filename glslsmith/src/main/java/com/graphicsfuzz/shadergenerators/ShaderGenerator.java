@@ -209,7 +209,8 @@ public abstract class ShaderGenerator {
       if (bound != 0L) {
         value = randGen.nextFloat(bound.floatValue());
       } else {
-        value = randGen.nextFloat(FuzzerConstants.MAX_PERMITTED_FLOAT);
+        //TODO add fuzzer constant
+        value = randGen.nextFloat(-(1 << 12), (1 << 12));
       }
       return new ImmutablePair<>(new FloatConstantExpr(String.format("%.1f", value) + "f"), value);
     } else {
@@ -238,7 +239,7 @@ public abstract class ShaderGenerator {
 
     // Randomly generate a constructor such as ivec4(3) or ivec4(1,2,3,4) by combining the base
     // Constant type for the underlying Basic type
-    // TODO use a generateVectorInstruction...
+    // TODO maybe use a generateVectorInstruction to reduce recursive calls
     if (type.isVector()) {
       int numberOfValues = randGen.nextBoolean() ? type.getNumElements() : 1;
       List<Expr> args = new ArrayList<>();
@@ -897,8 +898,8 @@ public abstract class ShaderGenerator {
     List<Stmt> stmts = new ArrayList<>();
 
     // Decide of the available actions in current context and skew the probability for assignments
-    List<Integer> options = new ArrayList<>(Arrays.asList(0, 0, 0, 0, 0, 0, 0, 0,  1, 1, 1, 1, 1,
-        1, 5, 5, 5));
+    List<Integer> options = new ArrayList<>(Arrays.asList(0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 5, 5, 5));
     if (programState.getScopeDepth() < configuration.getMaxScopeDepth()) {
       options.addAll(Arrays.asList(2, 2, 3, 4, 4, 8, 9, 10, 11));
     }
