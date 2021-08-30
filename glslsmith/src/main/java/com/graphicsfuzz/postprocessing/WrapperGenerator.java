@@ -350,6 +350,7 @@ public abstract class WrapperGenerator {
   }
 
   private static Expr generateFloatTestExpr(Expr innerTestExpr, BasicType resultType) {
+    // Paranoid version
     /*
     if (resultType.equals(BasicType.FLOAT)) {
       return new BinaryExpr(new BinaryExpr(new FunctionCallExpr("abs", innerTestExpr.clone()),
@@ -360,16 +361,18 @@ public abstract class WrapperGenerator {
       return new BinaryExpr(
           new FunctionCallExpr("any", new FunctionCallExpr("greaterThanEqual",
             innerTestExpr.clone(), generateConstant(resultType, (1 << 24) + ".0"))),
-          new FunctionCallExpr("any", new FunctionCallExpr("lessThan", innerTestExpr.clone(),
+          new FunctionCallExpr("any", new FunctionCallExpr("lessThan",
+              new FunctionCallExpr("abs", innerTestExpr.clone()),
               generateConstant(resultType, "1.0"))), BinOp.LOR);
     }
      */
     if (resultType.equals(BasicType.FLOAT)) {
       return new BinaryExpr(new FunctionCallExpr("abs", innerTestExpr.clone()),
-          new FloatConstantExpr((1 << 24) + ".0f"), BinOp.GE);
+          new FloatConstantExpr((1 << 24) + ".0"), BinOp.GE);
     } else {
       return new FunctionCallExpr("any", new FunctionCallExpr("greaterThanEqual",
-          innerTestExpr.clone(), generateConstant(resultType, (1 << 24) + ".0")));
+          new FunctionCallExpr("abs", innerTestExpr.clone()),
+          generateConstant(resultType, (1 << 24) + ".0")));
     }
   }
 

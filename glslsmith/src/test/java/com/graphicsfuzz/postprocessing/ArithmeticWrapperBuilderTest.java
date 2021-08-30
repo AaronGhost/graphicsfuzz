@@ -46,7 +46,7 @@ public class ArithmeticWrapperBuilderTest extends CommonPostProcessingTest {
       + "float SAFE_FLOAT_RESULT(float p0);\n"
       + "float SAFE_FLOAT_RESULT(float A)\n"
       + "{\n"
-      + " return abs(A) >= 16777216.0f || abs(A) < 1.0f ? 10.0f : A;\n"
+      + " return abs(A) >= 16777216.0 ? 10.0f : A;\n"
       + "}\n"
       + "void main()\n"
       + "{\n"
@@ -64,6 +64,25 @@ public class ArithmeticWrapperBuilderTest extends CommonPostProcessingTest {
       + "{\n"
       + " float var_0 = 3.0f;\n"
       + " float var_1 = SAFE_FLOAT_RESULT((SAFE_POST_INC(var_0)) + SAFE_PRE_DEC(var_0));\n"
+      + "}\n";
+
+  String floatFunctionCallProgramText = "#version 320 es\n"
+      + "void main()\n"
+      + "{\n"
+      + "float var_0 = float(1);"
+      + "float var_1 = dot(1.0, 2.0);"
+      + "}\n";
+
+  String floatFunctionCallCleanedProgramText = "#version 320 es\n"
+      + "float SAFE_FLOAT_RESULT(float p0);\n"
+      + "float SAFE_FLOAT_RESULT(float A)\n"
+      + "{\n"
+      + " return abs(A) >= 16777216.0 ? 10.0f : A;\n"
+      + "}\n"
+      + "void main()\n"
+      + "{\n"
+      + " float var_0 = SAFE_FLOAT_RESULT(float(1));\n"
+      + " float var_1 = SAFE_FLOAT_RESULT(dot(1.0, 2.0));\n"
       + "}\n";
 
   @Override
@@ -97,6 +116,13 @@ public class ArithmeticWrapperBuilderTest extends CommonPostProcessingTest {
     ProgramState returnState = new ArithmeticWrapperBuilder()
         .process(generateProgramStateForCode(multipleFloatArithmeticProgramText));
     Assert.assertTrue(returnState.getShaderCode().contains(multipleFloatWrappersMainText));
+  }
+
+  @Test
+  public void testProcessWithFloatFunCallShader() {
+    ProgramState returnState = new ArithmeticWrapperBuilder()
+        .process(generateProgramStateForCode(floatFunctionCallProgramText));
+    Assert.assertEquals(returnState.getShaderCode(), floatFunctionCallCleanedProgramText);
   }
 
 

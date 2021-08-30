@@ -6,6 +6,7 @@ import com.graphicsfuzz.common.ast.expr.BinaryExpr;
 import com.graphicsfuzz.common.ast.expr.Expr;
 import com.graphicsfuzz.common.ast.expr.FunctionCallExpr;
 import com.graphicsfuzz.common.ast.expr.Op;
+import com.graphicsfuzz.common.ast.expr.TypeConstructorExpr;
 import com.graphicsfuzz.common.ast.expr.UnOp;
 import com.graphicsfuzz.common.ast.expr.UnaryExpr;
 import com.graphicsfuzz.common.ast.type.BasicType;
@@ -56,6 +57,39 @@ public class ArithmeticWrapperBuilder extends BaseWrapperBuilder {
     // expression
     parentMap.put(replacementExpr, parentMap.get(expr));
     parentMap.replace(expr, replacementExpr);
+  }
+
+  @Override
+  public void visitTypeConstructorExpr(TypeConstructorExpr typeConstructorExpr) {
+    super.visitTypeConstructorExpr(typeConstructorExpr);
+    final String typeName = typeConstructorExpr.getTypename();
+    if (typeName.equals("float") || typeName.equals("vec2")
+        || typeName.equals("vec3") || typeName.equals("vec4")) {
+      boolean needsFloatWrapper = false;
+      for (Expr arg : typeConstructorExpr.getArgs()) {
+        final Type argType = typer.lookupType(arg).getWithoutQualifiers();
+        if (argType instanceof BasicType && ((BasicType) argType).isInteger()) {
+          needsFloatWrapper = true;
+          break;
+        }
+      }
+      if (needsFloatWrapper) {
+        switch (typeName) {
+          case "float":
+            wrapFloatResult(typeConstructorExpr, BasicType.FLOAT);
+            break;
+          case "vec2":
+            wrapFloatResult(typeConstructorExpr, BasicType.VEC2);
+            break;
+          case "vec3":
+            wrapFloatResult(typeConstructorExpr, BasicType.VEC3);
+            break;
+          default:
+            wrapFloatResult(typeConstructorExpr, BasicType.VEC4);
+            break;
+        }
+      }
+    }
   }
 
   //TODO handle constant cases for left and right operands where the wrappers are not necessary

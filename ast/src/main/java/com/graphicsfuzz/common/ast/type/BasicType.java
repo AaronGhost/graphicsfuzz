@@ -229,6 +229,10 @@ public class BasicType extends BuiltinType {
     return getElementType() == BOOL;
   }
 
+  public boolean isInteger() {
+    return getElementType() == UINT || getElementType() == INT;
+  }
+
   public static List<BasicType> allScalarTypes() {
     return new ArrayList<BasicType>(Arrays.asList(
         FLOAT,
