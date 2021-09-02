@@ -120,7 +120,7 @@ public class ShaderTrapStatePrinter implements StatePrinter {
 
           // Add a new Member name
           memberNames.add("ext_" + membersBinding);
-          //TODO parse back the correct values
+          // TODO parse back the correct values
           memberValues.add(0);
           membersBinding++;
         }

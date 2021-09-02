@@ -61,7 +61,6 @@ public class ArithmeticWrapperBuilder extends BaseWrapperBuilder {
 
   @Override
   public void visitTypeConstructorExpr(TypeConstructorExpr typeConstructorExpr) {
-    super.visitTypeConstructorExpr(typeConstructorExpr);
     final String typeName = typeConstructorExpr.getTypename();
     if (typeName.equals("float") || typeName.equals("vec2")
         || typeName.equals("vec3") || typeName.equals("vec4")) {
@@ -90,6 +89,7 @@ public class ArithmeticWrapperBuilder extends BaseWrapperBuilder {
         }
       }
     }
+    super.visitTypeConstructorExpr(typeConstructorExpr);
   }
 
   //TODO handle constant cases for left and right operands where the wrappers are not necessary

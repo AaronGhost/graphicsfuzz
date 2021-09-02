@@ -53,7 +53,6 @@ public class PostProcessingHandler {
       }
       TranslationUnit unit = ParseHelper.parse(glslCode, ShaderKind.COMPUTE);
       programState.programInitialization(unit);
-      //TODO setup the buffers according to the given values
       //Pipeline post-processing
       for (PostProcessorInterface postProcessorInterface : postProcessors) {
         programState = postProcessorInterface.process(programState);
@@ -68,7 +67,7 @@ public class PostProcessingHandler {
     }
   }
 
-  //TODO specifically call post-processing
+  //TODO specifically call a post-processing step
   public static void main(String[] args) throws ArgumentParserException {
     //Parse Arguments to know what to look at
     ArgumentParser parser = ArgumentParsers.newArgumentParser("GLSLsmith postprocessing")

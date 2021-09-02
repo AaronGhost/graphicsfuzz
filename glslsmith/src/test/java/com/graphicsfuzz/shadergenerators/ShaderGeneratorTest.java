@@ -66,13 +66,13 @@ public class ShaderGeneratorTest {
     randomTypeGenerator.setRandomNewType(new UnifiedTypeProxy(BasicType.UVEC3));
     ShaderGenerator generator = new MokeShaderGenerator(new ZeroCannedRandom(),
         randomTypeGenerator);
-    Assert.assertEquals("uvec3 var_0 = uvec3(0u, 0u, 0u)",
+    Assert.assertEquals("uvec3 var_0 = uvec3(0u)",
         TestHelper.getText(generator.generateRandomTypedVarDecls(1, true)));
     MokeRandomTypeGenerator randomTypeGenerator2 = new MokeRandomTypeGenerator();
     randomTypeGenerator2.setRandomNewType(new UnifiedTypeProxy(BasicType.BVEC2));
     ShaderGenerator generator2 = new MokeShaderGenerator(new ZeroCannedRandom(),
         randomTypeGenerator2);
-    Assert.assertEquals("bvec2 var_0 = bvec2(false, false)",
+    Assert.assertEquals("bvec2 var_0 = bvec2(false)",
         TestHelper.getText(generator2.generateRandomTypedVarDecls(1, true)));
   }
 
@@ -86,8 +86,8 @@ public class ShaderGeneratorTest {
         arrayInfo)));
     ShaderGenerator generator = new MokeShaderGenerator(new ZeroCannedRandom(),
         randomTypeGenerator);
-    Assert.assertEquals("ivec4 var_0[5] = ivec4[5](ivec4(0, 0, 0, 0), ivec4(0, 0, 0, 0), "
-        + "ivec4(0, 0, 0, 0), ivec4(0, 0, 0, 0), ivec4(0, 0, 0, 0))",
+    Assert.assertEquals("ivec4 var_0[5] = ivec4[5](ivec4(0), ivec4(0), "
+        + "ivec4(0), ivec4(0), ivec4(0))",
         TestHelper.getText(generator.generateRandomTypedVarDecls(1, true)));
     Assert.assertEquals("ivec4 var_1[5], var_2[5]",
         TestHelper.getText(generator.generateRandomTypedVarDecls(2, false)));
@@ -106,7 +106,7 @@ public class ShaderGeneratorTest {
     Assert.assertTrue(typeConst instanceof TypeConstructorExpr);
     TypeConstructorExpr expr = (TypeConstructorExpr) typeConst;
     Assert.assertEquals("uvec2", expr.getTypename());
-    Assert.assertEquals(expr.getNumArgs(), 2);
+    Assert.assertEquals(expr.getNumArgs(), 1);
   }
 
   @Test

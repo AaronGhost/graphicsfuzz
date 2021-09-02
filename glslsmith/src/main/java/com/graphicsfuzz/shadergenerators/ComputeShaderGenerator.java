@@ -71,7 +71,6 @@ public class ComputeShaderGenerator extends ShaderGenerator {
     // Buffers that are bound can be coherent, readonly or writeonly (reandonly / writeonly is
     // permitted but not useful at current step)
     // For convenience we choose to have no readonly output buffers
-    // TODO support everything for readonly + writeonly buffers
     // Randomly pick if the full buffer is coherent
     // For now the following code is useless
 
