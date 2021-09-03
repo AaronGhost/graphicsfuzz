@@ -81,13 +81,19 @@ public class GloballyTruncateLoops {
 
         // Converts loop condition from "x" to "(x) && (lc<lb)".
         private Expr buildCondition(Expr originalCondition) {
-          return new BinaryExpr(
-              new ParenExpr(originalCondition),
-              new ParenExpr(
-                  new BinaryExpr(new VariableIdentifierExpr(loopCountName),
-                      new VariableIdentifierExpr(loopBoundName),
-                      BinOp.LT)),
-              BinOp.LAND);
+          if (originalCondition != null) {
+            return new BinaryExpr(
+                new ParenExpr(originalCondition),
+                new ParenExpr(
+                    new BinaryExpr(new VariableIdentifierExpr(loopCountName),
+                        new VariableIdentifierExpr(loopBoundName),
+                        BinOp.LT)),
+                BinOp.LAND);
+          }
+          return new ParenExpr(
+              new BinaryExpr(new VariableIdentifierExpr(loopCountName),
+                  new VariableIdentifierExpr(loopBoundName),
+                  BinOp.LT));
         }
 
         // Check if the loop condition is just "false".
