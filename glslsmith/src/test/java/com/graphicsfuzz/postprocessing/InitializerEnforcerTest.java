@@ -1,6 +1,7 @@
 package com.graphicsfuzz.postprocessing;
 
 import com.graphicsfuzz.ProgramState;
+import com.graphicsfuzz.TestHelper;
 import java.util.Collections;
 import java.util.List;
 import org.junit.Assert;
@@ -54,21 +55,21 @@ public class InitializerEnforcerTest extends CommonPostProcessingTest {
   @Test
   public void testProcessWithBaseTypeShader() {
     ProgramState returnState = new InitializerEnforcer()
-        .process(generateProgramStateForCode(baseTypeProgramText));
+        .process(TestHelper.generateProgramStateForCode(baseTypeProgramText));
     Assert.assertEquals(returnState.getShaderCode(), baseTypeWithInitializerProgramText);
   }
 
   @Test
   public void testProcessWithQualifiedTypeShader() {
     ProgramState returnState = new InitializerEnforcer()
-        .process(generateProgramStateForCode(qualifiedTypeProgramText));
+        .process(TestHelper.generateProgramStateForCode(qualifiedTypeProgramText));
     Assert.assertEquals(returnState.getShaderCode(), qualifiedTypeWithInitializerProgramText);
   }
 
   @Test
   public void testProcessWithArrayTypeShader() {
     ProgramState returnState = new InitializerEnforcer()
-        .process(generateProgramStateForCode(arrayProgramText));
+        .process(TestHelper.generateProgramStateForCode(arrayProgramText));
     Assert.assertEquals(returnState.getShaderCode(), arrayWithInitializerProgramText);
   }
 

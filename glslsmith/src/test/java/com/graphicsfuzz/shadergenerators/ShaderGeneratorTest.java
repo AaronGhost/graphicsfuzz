@@ -15,7 +15,7 @@ import com.graphicsfuzz.common.util.CannedRandom;
 import com.graphicsfuzz.common.util.IRandom;
 import com.graphicsfuzz.common.util.SameValueRandom;
 import com.graphicsfuzz.common.util.ZeroCannedRandom;
-import com.graphicsfuzz.config.DefaultConfig;
+import com.graphicsfuzz.config.ParameterConfiguration;
 import com.graphicsfuzz.random.MokeRandomTypeGenerator;
 import com.graphicsfuzz.scope.UnifiedTypeProxy;
 import java.util.Collections;
@@ -27,7 +27,7 @@ public class ShaderGeneratorTest {
 
   class MokeShaderGenerator extends ShaderGenerator {
     public MokeShaderGenerator(IRandom random, MokeRandomTypeGenerator randomTypeGenerator) {
-      super(random, randomTypeGenerator, new DefaultConfig());
+      super(random, randomTypeGenerator, new ParameterConfiguration.Builder().getConfig());
       resetProgramState();
     }
   }

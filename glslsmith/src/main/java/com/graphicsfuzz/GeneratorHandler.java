@@ -1,9 +1,9 @@
 package com.graphicsfuzz;
 
 import com.graphicsfuzz.common.util.RandomWrapper;
-import com.graphicsfuzz.config.ConfigInterface;
-import com.graphicsfuzz.config.DefaultConfig;
+import com.graphicsfuzz.config.ParameterConfiguration;
 import com.graphicsfuzz.random.MultipleRangeRandomWrapper;
+import com.graphicsfuzz.stateprinters.AmberStatePrinter;
 import com.graphicsfuzz.stateprinters.ShaderTrapStatePrinter;
 import com.graphicsfuzz.stateprinters.StatePrinter;
 import java.io.FileWriter;
@@ -35,30 +35,45 @@ public class GeneratorHandler {
         .type(String.class)
         .setDefault("multiplerange")
         .help("Specify the type of random generator");
-    parser.addArgument("--config")
-        .dest("configFile")
-        .type(String.class)
-        .setDefault("default")
-        .help("Specify a config type for the generator");
     parser.addArgument("--output-directory")
         .dest("directory")
         .type(String.class)
         .setDefault("./")
         .help("Specify an output directory for the generated files");
+    parser.addArgument("--printer-format")
+        .dest("printer")
+        .type(String.class)
+        .setDefault("shadertrap")
+        .help("Specify the output format for the generated files (shadertrap / amber)");
 
 
     Namespace ns = parser.parseArgs(args);
     System.out.println("Seed:" + ns.getLong("seed"));
 
     //Instantiate main class with the selected random Generator
-    //TODO adapt to other stateprinters
-    StatePrinter shadertrapWrapper = new ShaderTrapStatePrinter();
     try {
+      // generate a configuration builder
+
+      ParameterConfiguration.Builder builder = new ParameterConfiguration.Builder();
+      //TODO fix the problem with coherent
+      builder = builder.withTypeDecoratorsOnBuffers(false);
+
+      // Select the state printer
+      StatePrinter wrapper = new ShaderTrapStatePrinter();
+      String fileExtension = ".shadertrap";
+      if (ns.getString("printer").equals("amber")) {
+        wrapper = new AmberStatePrinter();
+        fileExtension = ".amber";
+        // forbids mixing types within interface blocks
+        builder = builder.withSingleTypePerBuffer(true);
+      } else if (!ns.getString("printer").equals("shadertrap")) {
+        System.out.println("Unrecognized host language, defaulting to ShaderTrap");
+      }
+
       //Generates the number of program given in argument of the program
       for (int i = 0; i < ns.getInt("count"); i++) {
         System.out.println("Generating shader " + i);
         RandomWrapper randomWrapper;
-        ConfigInterface configuration;
         if (ns.getString("randomGenerator").equals("multiplerange")) {
           randomWrapper = new MultipleRangeRandomWrapper(ns.getLong("seed") + i);
         } else if (ns.getString("randomGenerator").equals("nospecial")) {
@@ -71,18 +86,13 @@ public class GeneratorHandler {
         } else {
           throw new UnsupportedOperationException("Random generator not recognized");
         }
-        if (ns.getString("configFile").equals("default")) {
-          configuration = new DefaultConfig();
-        } else {
-          throw new UnsupportedOperationException("Only default configuration are supported at "
-              + "the moment");
-        }
-        ProgramGenerator generator = new ProgramGenerator(randomWrapper, configuration);
-        String program = generator.generateProgram(shadertrapWrapper);
-        FileWriter outputfile = new FileWriter(ns.getString("directory") + "test_" + i
-            + ".shadertrap");
-        outputfile.write(program);
-        outputfile.close();
+        ProgramGenerator generator = new ProgramGenerator(randomWrapper,
+            builder.getConfig());
+        String program = generator.generateProgram(wrapper);
+        FileWriter outputFile = new FileWriter(ns.getString("directory") + "test_" + i
+            + fileExtension);
+        outputFile.write(program);
+        outputFile.close();
       }
     } catch (IOException e) {
       e.printStackTrace();

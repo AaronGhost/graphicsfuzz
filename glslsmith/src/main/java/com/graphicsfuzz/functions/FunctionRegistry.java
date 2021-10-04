@@ -834,8 +834,8 @@ public class FunctionRegistry {
     }
     voidReturnFunctions.add(new FunctionStruct("memoryBarrier",
         new UnifiedTypeProxy(VoidType.VOID)));
-    voidReturnFunctions.add(new FunctionStruct("memoryBarrierAtomicCounter",
-        new UnifiedTypeProxy(VoidType.VOID)));
+    //voidReturnFunctions.add(new FunctionStruct("memoryBarrierAtomicCounter",
+    //    new UnifiedTypeProxy(VoidType.VOID)));
     voidReturnFunctions.add(new FunctionStruct("memoryBarrierBuffer",
         new UnifiedTypeProxy(VoidType.VOID)));
     voidReturnFunctions.add(new FunctionStruct("memoryBarrierShared",

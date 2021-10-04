@@ -1,6 +1,7 @@
 package com.graphicsfuzz.postprocessing;
 
 import com.graphicsfuzz.ProgramState;
+import com.graphicsfuzz.TestHelper;
 import java.util.Collections;
 import java.util.List;
 import org.junit.Assert;
@@ -93,35 +94,35 @@ public class ArithmeticWrapperBuilderTest extends CommonPostProcessingTest {
   @Test
   public void testProcessWithSingleIntLineShader() {
     ProgramState returnState = new ArithmeticWrapperBuilder()
-        .process(generateProgramStateForCode(singleIntLineProgramText));
+        .process(TestHelper.generateProgramStateForCode(singleIntLineProgramText));
     Assert.assertEquals(returnState.getShaderCode(), wrapperIntLineProgramText);
   }
 
   @Test
   public void testProcessWithMultipleIntArithmeticShader() {
     ProgramState returnState = new ArithmeticWrapperBuilder()
-        .process(generateProgramStateForCode(multipleIntArithmeticProgramText));
+        .process(TestHelper.generateProgramStateForCode(multipleIntArithmeticProgramText));
     Assert.assertTrue(returnState.getShaderCode().contains(multipleIntWrappersMainText));
   }
 
   @Test
   public void testProcessWithFloatSingleLineShader() {
     ProgramState returnState = new ArithmeticWrapperBuilder()
-        .process(generateProgramStateForCode(singleFloatLineProgramText));
+        .process(TestHelper.generateProgramStateForCode(singleFloatLineProgramText));
     Assert.assertEquals(returnState.getShaderCode(), singleFloatWrapperProgramText);
   }
 
   @Test
   public void testProcessWithMultipleFloatArithmeticShader() {
     ProgramState returnState = new ArithmeticWrapperBuilder()
-        .process(generateProgramStateForCode(multipleFloatArithmeticProgramText));
+        .process(TestHelper.generateProgramStateForCode(multipleFloatArithmeticProgramText));
     Assert.assertTrue(returnState.getShaderCode().contains(multipleFloatWrappersMainText));
   }
 
   @Test
   public void testProcessWithFloatFunCallShader() {
     ProgramState returnState = new ArithmeticWrapperBuilder()
-        .process(generateProgramStateForCode(floatFunctionCallProgramText));
+        .process(TestHelper.generateProgramStateForCode(floatFunctionCallProgramText));
     Assert.assertEquals(returnState.getShaderCode(), floatFunctionCallCleanedProgramText);
   }
 

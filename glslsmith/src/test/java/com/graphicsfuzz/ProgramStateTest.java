@@ -1,7 +1,7 @@
 package com.graphicsfuzz;
 
 import com.graphicsfuzz.common.ast.type.BasicType;
-import com.graphicsfuzz.config.DefaultConfig;
+import com.graphicsfuzz.config.ParameterConfiguration;
 import com.graphicsfuzz.scope.FuzzerScopeEntry;
 import com.graphicsfuzz.scope.UnifiedTypeProxy;
 import java.util.Arrays;
@@ -25,7 +25,7 @@ public class ProgramStateTest {
 
   @Before
   public void setup() {
-    programState = new ProgramState(new DefaultConfig());
+    programState = new ProgramState(new ParameterConfiguration.Builder().getConfig());
     programState.addVariable("var0", new UnifiedTypeProxy(BasicType.INT));
     programState.addVariable("var1", new UnifiedTypeProxy(BasicType.UINT));
     programState.addVariable("var2", new UnifiedTypeProxy(BasicType.IVEC2));

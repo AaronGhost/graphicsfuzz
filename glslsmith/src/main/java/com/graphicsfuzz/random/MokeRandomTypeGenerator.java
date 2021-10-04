@@ -158,8 +158,8 @@ public class MokeRandomTypeGenerator implements IRandomType {
   }
 
   @Override
-  public UnifiedTypeInterface getBufferElementType(boolean noReadOnly) {
-    return new UnifiedTypeProxy(new QualifiedType(getRandomBaseType(true), new ArrayList<>()));
+  public UnifiedTypeInterface getBufferElementType(boolean noReadOnly, BasicType basicType) {
+    return new UnifiedTypeProxy(new QualifiedType(basicType, new ArrayList<>()));
   }
 
   @Override
@@ -188,6 +188,11 @@ public class MokeRandomTypeGenerator implements IRandomType {
   @Override
   public UnifiedTypeInterface getRandomArrayOrBaseType(boolean restrictToInteger) {
     return randomNewType;
+  }
+
+  @Override
+  public UnifiedTypeInterface getRandomArrayOrBaseType(BasicType baseType) {
+    return new UnifiedTypeProxy(baseType);
   }
 
   @Override

@@ -71,27 +71,35 @@ public class ComputeShaderGenerator extends ShaderGenerator {
     // Buffers that are bound can be coherent, readonly or writeonly (reandonly / writeonly is
     // permitted but not useful at current step)
     // For convenience we choose to have no readonly output buffers
-    // Randomly pick if the full buffer is coherent
-    // For now the following code is useless
 
-    final boolean coherentBuffer = randGen.nextBoolean();
+    final boolean coherentBuffer =
+        configuration.addTypeQualifierOnBuffers() && randGen.nextBoolean();
     if (coherentBuffer) {
       qualifiers.add(TypeQualifier.COHERENT);
     }
-    final boolean readonlyBuffer = isInBuffer && randGen.nextBoolean();
+    final boolean readonlyBuffer =
+        configuration.addTypeQualifierOnBuffers()
+            && isInBuffer && randGen.nextBoolean();
     if (readonlyBuffer) {
       qualifiers.add(TypeQualifier.READONLY);
     }
-    final boolean writeonlyBuffer = !readonlyBuffer && randGen.nextBoolean();
+    final boolean writeonlyBuffer =
+        configuration.addTypeQualifierOnBuffers()
+            && !readonlyBuffer && randGen.nextBoolean();
     if (writeonlyBuffer) {
       qualifiers.add(TypeQualifier.WRITEONLY);
     }
 
+    BasicType type = randomTypeGenerator.getRandomBaseType(true);
+
     //Randomly populate internal values
     for (int memberIndex = 0; memberIndex < newMembers; memberIndex++) {
-      // Elements can be declared as coherent, readonly or/ and writeonly
       UnifiedTypeInterface proxy =
-          randomTypeGenerator.getBufferElementType(!isInBuffer || writeonlyBuffer);
+          randomTypeGenerator.getBufferElementType(!isInBuffer || writeonlyBuffer, type);
+      // Elements can be declared as coherent, readonly or/ and writeonly
+      if (!configuration.enforceSingleTypePerBuffer()) {
+        type = randomTypeGenerator.getRandomBaseType(true);
+      }
       memberTypes.add(proxy.getRealType());
       String name = programState.getNextUniformBufferName();
       memberNames.add(name);

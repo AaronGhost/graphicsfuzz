@@ -34,7 +34,7 @@ public interface IRandomType {
 
   BasicType getRandomBaseType(boolean restrictToInteger);
 
-  UnifiedTypeInterface getBufferElementType(boolean noReadOnly);
+  UnifiedTypeInterface getBufferElementType(boolean noReadonly, BasicType basicType);
 
   BinOp getRandomComparisonOp();
 
@@ -43,6 +43,8 @@ public interface IRandomType {
   BinOp getRandomForOp(BasicType initType);
 
   UnifiedTypeInterface getRandomArrayOrBaseType(boolean restrictToInteger);
+
+  UnifiedTypeInterface getRandomArrayOrBaseType(BasicType baseType);
 
   UnifiedTypeInterface getRandomQualifiedProxyType();
 

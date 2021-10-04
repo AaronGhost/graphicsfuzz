@@ -639,7 +639,7 @@ public abstract class ShaderGenerator {
 
     // Generates a random length
     int switchLength = randGen.nextInt(configuration.allowEmptySwitch() ? 0 : 1,
-        configuration.getMaxSwitchScopeLength());
+        configuration.getMaxSwitchCases());
 
     long offset = 0;
     if (enforceCases) {

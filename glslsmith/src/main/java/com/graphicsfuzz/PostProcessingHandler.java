@@ -3,7 +3,7 @@ package com.graphicsfuzz;
 import com.graphicsfuzz.common.ast.TranslationUnit;
 import com.graphicsfuzz.common.util.ParseHelper;
 import com.graphicsfuzz.common.util.ShaderKind;
-import com.graphicsfuzz.config.DefaultConfig;
+import com.graphicsfuzz.config.ParameterConfiguration;
 import com.graphicsfuzz.postprocessing.ArithmeticWrapperBuilder;
 import com.graphicsfuzz.postprocessing.ArrayIndexBuilder;
 import com.graphicsfuzz.postprocessing.BufferFormatEnforcer;
@@ -12,6 +12,7 @@ import com.graphicsfuzz.postprocessing.InitializerEnforcer;
 import com.graphicsfuzz.postprocessing.LoopLimiter;
 import com.graphicsfuzz.postprocessing.PostProcessorInterface;
 import com.graphicsfuzz.postprocessing.StdWrapperBuilder;
+import com.graphicsfuzz.stateprinters.AmberStatePrinter;
 import com.graphicsfuzz.stateprinters.ShaderTrapStatePrinter;
 import com.graphicsfuzz.stateprinters.StatePrinter;
 import java.nio.file.Files;
@@ -38,16 +39,22 @@ public class PostProcessingHandler {
 
   public static void updateFile(String src, String dest) {
     try {
-      //Parse the file to collect the glsl code
-      String harnessText = Files.readString(Path.of(src));
-      //TODO adapt to any state printer
+      // Recognize the format of the code based on the extension
+      String[] shaderFileExtensions = src.split("\\.");
       StatePrinter shaderPrinter = new ShaderTrapStatePrinter();
+      if (shaderFileExtensions[shaderFileExtensions.length - 1 ].equals("amber")) {
+        shaderPrinter = new AmberStatePrinter();
+      } else if (!shaderFileExtensions[shaderFileExtensions.length - 1].equals("shadertrap")) {
+        throw new RuntimeException("Provided file is not a shadertrap or an amber file");
+      }
+      String harnessText = Files.readString(Path.of(src));
       String glslCode = shaderPrinter.getShaderCodeFromHarness(harnessText);
       List<Buffer> buffers = shaderPrinter.getBuffersFromHarness(harnessText);
       //TODO determine the kind of shader from the harness
       //Setup the Program state and the TU using the parsed code
       //TODO see if the config interface is necessary to the program state
-      ProgramState programState = new ProgramState(new DefaultConfig());
+      ProgramState programState = new ProgramState(new ParameterConfiguration.Builder()
+          .getConfig());
       for (Buffer buffer: buffers) {
         programState.addBuffer(buffer);
       }

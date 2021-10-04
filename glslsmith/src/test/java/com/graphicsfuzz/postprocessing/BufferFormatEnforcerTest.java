@@ -2,6 +2,7 @@ package com.graphicsfuzz.postprocessing;
 
 import com.graphicsfuzz.Buffer;
 import com.graphicsfuzz.ProgramState;
+import com.graphicsfuzz.TestHelper;
 import com.graphicsfuzz.common.ast.decl.ArrayInfo;
 import com.graphicsfuzz.common.ast.expr.IntConstantExpr;
 import com.graphicsfuzz.common.ast.type.ArrayType;
@@ -19,8 +20,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class BufferFormatEnforcerTest extends CommonPostProcessingTest {
-
-
 
   Buffer buffer0;
 
@@ -75,7 +74,7 @@ public class BufferFormatEnforcerTest extends CommonPostProcessingTest {
   @Test
   public void testProcessWithAlreadyCorrectBufferShader() {
     ProgramState returnState = new BufferFormatEnforcer()
-        .process(generateProgramStateForCode(bufferWithoutNeedText,
+        .process(TestHelper.generateProgramStateForCode(bufferWithoutNeedText,
             Collections.singletonList(buffer0)));
     Assert.assertEquals(returnState.getShaderCode(), bufferWithoutNeedText);
   }
@@ -83,7 +82,7 @@ public class BufferFormatEnforcerTest extends CommonPostProcessingTest {
   @Test
   public void testProcessWithBufferToCorrectShader() {
     ProgramState returnState = new BufferFormatEnforcer()
-        .process(generateProgramStateForCode(bufferWithOnlyBindingText,
+        .process(TestHelper.generateProgramStateForCode(bufferWithOnlyBindingText,
             Collections.singletonList(buffer0)));
     Assert.assertEquals(returnState.getShaderCode(), bufferWithoutNeedText);
   }

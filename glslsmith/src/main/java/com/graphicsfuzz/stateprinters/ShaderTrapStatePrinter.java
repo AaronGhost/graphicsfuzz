@@ -149,13 +149,6 @@ public class ShaderTrapStatePrinter implements StatePrinter {
     }
   }
 
-  private String correctlyPrintNumber(Number value) {
-    if (value instanceof Float) {
-      return String.format("%.1f", value);
-    }
-    return String.valueOf(value);
-  }
-
   public String printBufferWrapper(Buffer buffer) {
     List<? extends Number> values = buffer.getValues();
     StringBuilder createInstruction = new StringBuilder("CREATE_BUFFER " + buffer.getName() + " "
@@ -163,9 +156,7 @@ public class ShaderTrapStatePrinter implements StatePrinter {
         + 4 * buffer.getLength() + " INIT_VALUES ");
     int offset = 0;
     for (Type type : buffer.getMemberTypes()) {
-      if (type instanceof QualifiedType) {
-        type = ((QualifiedType) type).getTargetType();
-      }
+      type = type.getWithoutQualifiers();
       if (type instanceof ArrayType) {
         ArrayType arrayType = (ArrayType) type;
         createInstruction.append(arrayType.getBaseType().getText()).append(" ");

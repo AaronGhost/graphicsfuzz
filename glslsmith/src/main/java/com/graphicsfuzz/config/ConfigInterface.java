@@ -6,11 +6,13 @@ import com.graphicsfuzz.common.util.ShaderKind;
 public interface ConfigInterface {
   boolean allowEmptySwitch();
 
+  boolean enforceSingleTypePerBuffer();
+
+  boolean addTypeQualifierOnBuffers();
+
   boolean allowMultipleWriteAccessInInitializers();
 
   boolean enforceDefaultCase();
-
-  boolean allowArrayAbsAccess();
 
   int getMaxArrayLength();
 

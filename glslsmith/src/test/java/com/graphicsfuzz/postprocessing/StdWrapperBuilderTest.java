@@ -1,6 +1,7 @@
 package com.graphicsfuzz.postprocessing;
 
 import com.graphicsfuzz.ProgramState;
+import com.graphicsfuzz.TestHelper;
 import java.util.Collections;
 import java.util.List;
 import org.junit.Assert;
@@ -23,7 +24,7 @@ public class StdWrapperBuilderTest extends CommonPostProcessingTest {
   @Test
   public void testProcessWithSafeBitfieldExtractShader() {
     ProgramState returnState = new StdWrapperBuilder()
-        .process(generateProgramStateForCode(singleLineProgramText));
+        .process(TestHelper.generateProgramStateForCode(singleLineProgramText));
     String shaderCode = returnState.getShaderCode();
 
     // Order of declaration is undefined
@@ -69,7 +70,7 @@ public class StdWrapperBuilderTest extends CommonPostProcessingTest {
   @Test
   public void testProcessWithUintFromFloatConversionShader() {
     ProgramState returnState = new StdWrapperBuilder()
-        .process(generateProgramStateForCode(uintFloatConversionText));
+        .process(TestHelper.generateProgramStateForCode(uintFloatConversionText));
     Assert.assertEquals(returnState.getShaderCode(), uintFloatCleanedConversionText);
   }
 }

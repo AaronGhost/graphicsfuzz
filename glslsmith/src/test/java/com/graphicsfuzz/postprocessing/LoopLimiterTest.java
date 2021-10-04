@@ -1,6 +1,7 @@
 package com.graphicsfuzz.postprocessing;
 
 import com.graphicsfuzz.ProgramState;
+import com.graphicsfuzz.TestHelper;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.Assert;
@@ -110,28 +111,28 @@ public class LoopLimiterTest extends CommonPostProcessingTest {
   @Test
   public void testWhileWithGlobalLimiter() {
     ProgramState returnState = new LoopLimiter(true, 10)
-        .process(generateProgramStateForCode(simpleWhileProgramText));
+        .process(TestHelper.generateProgramStateForCode(simpleWhileProgramText));
     Assert.assertEquals(returnState.getShaderCode(), globalLimitedSimpleWhileProgramText);
   }
 
   @Test
   public void testWhileWithLocalLimiter() {
     ProgramState returnState = new LoopLimiter(false, 10)
-        .process(generateProgramStateForCode(simpleWhileProgramText));
+        .process(TestHelper.generateProgramStateForCode(simpleWhileProgramText));
     Assert.assertEquals(returnState.getShaderCode(), localLimitedSimpleWhileProgramText);
   }
 
   @Test
   public void testComplexWhileWithGlobalLimiter() {
     ProgramState returnState = new LoopLimiter(true, 10)
-        .process(generateProgramStateForCode(complexWhileProgramTest));
+        .process(TestHelper.generateProgramStateForCode(complexWhileProgramTest));
     Assert.assertEquals(returnState.getShaderCode(), globalLimitedComplexWhileProgramText);
   }
 
   @Test
   public void testComplexWhileWithLocalLimiters() {
     ProgramState returnState = new LoopLimiter(false, 10)
-        .process(generateProgramStateForCode(complexWhileProgramTest));
+        .process(TestHelper.generateProgramStateForCode(complexWhileProgramTest));
     Assert.assertEquals(returnState.getShaderCode(), localLimitedComplexWhileProgramText);
   }
 }

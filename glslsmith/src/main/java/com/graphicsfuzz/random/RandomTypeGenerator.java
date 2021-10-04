@@ -32,7 +32,11 @@ public class RandomTypeGenerator implements IRandomType {
   // or use an overloaded function with given size
   @Override
   public UnifiedTypeInterface getRandomArrayOrBaseType(boolean restrictToScalar) {
-    BasicType basicType = this.getRandomBaseType(restrictToScalar);
+    return getRandomArrayOrBaseType(getRandomBaseType(restrictToScalar));
+  }
+
+  @Override
+  public UnifiedTypeInterface getRandomArrayOrBaseType(BasicType baseType) {
     if (randGen.nextBoolean()) {
       int arrayLength = randGen.nextPositiveInt(configuration.getMaxArrayLength());
 
@@ -41,9 +45,9 @@ public class RandomTypeGenerator implements IRandomType {
           new ArrayInfo(Collections.singletonList(Optional.of(
               new IntConstantExpr(String.valueOf(arrayLength)))));
       arrayInfo.setConstantSizeExpr(0, arrayLength);
-      return new UnifiedTypeProxy(new ArrayType(basicType, arrayInfo));
+      return new UnifiedTypeProxy(new ArrayType(baseType, arrayInfo));
     } else {
-      return new UnifiedTypeProxy(basicType);
+      return new UnifiedTypeProxy(baseType);
     }
   }
 
@@ -402,22 +406,25 @@ public class RandomTypeGenerator implements IRandomType {
   }
 
   @Override
-  public UnifiedTypeInterface getBufferElementType(boolean noReadOnly) {
+  public UnifiedTypeInterface getBufferElementType(boolean noReadOnly, BasicType baseType) {
     List<TypeQualifier> qualifierList = new ArrayList<>();
     // Randomly coherent
-    if (randGen.nextBoolean()) {
+    if (configuration.addTypeQualifierOnBuffers() && randGen.nextBoolean()) {
       qualifierList.add(TypeQualifier.COHERENT);
     }
     // Can be readonly and  randomly readonly
-    boolean readonlyElement = !noReadOnly && randGen.nextBoolean();
+    boolean readonlyElement =
+        configuration.addTypeQualifierOnBuffers()
+            && !noReadOnly && randGen.nextBoolean();
     if (readonlyElement) {
       qualifierList.add(TypeQualifier.READONLY);
     }
     // is not readonly and randomly writeonly
-    if (!readonlyElement && randGen.nextBoolean()) {
+    if (configuration.addTypeQualifierOnBuffers()
+        && !readonlyElement && randGen.nextBoolean()) {
       qualifierList.add(TypeQualifier.WRITEONLY);
     }
-    UnifiedTypeInterface proxyType = getRandomArrayOrBaseType(true);
+    UnifiedTypeInterface proxyType = getRandomArrayOrBaseType(baseType);
     if (configuration.enforceFloatsAsConst() && proxyType.getBaseType() == BasicType.FLOAT) {
       qualifierList.clear();
       qualifierList.add(TypeQualifier.READONLY);

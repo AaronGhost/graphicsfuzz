@@ -1,6 +1,7 @@
 package com.graphicsfuzz.postprocessing;
 
 import com.graphicsfuzz.ProgramState;
+import com.graphicsfuzz.TestHelper;
 import java.util.Collections;
 import java.util.List;
 import org.junit.Assert;
@@ -24,7 +25,7 @@ public class CallingOrderCleanerTest extends CommonPostProcessingTest {
         + "}\n";
 
     ProgramState returnState = new CallingOrderCleaner()
-        .process(generateProgramStateForCode(readOnlyText));
+        .process(TestHelper.generateProgramStateForCode(readOnlyText));
     Assert.assertEquals(returnState.getShaderCode(), readOnlyText);
   }
 
@@ -46,7 +47,7 @@ public class CallingOrderCleanerTest extends CommonPostProcessingTest {
         + "}\n";
 
     ProgramState returnState = new CallingOrderCleaner()
-        .process(generateProgramStateForCode(readWriteText));
+        .process(TestHelper.generateProgramStateForCode(readWriteText));
     Assert.assertEquals(returnState.getShaderCode(), readWriteCleanedText);
   }
 
@@ -76,7 +77,7 @@ public class CallingOrderCleanerTest extends CommonPostProcessingTest {
         + "}\n";
 
     ProgramState returnState = new CallingOrderCleaner()
-        .process(generateProgramStateForCode(writeReadAndWriteWriteText));
+        .process(TestHelper.generateProgramStateForCode(writeReadAndWriteWriteText));
     Assert.assertEquals(returnState.getShaderCode(), writeReadAndWriteWriteCleanedText);
   }
 
@@ -102,7 +103,7 @@ public class CallingOrderCleanerTest extends CommonPostProcessingTest {
         + "}\n";
 
     ProgramState returnState = new CallingOrderCleaner()
-        .process(generateProgramStateForCode(intricateWriteWriteText));
+        .process(TestHelper.generateProgramStateForCode(intricateWriteWriteText));
     Assert.assertEquals(returnState.getShaderCode(), intricateWriteWriteCleanedText);
   }
 
@@ -124,7 +125,7 @@ public class CallingOrderCleanerTest extends CommonPostProcessingTest {
         + "}\n";
 
     ProgramState returnState = new CallingOrderCleaner()
-        .process(generateProgramStateForCode(intraArgText));
+        .process(TestHelper.generateProgramStateForCode(intraArgText));
     Assert.assertEquals(returnState.getShaderCode(), intraArgCleanedText);
   }
 
@@ -152,7 +153,7 @@ public class CallingOrderCleanerTest extends CommonPostProcessingTest {
         + "}\n";
 
     ProgramState returnState = new CallingOrderCleaner()
-        .process(generateProgramStateForCode(funCallText));
+        .process(TestHelper.generateProgramStateForCode(funCallText));
     Assert.assertEquals(returnState.getShaderCode(), funCallCleanedText);
   }
 
@@ -183,7 +184,7 @@ public class CallingOrderCleanerTest extends CommonPostProcessingTest {
         + "}\n";
 
     ProgramState returnState = new CallingOrderCleaner()
-        .process(generateProgramStateForCode(initializerInFunCallText));
+        .process(TestHelper.generateProgramStateForCode(initializerInFunCallText));
     Assert.assertEquals(returnState.getShaderCode(), initializerInFunCallCleanedText);
   }
 
@@ -217,7 +218,7 @@ public class CallingOrderCleanerTest extends CommonPostProcessingTest {
         + "}\n";
 
     ProgramState returnState = new CallingOrderCleaner()
-        .process(generateProgramStateForCode(funCallInInitializerText));
+        .process(TestHelper.generateProgramStateForCode(funCallInInitializerText));
     Assert.assertEquals(returnState.getShaderCode(), funCallInInitializerCleanedText);
   }
 
@@ -231,7 +232,7 @@ public class CallingOrderCleanerTest extends CommonPostProcessingTest {
         + "}\n";
 
     ProgramState returnState = new CallingOrderCleaner()
-        .process(generateProgramStateForCode(exprWithoutUbText));
+        .process(TestHelper.generateProgramStateForCode(exprWithoutUbText));
     Assert.assertEquals(returnState.getShaderCode(), exprWithoutUbText);
   }
 
@@ -254,7 +255,7 @@ public class CallingOrderCleanerTest extends CommonPostProcessingTest {
         + "}\n";
 
     ProgramState returnState = new CallingOrderCleaner()
-        .process(generateProgramStateForCode(exprWithSimpleUbText));
+        .process(TestHelper.generateProgramStateForCode(exprWithSimpleUbText));
     Assert.assertEquals(returnState.getShaderCode(), exprWithSimpleUbCleanedText);
   }
 
@@ -284,7 +285,7 @@ public class CallingOrderCleanerTest extends CommonPostProcessingTest {
         + "y_expr_3_temp_read) + y_expr_3_temp_read;\n"
         + "}\n";
     ProgramState returnState = new CallingOrderCleaner()
-        .process(generateProgramStateForCode(exprWithTernaryUbText));
+        .process(TestHelper.generateProgramStateForCode(exprWithTernaryUbText));
     Assert.assertEquals(returnState.getShaderCode(), exprWithTernaryUbClearedText);
   }
 
