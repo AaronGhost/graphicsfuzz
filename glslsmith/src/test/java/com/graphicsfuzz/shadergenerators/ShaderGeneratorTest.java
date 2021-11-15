@@ -112,7 +112,7 @@ public class ShaderGeneratorTest {
   @Test
   public void testGenerateSwizzleWithOneLevel() {
     MokeRandomTypeGenerator randomTypeGenerator = new MokeRandomTypeGenerator();
-    ShaderGenerator generator = new MokeShaderGenerator(new SameValueRandom(false, 1),
+    ShaderGenerator generator = new MokeShaderGenerator(new SameValueRandom(false, 1, 0L),
         randomTypeGenerator);
     Assert.assertEquals("var_0.gb",
         TestHelper.getText(generator.generateRandomSwizzle(new VariableIdentifierExpr("var_0"),

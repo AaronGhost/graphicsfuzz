@@ -65,7 +65,7 @@ public class BufferFormatEnforcer extends StandardVisitor implements PostProcess
           types.clear();
           for (String name : buffer.getMemberNames()) {
             // Check if the every member is defined and provide a default one if there is none
-            Optional<Type> memberType =  interfaceBlock.getMemberType(name);
+            Optional<Type> memberType = Optional.ofNullable(interfaceBlock.getMemberType(name));
             if (memberType.isEmpty()) {
               types.add(buffer.getMemberType(name));
               // Enforce a size on array types (last member)

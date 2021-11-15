@@ -56,8 +56,9 @@ public abstract class BaseWrapperBuilder extends StandardVisitor implements Post
     }
 
     // Check the Run type and add the extra ids buffer if necessary
-    Buffer idsBuffer = programState.getIdsBuffer();
-    if (programState.getRunType() == ConfigInterface.RunType.ADDED_ID) {
+    if (programState.getRunType() == ConfigInterface.RunType.ADDED_ID
+        && programState.hasIdsBuffer()) {
+      Buffer idsBuffer = programState.getIdsBuffer();
       if (tu.hasBufferDeclaration("buffer_ids")) {
         tu.updateTopLevelDeclaration(
             new InterfaceBlock(Optional.ofNullable(idsBuffer.getLayoutQualifiers()),

@@ -432,7 +432,12 @@ public class ProgramState {
   }
 
   // Wrapper counter
+  public boolean hasIdsBuffer() {
+    return wrapperCounter >= 1;
+  }
+
   public Buffer getIdsBuffer() {
+    assert wrapperCounter >= 1;
     int idsBufferBinding = getBindingOffset();
     int nbIds = wrapperCounter;
     ArrayInfo idsInfo = new ArrayInfo(
