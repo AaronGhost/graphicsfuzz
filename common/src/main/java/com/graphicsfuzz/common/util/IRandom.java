@@ -24,7 +24,15 @@ public interface IRandom {
 
   int nextInt(int bound);
 
+
+  /**
+   * Return an integer in the range [origin, bound) if bound > origin
+   * @param origin minimal integer that the generator can produce
+   * @param bound maximal (excluded) integer that the generator can produce
+   * @return an integer from the range [origin, bound)
+   */
   default int nextInt(int origin, int bound) {
+    assert bound > origin;
     return (int) (nextLong(((long)bound - (long) origin)) + (long) origin);
   }
 

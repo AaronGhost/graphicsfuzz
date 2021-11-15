@@ -22,8 +22,8 @@ import com.graphicsfuzz.common.ast.visitors.VisitationDepth;
 
 public class GlobalVariablesDeclarationReductionOpportunity extends AbstractReductionOpportunity {
 
-  final TranslationUnit translationUnit;
-  final VariablesDeclaration variablesDeclaration;
+  private final TranslationUnit translationUnit;
+  private final VariablesDeclaration variablesDeclaration;
 
   public GlobalVariablesDeclarationReductionOpportunity(TranslationUnit translationUnit,
                                                         VariablesDeclaration variablesDeclaration,

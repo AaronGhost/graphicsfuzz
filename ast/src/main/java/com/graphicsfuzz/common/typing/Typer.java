@@ -172,7 +172,7 @@ public class Typer extends ScopeTrackingVisitor {
     // Next, see if there is a builtin with a matching prototype.
     final Optional<Type> maybeMatchingBuiltinFunctionReturn =
         lookForMatchingFunction(functionCallExpr,
-        TyperHelper.getBuiltins(tu.getShadingLanguageVersion(), tu.getShaderKind())
+        TyperHelper.getBuiltins(tu.getShadingLanguageVersion(), false, tu.getShaderKind())
             .get(functionCallExpr.getCallee()));
     if (maybeMatchingBuiltinFunctionReturn.isPresent()) {
       types.put(functionCallExpr, maybeMatchingBuiltinFunctionReturn.get());
@@ -235,15 +235,6 @@ public class Typer extends ScopeTrackingVisitor {
       types.put(variableIdentifierExpr, type);
       return;
     }
-    for (InterfaceBlock interfaceBlock : interfaceBlocks) {
-      final Optional<Type> memberType =
-          interfaceBlock.getMemberType(variableIdentifierExpr.getName());
-      if (memberType.isPresent()) {
-        types.put(variableIdentifierExpr, memberType.get());
-        return;
-      }
-    }
-
     maybeGetTypeOfBuiltinVariable(variableIdentifierExpr.getName())
         .ifPresent(item -> types.put(variableIdentifierExpr, item));
   }
@@ -361,9 +352,6 @@ public class Typer extends ScopeTrackingVisitor {
   public void visitBinaryExpr(BinaryExpr binaryExpr) {
     super.visitBinaryExpr(binaryExpr);
     Type lhsType = types.get(binaryExpr.getLhs()).getWithoutQualifiers();
-    if (types.get(binaryExpr.getRhs()) == null) {
-      System.out.println("test");
-    }
     Type rhsType = types.get(binaryExpr.getRhs()).getWithoutQualifiers();
     switch (binaryExpr.getOp()) {
       case MUL: {
@@ -513,7 +501,7 @@ public class Typer extends ScopeTrackingVisitor {
       result.addAll(userDefinedFunctions.get(name));
     }
     final Map<String, List<FunctionPrototype>> builtins =
-        TyperHelper.getBuiltins(tu.getShadingLanguageVersion(), tu.getShaderKind());
+        TyperHelper.getBuiltins(tu.getShadingLanguageVersion(), false, tu.getShaderKind());
     if (builtins.containsKey(name)) {
       result.addAll(builtins.get(name));
     }
