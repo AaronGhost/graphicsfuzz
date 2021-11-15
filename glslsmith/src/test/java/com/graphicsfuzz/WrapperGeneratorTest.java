@@ -1,7 +1,9 @@
 package com.graphicsfuzz;
 
 import com.graphicsfuzz.common.ast.type.BasicType;
+import com.graphicsfuzz.config.ConfigInterface;
 import com.graphicsfuzz.postprocessing.WrapperGenerator;
+import com.graphicsfuzz.util.TestHelper;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -11,6 +13,7 @@ public class WrapperGeneratorTest {
   public void testGenerateVectorComparisonWrapper() {
     String ivec4returnText = "any(equal(A, ivec4(0)))";
     String uvec3returnText = "any(equal(B, uvec3(0u)))";
+
     Assert.assertEquals(ivec4returnText,
         TestHelper.getText(WrapperGenerator.generateVectorComparison(BasicType.IVEC4, "A", "0")));
     Assert.assertEquals(uvec3returnText,
@@ -20,7 +23,6 @@ public class WrapperGeneratorTest {
 
   @Test
   public void testGenerateDivWrapper() {
-
     String intDivText = "int SAFE_DIV(int A, int B)\n"
         + "{\n"
         + " return B == 0 || A == -2147483648 && B == -1 ? A / 2 : A / B;\n"
@@ -38,14 +40,15 @@ public class WrapperGeneratorTest {
         + "{\n"
         + " return any(equal(B, uvec2(0u))) ? A / uvec2(2u) : A / B;\n"
         + "}\n";
+
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateDivWrapper(BasicType.INT,
-        BasicType.INT)), intDivText);
+        BasicType.INT, ConfigInterface.RunType.STANDARD)), intDivText);
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateDivWrapper(BasicType.UINT,
-        BasicType.UINT)), uintDivText);
+        BasicType.UINT, ConfigInterface.RunType.STANDARD)), uintDivText);
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateDivWrapper(BasicType.IVEC3,
-        BasicType.INT)), vec3intDivText);
+        BasicType.INT, ConfigInterface.RunType.STANDARD)), vec3intDivText);
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateDivWrapper(BasicType.UINT,
-        BasicType.UVEC2)), vec2uintDivText);
+        BasicType.UVEC2, ConfigInterface.RunType.STANDARD)), vec2uintDivText);
   }
 
   @Test
@@ -64,13 +67,14 @@ public class WrapperGeneratorTest {
         + "{\n"
         + " return B == 0 || any(equal(A, ivec4(-2147483648))) && B == -1 ? (A /= 2) : (A /= B);\n"
         + "}\n";
+
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateDivAssignWrapper(BasicType.INT,
-        BasicType.INT)), intDivAssignText);
+        BasicType.INT, ConfigInterface.RunType.STANDARD)), intDivAssignText);
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateDivAssignWrapper(BasicType.UINT,
-        BasicType.UINT)), uintDivAssignText);
+        BasicType.UINT, ConfigInterface.RunType.STANDARD)), uintDivAssignText);
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateDivAssignWrapper(
         BasicType.IVEC4,
-        BasicType.INT)),
+        BasicType.INT, ConfigInterface.RunType.STANDARD)),
         vec4DivAssignText);
   }
 
@@ -104,18 +108,19 @@ public class WrapperGeneratorTest {
         + " return any(greaterThan(B, ivec3(32))) || any(lessThan(B, ivec3(0))) ? A << ivec3(16) :"
         + " A << B;\n"
         + "}\n";
+
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateLShiftWrapper(BasicType.INT,
-        BasicType.UINT)), lshiftIntUintText);
+        BasicType.UINT, ConfigInterface.RunType.STANDARD)), lshiftIntUintText);
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateLShiftWrapper(BasicType.INT,
-        BasicType.INT)), lshiftIntIntText);
+        BasicType.INT, ConfigInterface.RunType.STANDARD)), lshiftIntIntText);
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateLShiftWrapper(BasicType.UINT,
-        BasicType.UINT)), lshiftUintUintText);
+        BasicType.UINT, ConfigInterface.RunType.STANDARD)), lshiftUintUintText);
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateLShiftWrapper(BasicType.UINT,
-        BasicType.INT)), lshiftUintIntText);
+        BasicType.INT, ConfigInterface.RunType.STANDARD)), lshiftUintIntText);
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateLShiftWrapper(BasicType.IVEC2,
-        BasicType.INT)), lshiftVec2IntText);
+        BasicType.INT, ConfigInterface.RunType.STANDARD)), lshiftVec2IntText);
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateLShiftWrapper(BasicType.UVEC3,
-        BasicType.IVEC3)), lshiftuvec3ivec3Text);
+        BasicType.IVEC3, ConfigInterface.RunType.STANDARD)), lshiftuvec3ivec3Text);
   }
 
   @Test
@@ -139,14 +144,15 @@ public class WrapperGeneratorTest {
         + "{\n"
         + " return B >= 32u ? A >> 16u : A >> B;\n"
         + "}\n";
+
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateRShiftWrapper(BasicType.INT,
-        BasicType.UINT)), rshiftIntUintText);
+        BasicType.UINT, ConfigInterface.RunType.STANDARD)), rshiftIntUintText);
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateRShiftWrapper(BasicType.INT,
-        BasicType.INT)), rshiftIntIntText);
+        BasicType.INT, ConfigInterface.RunType.STANDARD)), rshiftIntIntText);
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateRShiftWrapper(BasicType.UINT,
-        BasicType.UINT)), rshiftUintUintText);
+        BasicType.UINT, ConfigInterface.RunType.STANDARD)), rshiftUintUintText);
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateRShiftWrapper(BasicType.UINT,
-        BasicType.INT)), rshiftUintIntText);
+        BasicType.INT, ConfigInterface.RunType.STANDARD)), rshiftUintIntText);
   }
 
   @Test
@@ -174,17 +180,17 @@ public class WrapperGeneratorTest {
 
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateLShiftAssignWrapper(
         BasicType.INT,
-        BasicType.UINT)),
+        BasicType.UINT, ConfigInterface.RunType.STANDARD)),
         lshiftIntUintText);
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateLShiftAssignWrapper(
         BasicType.INT,
-        BasicType.INT)), lshiftIntIntText);
+        BasicType.INT, ConfigInterface.RunType.STANDARD)), lshiftIntIntText);
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateLShiftAssignWrapper(
         BasicType.UINT,
-        BasicType.UINT)), lshiftUintUintText);
+        BasicType.UINT, ConfigInterface.RunType.STANDARD)), lshiftUintUintText);
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateLShiftAssignWrapper(
         BasicType.UINT,
-        BasicType.INT)), lshiftUintIntText);
+        BasicType.INT, ConfigInterface.RunType.STANDARD)), lshiftUintIntText);
   }
 
   @Test
@@ -219,24 +225,25 @@ public class WrapperGeneratorTest {
         + " return any(greaterThan(B, ivec2(32))) || any(lessThan(B, ivec2(0))) ? (A >>= ivec2(16))"
         + " : (A >>= B);\n"
         + "}\n";
+
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateRShiftAssignWrapper(
         BasicType.INT,
-        BasicType.UINT)), lshiftIntUintText);
+        BasicType.UINT, ConfigInterface.RunType.STANDARD)), lshiftIntUintText);
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateRShiftAssignWrapper(
         BasicType.INT,
-        BasicType.INT)), lshiftIntIntText);
+        BasicType.INT, ConfigInterface.RunType.STANDARD)), lshiftIntIntText);
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateRShiftAssignWrapper(
         BasicType.UINT,
-        BasicType.UINT)), lshiftUintUintText);
+        BasicType.UINT, ConfigInterface.RunType.STANDARD)), lshiftUintUintText);
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateRShiftAssignWrapper(
         BasicType.UINT,
-        BasicType.INT)), lshiftUintIntText);
+        BasicType.INT, ConfigInterface.RunType.STANDARD)), lshiftUintIntText);
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateRShiftAssignWrapper(
         BasicType.UVEC4,
-        BasicType.INT)), lshiftuvec4IntText);
+        BasicType.INT, ConfigInterface.RunType.STANDARD)), lshiftuvec4IntText);
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateRShiftAssignWrapper(
         BasicType.UVEC2,
-        BasicType.IVEC2)), lshiftuvec2ivec2Text);
+        BasicType.IVEC2, ConfigInterface.RunType.STANDARD)), lshiftuvec2ivec2Text);
   }
 
   @Test
@@ -258,14 +265,15 @@ public class WrapperGeneratorTest {
         + " return any(equal(B, ivec4(0))) ? SAFE_ABS(A) % ivec4(2147483646)"
         + " : SAFE_ABS(A) % SAFE_ABS(B);\n"
         + "}\n";
+
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateModWrapper(BasicType.INT,
-        BasicType.INT)), intModText);
+        BasicType.INT, ConfigInterface.RunType.STANDARD)), intModText);
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateModWrapper(BasicType.UINT,
-        BasicType.UINT)), uintModText);
+        BasicType.UINT, ConfigInterface.RunType.STANDARD)), uintModText);
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateModWrapper(BasicType.UVEC3,
-        BasicType.UINT)), uvec3uintModText);
+        BasicType.UINT, ConfigInterface.RunType.STANDARD)), uvec3uintModText);
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateModWrapper(BasicType.INT,
-        BasicType.IVEC4)), intivec4ModText);
+        BasicType.IVEC4, ConfigInterface.RunType.STANDARD)), intivec4ModText);
   }
 
   @Test
@@ -279,10 +287,11 @@ public class WrapperGeneratorTest {
         + "{\n"
         + " return B == 0u ? (A %= 2147483646u) : (A %= B);\n"
         + "}\n";
+
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateModAssignWrapper(BasicType.INT,
-        BasicType.INT)), intModAssignText);
+        BasicType.INT, ConfigInterface.RunType.STANDARD)), intModAssignText);
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateModAssignWrapper(BasicType.UINT,
-        BasicType.UINT)), uintModAssignText);
+        BasicType.UINT, ConfigInterface.RunType.STANDARD)), uintModAssignText);
   }
 
   @Test
@@ -301,11 +310,12 @@ public class WrapperGeneratorTest {
         + " int safe_bits = SAFE_ABS(bits) % (32 - safe_offset);\n"
         + " return bitfieldInsert(base, insert, safe_offset, safe_bits);\n"
         + "}\n";
+
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateBitInsertWrapper(
-        BasicType.INT, null)),
+        BasicType.INT, null, ConfigInterface.RunType.STANDARD)),
         intBitfieldInsertText);
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateBitInsertWrapper(
-        BasicType.IVEC4, null)),
+        BasicType.IVEC4, null, ConfigInterface.RunType.STANDARD)),
         vec4BitfieldInsertText);
   }
 
@@ -324,12 +334,12 @@ public class WrapperGeneratorTest {
         + " int safe_bits = SAFE_ABS(bits) % (32 - safe_offset);\n"
         + " return bitfieldExtract(value, safe_offset, safe_bits);\n"
         + "}\n";
+
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateBitExtractWrapper(
-        BasicType.INT, null)),
+        BasicType.INT, null, ConfigInterface.RunType.STANDARD)),
         intBitfieldExtractText);
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateBitExtractWrapper(
-        BasicType.IVEC4,
-        null)),
+        BasicType.IVEC4, null, ConfigInterface.RunType.STANDARD)),
         vec4BitfieldExtractText);
   }
 
@@ -345,10 +355,11 @@ public class WrapperGeneratorTest {
         + " return any(greaterThan(minVal, maxVal)) ? clamp(value, min(minVal, maxVal), max"
         + "(minVal, maxVal)) : clamp(value, minVal, maxVal);\n"
         + "}\n";
+
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateClampWrapper(BasicType.IVEC4,
-        BasicType.INT)), intText);
+        BasicType.INT, ConfigInterface.RunType.STANDARD)), intText);
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateClampWrapper(BasicType.UVEC2,
-        BasicType.UVEC2)), uintText);
+        BasicType.UVEC2, ConfigInterface.RunType.STANDARD)), uintText);
   }
 
   @Test
@@ -357,8 +368,9 @@ public class WrapperGeneratorTest {
         + "{\n"
         + " return abs(A + 1.0f) >= 16777216.0 ? A = 7.0f : ++ A;\n"
         + "}\n";
+
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generatePreIncWrapper(BasicType.FLOAT,
-        null)), floatText);
+        null, ConfigInterface.RunType.STANDARD)), floatText);
   }
 
   @Test
@@ -367,8 +379,9 @@ public class WrapperGeneratorTest {
         + "{\n"
         + " return abs(A + 1.0f) >= 16777216.0 ? A = 1.0f : A ++;\n"
         + "}\n";
+
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generatePostIncWrapper(BasicType.FLOAT,
-        null)), floatText);
+        null, ConfigInterface.RunType.STANDARD)), floatText);
   }
 
   @Test
@@ -377,8 +390,9 @@ public class WrapperGeneratorTest {
         + "{\n"
         + " return abs(A - 1.0f) >= 16777216.0 ? A = 2.0f : A --;\n"
         + "}\n";
+
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generatePostDecWrapper(BasicType.FLOAT,
-        null)), floatText);
+        null, ConfigInterface.RunType.STANDARD)), floatText);
   }
 
   @Test
@@ -392,10 +406,11 @@ public class WrapperGeneratorTest {
         + " return any(greaterThanEqual(abs(A - 1.0f), vec2(16777216.0f))) ? A = vec2(3.0f) : -- "
         + "A;\n"
         + "}\n";
+
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generatePreDecWrapper(BasicType.FLOAT,
-        null)), floatText);
+        null, ConfigInterface.RunType.STANDARD)), floatText);
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generatePreDecWrapper(BasicType.VEC2,
-        null)), vec2Text);
+        null, ConfigInterface.RunType.STANDARD)), vec2Text);
   }
 
   @Test
@@ -404,9 +419,9 @@ public class WrapperGeneratorTest {
         + "{\n"
         + " return abs(A + B) >= 16777216.0 ? A = 8.0f : (A += B);\n"
         + "}\n";
+
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateAddAssignWrapper(
-        BasicType.FLOAT,
-        BasicType.FLOAT)), floatText);
+        BasicType.FLOAT, BasicType.FLOAT, ConfigInterface.RunType.STANDARD)), floatText);
   }
 
   @Test
@@ -420,12 +435,11 @@ public class WrapperGeneratorTest {
         + " return any(greaterThanEqual(abs(A - B), vec2(16777216.0f))) ? A = vec2(5.0f) : (A -= "
         + "B);\n"
         + "}\n";
+
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateSubAssignWrapper(
-        BasicType.FLOAT,
-        BasicType.FLOAT)), floatText);
+        BasicType.FLOAT, BasicType.FLOAT, ConfigInterface.RunType.STANDARD)), floatText);
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateSubAssignWrapper(
-        BasicType.VEC2,
-        BasicType.VEC2)), vec2Text);
+        BasicType.VEC2, BasicType.VEC2, ConfigInterface.RunType.STANDARD)), vec2Text);
   }
 
   @Test
@@ -439,12 +453,11 @@ public class WrapperGeneratorTest {
         + " return any(greaterThanEqual(abs(A * B), vec3(16777216.0f))) ? A = vec3(12.0f) : (A *= "
         + "B);\n"
         + "}\n";
+
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateMulAssignWrapper(
-        BasicType.FLOAT,
-        BasicType.FLOAT)), floatText);
+        BasicType.FLOAT, BasicType.FLOAT, ConfigInterface.RunType.STANDARD)), floatText);
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateMulAssignWrapper(
-        BasicType.VEC3,
-        BasicType.FLOAT)), vec3Text);
+        BasicType.VEC3, BasicType.FLOAT, ConfigInterface.RunType.STANDARD)), vec3Text);
   }
 
   @Test
@@ -458,12 +471,11 @@ public class WrapperGeneratorTest {
         + " return any(greaterThanEqual(abs(A), vec4(16777216.0f))) ? "
         + "vec4(10.0f) : A;\n"
         + "}\n";
+
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateFloatResultWrapper(
-        BasicType.FLOAT,
-        null)), floatText);
+        BasicType.FLOAT, null, ConfigInterface.RunType.STANDARD)), floatText);
     Assert.assertEquals(TestHelper.getText(WrapperGenerator.generateFloatResultWrapper(
-        BasicType.VEC4,
-        null)), vec4Text);
+        BasicType.VEC4, null, ConfigInterface.RunType.STANDARD)), vec4Text);
   }
 }
 

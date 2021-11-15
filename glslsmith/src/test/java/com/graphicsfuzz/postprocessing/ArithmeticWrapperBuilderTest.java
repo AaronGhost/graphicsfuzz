@@ -1,7 +1,7 @@
 package com.graphicsfuzz.postprocessing;
 
 import com.graphicsfuzz.ProgramState;
-import com.graphicsfuzz.TestHelper;
+import com.graphicsfuzz.util.TestHelper;
 import java.util.Collections;
 import java.util.List;
 import org.junit.Assert;
@@ -95,6 +95,7 @@ public class ArithmeticWrapperBuilderTest extends CommonPostProcessingTest {
   public void testProcessWithSingleIntLineShader() {
     ProgramState returnState = new ArithmeticWrapperBuilder()
         .process(TestHelper.generateProgramStateForCode(singleIntLineProgramText));
+    System.out.println(returnState.getShaderCode());
     Assert.assertEquals(returnState.getShaderCode(), wrapperIntLineProgramText);
   }
 
@@ -116,6 +117,7 @@ public class ArithmeticWrapperBuilderTest extends CommonPostProcessingTest {
   public void testProcessWithMultipleFloatArithmeticShader() {
     ProgramState returnState = new ArithmeticWrapperBuilder()
         .process(TestHelper.generateProgramStateForCode(multipleFloatArithmeticProgramText));
+    System.out.println(returnState.getShaderCode());
     Assert.assertTrue(returnState.getShaderCode().contains(multipleFloatWrappersMainText));
   }
 

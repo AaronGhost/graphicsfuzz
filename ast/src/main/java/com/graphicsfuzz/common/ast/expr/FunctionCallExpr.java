@@ -64,6 +64,10 @@ public class FunctionCallExpr extends Expr {
     args.set(index, expr);
   }
 
+  public void setArgs(List<Expr> args) {
+    this.args = new ArrayList<>(args);
+  }
+
   public void removeArg(int index) {
     args.remove(index);
   }

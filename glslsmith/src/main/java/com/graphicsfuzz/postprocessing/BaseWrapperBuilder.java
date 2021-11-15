@@ -1,13 +1,17 @@
 package com.graphicsfuzz.postprocessing;
 
+import com.graphicsfuzz.Buffer;
 import com.graphicsfuzz.ProgramState;
 import com.graphicsfuzz.common.ast.TranslationUnit;
 import com.graphicsfuzz.common.ast.decl.FunctionPrototype;
+import com.graphicsfuzz.common.ast.decl.InterfaceBlock;
 import com.graphicsfuzz.common.ast.type.BasicType;
 import com.graphicsfuzz.common.ast.visitors.StandardVisitor;
 import com.graphicsfuzz.common.typing.Typer;
+import com.graphicsfuzz.config.ConfigInterface;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
 
 public abstract class BaseWrapperBuilder extends StandardVisitor implements PostProcessorInterface {
@@ -28,7 +32,8 @@ public abstract class BaseWrapperBuilder extends StandardVisitor implements Post
     for (ImmutableTriple<Wrapper, BasicType, BasicType> wrapperFunction :
         programState.getWrappers()) {
       FunctionPrototype wrapperPrototype = WrapperGenerator.generateDeclaration(
-          wrapperFunction.left, wrapperFunction.middle, wrapperFunction.right);
+          wrapperFunction.left, wrapperFunction.middle, wrapperFunction.right,
+          programState.getRunType());
       if (tu.getTopLevelDeclarations().stream()
           .noneMatch(t -> t instanceof FunctionPrototype
               && (((FunctionPrototype) t).matches(wrapperPrototype)))) {
@@ -40,16 +45,40 @@ public abstract class BaseWrapperBuilder extends StandardVisitor implements Post
     for (ImmutableTriple<Wrapper, BasicType, BasicType> wrapperFunction :
         necessaryWrappers) {
       tu.addDeclaration(WrapperGenerator.generateDeclaration(wrapperFunction.left,
-          wrapperFunction.middle, wrapperFunction.right));
+          wrapperFunction.middle, wrapperFunction.right, programState.getRunType()));
     }
 
     //Add the necessary wrapper bodies in any order before the main function
     for (ImmutableTriple<Wrapper, BasicType, BasicType> wrapperFunction :
         necessaryWrappers) {
       tu.addDeclarationBefore(wrapperFunction.left.generator.apply(wrapperFunction.middle,
-          wrapperFunction.right), tu.getMainFunction());
+          wrapperFunction.right, programState.getRunType()), tu.getMainFunction());
     }
 
+    // Check the Run type and add the extra ids buffer if necessary
+    Buffer idsBuffer = programState.getIdsBuffer();
+    if (programState.getRunType() == ConfigInterface.RunType.ADDED_ID) {
+      if (tu.hasBufferDeclaration("buffer_ids")) {
+        tu.updateTopLevelDeclaration(
+            new InterfaceBlock(Optional.ofNullable(idsBuffer.getLayoutQualifiers()),
+                idsBuffer.getInterfaceQualifiers(),
+                idsBuffer.getName(),
+                idsBuffer.getMemberNames(),
+                idsBuffer.getMemberTypes(),
+                Optional.of("")
+            ),
+            tu.getBufferDeclaration("buffer_ids"));
+      } else {
+        tu.addDeclaration(
+            new InterfaceBlock(Optional.ofNullable(idsBuffer.getLayoutQualifiers()),
+            idsBuffer.getInterfaceQualifiers(),
+            idsBuffer.getName(),
+            idsBuffer.getMemberNames(),
+            idsBuffer.getMemberTypes(),
+            Optional.of("")
+        ));
+      }
+    }
     state.programInitialization(tu);
     return state;
   }

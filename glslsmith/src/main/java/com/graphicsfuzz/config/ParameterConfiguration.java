@@ -4,6 +4,7 @@ import com.graphicsfuzz.common.glslversion.ShadingLanguageVersion;
 import com.graphicsfuzz.common.util.ShaderKind;
 
 public class ParameterConfiguration implements ConfigInterface {
+  private RunType runType;
   private ShadingLanguageVersion shadingLanguageVersion;
   private ShaderKind shaderKind;
   private int maxLocalSizeX;
@@ -30,6 +31,12 @@ public class ParameterConfiguration implements ConfigInterface {
   private boolean floatAsConst;
   private boolean singleTypePerBuffer;
   private boolean typeDecoratorsOnBuffers;
+
+  //Run type for the tool
+  @Override
+  public RunType getRunType() {
+    return runType;
+  }
 
   //Language version
   @Override
@@ -102,7 +109,7 @@ public class ParameterConfiguration implements ConfigInterface {
   }
 
   @Override
-  public Long getMaxForIncrement() {
+  public long getMaxForIncrement() {
     return maxForIncrement;
   }
 
@@ -169,6 +176,7 @@ public class ParameterConfiguration implements ConfigInterface {
   }
 
   public static class Builder {
+    private RunType runType = RunType.STANDARD;
     private ShadingLanguageVersion shadingLanguageVersion = ShadingLanguageVersion.ESSL_310;
     private ShaderKind shaderKind = ShaderKind.COMPUTE;
     private int maxLocalSizeX = 2;
@@ -198,6 +206,11 @@ public class ParameterConfiguration implements ConfigInterface {
 
     public Builder getBuilder() {
       return new Builder();
+    }
+
+    public Builder withRunType(RunType runType) {
+      this.runType = runType;
+      return this;
     }
 
     public Builder withShadingLanguageVersion(ShadingLanguageVersion shadingLanguageVersion) {
@@ -332,6 +345,7 @@ public class ParameterConfiguration implements ConfigInterface {
 
     public ParameterConfiguration getConfig() {
       ParameterConfiguration configuration = new ParameterConfiguration();
+      configuration.runType = this.runType;
       configuration.shadingLanguageVersion = this.shadingLanguageVersion;
       configuration.shaderKind = this.shaderKind;
       configuration.maxLocalSizeX = this.maxLocalSizeX;

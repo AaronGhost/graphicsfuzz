@@ -2,10 +2,14 @@ package com.graphicsfuzz.postprocessing;
 
 import com.graphicsfuzz.common.ast.expr.Expr;
 import com.graphicsfuzz.common.ast.expr.FunctionCallExpr;
+import com.graphicsfuzz.common.ast.expr.IntConstantExpr;
 import com.graphicsfuzz.common.ast.expr.TypeConstructorExpr;
 import com.graphicsfuzz.common.ast.type.BasicType;
 import com.graphicsfuzz.common.ast.type.Type;
+import com.graphicsfuzz.config.ConfigInterface;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class StdWrapperBuilder extends BaseWrapperBuilder {
@@ -33,6 +37,7 @@ public class StdWrapperBuilder extends BaseWrapperBuilder {
 
   @Override
   public void visitTypeConstructorExpr(TypeConstructorExpr typeConstructorExpr) {
+    // TODO add closer to the edge mechanism
     super.visitTypeConstructorExpr(typeConstructorExpr);
     // Conversion from a float to an uint needs an extra abs
     String targetType = typeConstructorExpr.getTypename();
@@ -40,6 +45,7 @@ public class StdWrapperBuilder extends BaseWrapperBuilder {
         || targetType.equals("uvec3") || targetType.equals("uvec4")) {
       for (int i = 0; i < typeConstructorExpr.getNumArgs(); i++) {
         if (getBasicArg(typeConstructorExpr, i).getElementType().equals(BasicType.FLOAT)) {
+          // The size of the floats values is bounded
           typeConstructorExpr.setChild(i, new FunctionCallExpr("abs",
               typeConstructorExpr.getArg(i)));
         }
@@ -63,9 +69,20 @@ public class StdWrapperBuilder extends BaseWrapperBuilder {
         // Regular integer to integer functions
         if (intBaseFunMap.containsKey(callee)) {
           Wrapper necessaryWrapper = intBaseFunMap.get(callee);
-          functionCallExpr.setCallee(necessaryWrapper.name);
-          programState.registerWrapper(necessaryWrapper, getBasicArg(functionCallExpr, 0),
-              getBasicArg(functionCallExpr, necessaryWrapper.nbA));
+          // collect the id of the wrapper and check if the wrapper is necessary
+          int id = programState.wrapperCounterPostIncrement();
+          if (programState.getRunType() != ConfigInterface.RunType.REDUCED_WRAPPERS
+              || !programState.lookupIds(id)) {
+            if (programState.getRunType() == ConfigInterface.RunType.ADDED_ID) {
+              List<Expr> args = new ArrayList<>(functionCallExpr.getArgs());
+              args.add(
+                  new IntConstantExpr(String.valueOf(id)));
+              functionCallExpr.setArgs(args);
+            }
+            functionCallExpr.setCallee(necessaryWrapper.name);
+            programState.registerWrapper(necessaryWrapper, getBasicArg(functionCallExpr, 0),
+                getBasicArg(functionCallExpr, necessaryWrapper.nbA));
+          }
         }
       }
     }

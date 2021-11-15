@@ -5,12 +5,14 @@ import com.graphicsfuzz.common.ast.expr.BinOp;
 import com.graphicsfuzz.common.ast.expr.BinaryExpr;
 import com.graphicsfuzz.common.ast.expr.Expr;
 import com.graphicsfuzz.common.ast.expr.FunctionCallExpr;
+import com.graphicsfuzz.common.ast.expr.IntConstantExpr;
 import com.graphicsfuzz.common.ast.expr.Op;
 import com.graphicsfuzz.common.ast.expr.TypeConstructorExpr;
 import com.graphicsfuzz.common.ast.expr.UnOp;
 import com.graphicsfuzz.common.ast.expr.UnaryExpr;
 import com.graphicsfuzz.common.ast.type.BasicType;
 import com.graphicsfuzz.common.ast.type.Type;
+import com.graphicsfuzz.config.ConfigInterface;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -47,11 +49,17 @@ public class ArithmeticWrapperBuilder extends BaseWrapperBuilder {
     super.visitChildFromParent(child, parent);
   }
 
-  protected void wrapFloatResult(Expr expr, BasicType floatType) {
+  protected void wrapFloatResult(Expr expr, BasicType floatType, int id) {
     programState.registerWrapper(Wrapper.SAFE_FLOAT_RESULT, floatType, null);
     // Build the replacement Expr and exchange the child on the AST using the reference in
     // the map
-    Expr replacementExpr = new FunctionCallExpr(Wrapper.SAFE_FLOAT_RESULT.name, expr);
+    Expr replacementExpr;
+    if (programState.getRunType() == ConfigInterface.RunType.ADDED_ID) {
+      replacementExpr = new FunctionCallExpr(Wrapper.SAFE_FLOAT_RESULT.name, expr,
+          new IntConstantExpr(String.valueOf(id)));
+    } else {
+      replacementExpr = new FunctionCallExpr(Wrapper.SAFE_FLOAT_RESULT.name, expr);
+    }
     parentMap.get(expr).replaceChild(expr, replacementExpr);
     // Rebuild the map for the current binaryExpr so that its parent is the newly declared
     // expression
@@ -73,19 +81,24 @@ public class ArithmeticWrapperBuilder extends BaseWrapperBuilder {
         }
       }
       if (needsFloatWrapper) {
-        switch (typeName) {
-          case "float":
-            wrapFloatResult(typeConstructorExpr, BasicType.FLOAT);
-            break;
-          case "vec2":
-            wrapFloatResult(typeConstructorExpr, BasicType.VEC2);
-            break;
-          case "vec3":
-            wrapFloatResult(typeConstructorExpr, BasicType.VEC3);
-            break;
-          default:
-            wrapFloatResult(typeConstructorExpr, BasicType.VEC4);
-            break;
+        // collect the id of the wrapper and check if the wrapper is necessary
+        int id = programState.wrapperCounterPostIncrement();
+        if (programState.getRunType() != ConfigInterface.RunType.REDUCED_WRAPPERS
+            || !programState.lookupIds(id)) {
+          switch (typeName) {
+            case "float":
+              wrapFloatResult(typeConstructorExpr, BasicType.FLOAT, id);
+              break;
+            case "vec2":
+              wrapFloatResult(typeConstructorExpr, BasicType.VEC2, id);
+              break;
+            case "vec3":
+              wrapFloatResult(typeConstructorExpr, BasicType.VEC3, id);
+              break;
+            default:
+              wrapFloatResult(typeConstructorExpr, BasicType.VEC4, id);
+              break;
+          }
         }
       }
     }
@@ -117,21 +130,34 @@ public class ArithmeticWrapperBuilder extends BaseWrapperBuilder {
       // If the operation needs some rewriting we do it
       if (wrapperOp != null) {
 
-        // Register wrapper for generation with the correct operand type
-        programState.registerWrapper(wrapperOp, leftType,
-            rightType);
+        // Collect the id of the current wrapper
+        int id = programState.wrapperCounterPostIncrement();
 
-        // Build the replacement Expr and exchange the child on the AST using the reference in
-        // the map
-        Expr replacementExpr = new FunctionCallExpr(wrapperOp.name, binaryExpr.getLhs(),
-            binaryExpr.getRhs());
-        parentMap.get(binaryExpr).replaceChild(binaryExpr, replacementExpr);
+        // If we need a wrapper we add it with the necessary id (or not)
+        if (programState.getRunType() != ConfigInterface.RunType.REDUCED_WRAPPERS
+            || !programState.lookupIds(id)) {
+          // Register wrapper for generation with the correct operand type
+          programState.registerWrapper(wrapperOp, leftType,
+              rightType);
 
-        // Visit the left and right operand as "children" of the new replacement Expr and return
-        // early
-        visitChildFromParent(binaryExpr.getLhs(), replacementExpr);
-        visitChildFromParent(binaryExpr.getRhs(), replacementExpr);
-        return;
+          // Build the replacement Expr and exchange the child on the AST using the reference in
+          // the map
+          Expr replacementExpr;
+          if (programState.getRunType() == ConfigInterface.RunType.ADDED_ID) {
+            replacementExpr = new FunctionCallExpr(wrapperOp.name, binaryExpr.getLhs(),
+                binaryExpr.getRhs(), new IntConstantExpr(String.valueOf(id)));
+          } else {
+            replacementExpr = new FunctionCallExpr(wrapperOp.name, binaryExpr.getLhs(),
+                binaryExpr.getRhs());
+          }
+          parentMap.get(binaryExpr).replaceChild(binaryExpr, replacementExpr);
+
+          // Visit the left and right operand as "children" of the new replacement Expr and return
+          // early
+          visitChildFromParent(binaryExpr.getLhs(), replacementExpr);
+          visitChildFromParent(binaryExpr.getRhs(), replacementExpr);
+          return;
+        }
 
         // We apply the default wrapper on the result for FLOAT based value (all side-effecting
         // assign supported are already dealt with)
@@ -140,7 +166,13 @@ public class ArithmeticWrapperBuilder extends BaseWrapperBuilder {
         if (rType instanceof BasicType) {
           final BasicType resultType = (BasicType) rType;
           if (resultType.getElementType().equals(BasicType.FLOAT)) {
-            wrapFloatResult(binaryExpr, resultType);
+
+            // collect the id of the wrapper and check if the wrapper is necessary
+            int id = programState.wrapperCounterPostIncrement();
+            if (programState.getRunType() != ConfigInterface.RunType.REDUCED_WRAPPERS
+                || !programState.lookupIds(id)) {
+              wrapFloatResult(binaryExpr, resultType, id);
+            }
           }
         }
       }
@@ -151,12 +183,18 @@ public class ArithmeticWrapperBuilder extends BaseWrapperBuilder {
   @Override
   public void visitFunctionCallExpr(FunctionCallExpr functionCallExpr) {
     super.visitFunctionCallExpr(functionCallExpr);
+
     Type funCallType = typer.lookupType(functionCallExpr).getWithoutQualifiers();
 
     if (funCallType instanceof BasicType) {
       BasicType returnType = (BasicType) funCallType;
       if (returnType.getElementType().equals(BasicType.FLOAT)) {
-        wrapFloatResult(functionCallExpr, returnType);
+        // collect the id of the wrapper and check if the wrapper is necessary
+        int id = programState.wrapperCounterPostIncrement();
+        if (!(programState.getRunType() == ConfigInterface.RunType.REDUCED_WRAPPERS)
+            || !programState.lookupIds(id)) {
+          wrapFloatResult(functionCallExpr, returnType, id);
+        }
       }
     }
   }
@@ -169,17 +207,32 @@ public class ArithmeticWrapperBuilder extends BaseWrapperBuilder {
     if (type instanceof BasicType) {
       BasicType operandType = (BasicType) type;
       if (operandType.getElementType().equals(BasicType.FLOAT) && floatBaseOpMap.containsKey(op)) {
-        Wrapper wrapperOp = floatBaseOpMap.get(op);
-        // Register the side-effecting wrapper
-        programState.registerWrapper(wrapperOp, operandType, null);
-        // Build the replacement Expr and exchange the child on the AST using the reference in
-        // the map
-        Expr replacementExpr = new FunctionCallExpr(wrapperOp.name, unaryExpr.getExpr());
-        parentMap.get(unaryExpr).replaceChild(unaryExpr, replacementExpr);
+        // Collect the id of the current wrapper
+        int id = programState.wrapperCounterPostIncrement();
 
-        // Visit the child considering using the replacement expr as parent and return early
-        visitChildFromParent(unaryExpr.getExpr(), replacementExpr);
-        return;
+        // If we need a wrapper we add it with the necessary id (or not)
+        if (programState.getRunType() != ConfigInterface.RunType.REDUCED_WRAPPERS
+            || !programState.lookupIds(id)) {
+          Wrapper wrapperOp = floatBaseOpMap.get(op);
+          // Register the side-effecting wrapper
+
+          programState.registerWrapper(wrapperOp, operandType, null);
+          // Build the replacement Expr and exchange the child on the AST using the reference in
+          // the map
+
+          Expr replacementExpr;
+          if (programState.getRunType() == ConfigInterface.RunType.ADDED_ID) {
+            replacementExpr = new FunctionCallExpr(wrapperOp.name, unaryExpr.getExpr(),
+                new IntConstantExpr(String.valueOf(id)));
+          } else {
+            replacementExpr = new FunctionCallExpr(wrapperOp.name, unaryExpr.getExpr());
+          }
+          parentMap.get(unaryExpr).replaceChild(unaryExpr, replacementExpr);
+
+          // Visit the child considering using the replacement expr as parent and return early
+          visitChildFromParent(unaryExpr.getExpr(), replacementExpr);
+          return;
+        }
       }
     }
     super.visitUnaryExpr(unaryExpr);

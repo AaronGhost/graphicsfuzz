@@ -1,7 +1,7 @@
 package com.graphicsfuzz.postprocessing;
 
 import com.graphicsfuzz.ProgramState;
-import com.graphicsfuzz.TestHelper;
+import com.graphicsfuzz.util.TestHelper;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;

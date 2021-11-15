@@ -2,6 +2,7 @@ package com.graphicsfuzz.stateprinters;
 
 import com.graphicsfuzz.Buffer;
 import com.graphicsfuzz.ProgramState;
+import java.util.ArrayList;
 import java.util.List;
 
 public interface StatePrinter {
@@ -12,7 +13,11 @@ public interface StatePrinter {
 
   String getShaderCodeFromHarness(String fileContent);
 
-  String printWrapper(ProgramState programState);
+  String addBufferToHarness(String fileContent, Buffer buffer);
+
+  ArrayList<Boolean> parseIdsBuffer(String idsBufferName);
+
+  String printHarness(ProgramState programState);
 
   List<Buffer> getBuffersFromHarness(String fileContent);
 

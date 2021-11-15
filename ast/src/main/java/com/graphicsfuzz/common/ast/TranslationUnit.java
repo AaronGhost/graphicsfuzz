@@ -18,6 +18,7 @@ package com.graphicsfuzz.common.ast;
 
 import com.graphicsfuzz.common.ast.decl.Declaration;
 import com.graphicsfuzz.common.ast.decl.FunctionDefinition;
+import com.graphicsfuzz.common.ast.decl.InterfaceBlock;
 import com.graphicsfuzz.common.ast.decl.PrecisionDeclaration;
 import com.graphicsfuzz.common.ast.decl.VariableDeclInfo;
 import com.graphicsfuzz.common.ast.decl.VariablesDeclaration;
@@ -225,6 +226,27 @@ public class TranslationUnit implements IAstNode {
             && variablesDeclaration.getDeclInfos().stream()
             .anyMatch(variableDecl -> variableDecl.getName().equals(name)));
   }
+
+  public List<InterfaceBlock> getBufferDeclarations() {
+    return getTopLevelDeclarations()
+        .stream()
+        .filter(item -> item instanceof InterfaceBlock)
+        .map(item -> (InterfaceBlock) item)
+        .collect(Collectors.toList());
+  }
+
+  public InterfaceBlock getBufferDeclaration(String name) {
+    return getBufferDeclarations().stream()
+        .filter(variablesDeclaration ->
+            variablesDeclaration.getStructName().equals(name)).findAny().get();
+  }
+
+  public boolean hasBufferDeclaration(String name) {
+    return getBufferDeclarations().stream()
+        .anyMatch(variablesDeclaration ->
+            variablesDeclaration.getStructName().equals(name));
+  }
+
 
   public List<StructDefinitionType> getStructDefinitions() {
     return StructUtils.getStructDefinitions(this);

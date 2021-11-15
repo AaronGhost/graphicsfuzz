@@ -13,6 +13,9 @@ import com.graphicsfuzz.common.ast.type.Std430LayoutQualifier;
 import com.graphicsfuzz.common.ast.type.Type;
 import com.graphicsfuzz.common.ast.type.TypeQualifier;
 import com.graphicsfuzz.common.util.ShaderKind;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -42,7 +45,44 @@ public class ShaderTrapStatePrinter implements StatePrinter {
   }
 
   @Override
-  public String printWrapper(ProgramState programState) {
+  public String addBufferToHarness(String fileContent, Buffer buffer) {
+    Pattern pattern = Pattern.compile("CREATE_BUFFER ([^ ]+) SIZE_BYTES ([0-9]+) "
+        + "INIT_VALUES (.*)");
+    Matcher matcher = pattern.matcher(fileContent);
+    if (matcher.find()) {
+      fileContent = fileContent.replace(matcher.group(),
+          printBufferWrapper(buffer) + matcher.group());
+    } else {
+      throw new RuntimeException("No output to the initial program, verify the underlying shader");
+    }
+    return fileContent + printDumpBuffer(buffer);
+  }
+
+  @Override
+  public ArrayList<Boolean> parseIdsBuffer(String idsBufferName) {
+    try {
+      ArrayList<Boolean> result = new ArrayList<>();
+      // Index regex
+      Pattern intPattern = Pattern.compile("-?[0-9]+");
+
+      Matcher matcher = intPattern.matcher(Files.readString(Path.of(idsBufferName)));
+      // Match integers with booleans (ids should be used in order from 0)
+      while (matcher.find()) {
+        if (Integer.parseInt(matcher.group()) > 0) {
+          result.add(true);
+        } else {
+          result.add(false);
+        }
+      }
+      return result;
+    } catch (IOException e) {
+      e.printStackTrace();
+      return null;
+    }
+  }
+
+  @Override
+  public String printHarness(ProgramState programState) {
     if (programState.getShaderKind() == ShaderKind.COMPUTE) {
       StringBuilder shaderTrapPrefix = new StringBuilder();
       String version = parseVersion(programState.getShadingLanguageVersion());
@@ -86,13 +126,14 @@ public class ShaderTrapStatePrinter implements StatePrinter {
               + " BINDING ([0-9]+)");
       Matcher bindingMatcher = bindingPattern.matcher(fileContent);
       if (bindingMatcher.find()) {
+
         int bufferBinding = Integer.parseInt(bindingMatcher.group(1));
-        List<Integer> memberValues = new ArrayList<>();
-        List<String> memberNames = new ArrayList<>();
-        List<Type> memberTypes = new ArrayList<>();
+        final List<Integer> memberValues = new ArrayList<>();
+        final List<String> memberNames = new ArrayList<>();
+        final List<Type> memberTypes = new ArrayList<>();
+
         Matcher innerMatcher = typePattern.matcher(matcher.group(3));
         while (innerMatcher.find()) {
-
           // Match internal values to determine current inner type
           BasicType type;
           switch (innerMatcher.group(1)) {

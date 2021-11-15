@@ -1,5 +1,7 @@
-package com.graphicsfuzz;
+package com.graphicsfuzz.util;
 
+import com.graphicsfuzz.Buffer;
+import com.graphicsfuzz.ProgramState;
 import com.graphicsfuzz.common.ast.TranslationUnit;
 import com.graphicsfuzz.common.ast.decl.Declaration;
 import com.graphicsfuzz.common.ast.expr.Expr;

@@ -55,6 +55,7 @@ public class ShaderTrapStatePrinterTest {
       + "void main()\n"
       + "{\n"
       + "}\n";
+
   static String minimalProgramText = "GLES 3.1\n"
       + "DECLARE_SHADER shader KIND COMPUTE\n"
       + minimalShaderText
@@ -62,6 +63,41 @@ public class ShaderTrapStatePrinterTest {
       + "COMPILE_SHADER shader_compiled SHADER shader\n"
       + "CREATE_PROGRAM compute_prog SHADERS shader_compiled\n"
       + "RUN_COMPUTE PROGRAM compute_prog NUM_GROUPS 1 1 1\n";
+
+  static String minimalProgramWithBuffers = "GLES 3.1\n"
+      + buffer2Text
+      + buffer3Text
+      + buffer4Text
+      + "DECLARE_SHADER shader KIND COMPUTE\n"
+      + minimalShaderText
+      + "END\n\n"
+      + "COMPILE_SHADER shader_compiled SHADER shader\n"
+      + "CREATE_PROGRAM compute_prog SHADERS shader_compiled\n"
+      + "RUN_COMPUTE PROGRAM compute_prog NUM_GROUPS 1 1 1\n"
+      + "DUMP_BUFFER_TEXT BUFFER buffer_3 FILE \"buffer_3.txt\" FORMAT \"buffer_3 \" float 2 \" "
+          + "\" int 1 \" \" uint 1 \" \" float 1\n"
+      + "DUMP_BUFFER_TEXT BUFFER buffer_4 FILE \"buffer_4.txt\" FORMAT \"buffer_4 \" int 2 \" \" "
+      + "uint 7\n";
+
+  static String bufferIdText = "CREATE_BUFFER buffer_id SIZE_BYTES 12 INIT_VALUES int 0 0 0\n"
+      + "BIND_SHADER_STORAGE_BUFFER BUFFER buffer_id BINDING 0\n\n";
+
+  static String minimalProgramWithIdBuffer =  "GLES 3.1\n"
+      + bufferIdText
+      + buffer2Text
+      + buffer3Text
+      + buffer4Text
+      + "DECLARE_SHADER shader KIND COMPUTE\n"
+      + minimalShaderText
+      + "END\n\n"
+      + "COMPILE_SHADER shader_compiled SHADER shader\n"
+      + "CREATE_PROGRAM compute_prog SHADERS shader_compiled\n"
+      + "RUN_COMPUTE PROGRAM compute_prog NUM_GROUPS 1 1 1\n"
+      + "DUMP_BUFFER_TEXT BUFFER buffer_3 FILE \"buffer_3.txt\" FORMAT \"buffer_3 \" float 2 \" "
+          + "\" int 1 \" \" uint 1 \" \" float 1\n"
+      + "DUMP_BUFFER_TEXT BUFFER buffer_4 FILE \"buffer_4.txt\" FORMAT \"buffer_4 \" int 2 \" \" "
+          + "uint 7\n"
+      + "DUMP_BUFFER_TEXT BUFFER buffer_id FILE \"buffer_id.txt\" FORMAT \"buffer_id \" int 3\n";
 
   @BeforeClass
   public static void setup() {
@@ -118,8 +154,14 @@ public class ShaderTrapStatePrinterTest {
         new ParameterConfiguration.Builder().getConfig());
     programState.programInitialization(new TranslationUnit(ShaderKind.COMPUTE,
         Optional.of(ShadingLanguageVersion.ESSL_310), Arrays.asList(inVariable, mainFunction)));
-    Assert.assertEquals(new ShaderTrapStatePrinter().printWrapper(programState),
+    Assert.assertEquals(new ShaderTrapStatePrinter().printHarness(programState),
         minimalProgramText);
+
+    programState.addBuffer(buffer2);
+    programState.addBuffer(buffer3);
+    programState.addBuffer(buffer4);
+    Assert.assertEquals(new ShaderTrapStatePrinter().printHarness(programState),
+        minimalProgramWithBuffers);
   }
 
   @Test
@@ -154,8 +196,26 @@ public class ShaderTrapStatePrinterTest {
 
   @Test
   public void testGetShaderCodeFromHarness() {
-    Assert.assertEquals(new ShaderTrapStatePrinter().getShaderCodeFromHarness(minimalProgramText),
-        minimalShaderText);
+    Assert.assertEquals(new ShaderTrapStatePrinter()
+        .getShaderCodeFromHarness(minimalProgramWithBuffers), minimalShaderText);
+  }
+
+  @Test
+  public void testAddBufferToHarness() {
+    // Buffer id
+    List<? extends Number> valueList = Arrays.asList(0, 0, 0);
+    ArrayInfo arrayInfoId = new ArrayInfo(Collections.singletonList(Optional.of(
+        new IntConstantExpr(String.valueOf(3)))));
+    arrayInfoId.setConstantSizeExpr(0, 3);
+    Buffer bufferId = new Buffer("buffer_id",
+        new LayoutQualifierSequence(new BindingLayoutQualifier(0)),
+        valueList, Collections.singletonList(TypeQualifier.BUFFER),
+        Collections.singletonList("ids"),
+        Collections.singletonList(new ArrayType(BasicType.INT, arrayInfoId)), "", false, 0);
+
+    Assert.assertEquals(new ShaderTrapStatePrinter()
+            .addBufferToHarness(minimalProgramWithBuffers, bufferId),
+        minimalProgramWithIdBuffer);
   }
 
   @Test

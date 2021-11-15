@@ -1,6 +1,5 @@
 package com.graphicsfuzz.shadergenerators;
 
-import com.graphicsfuzz.TestHelper;
 import com.graphicsfuzz.common.ast.decl.ArrayInfo;
 import com.graphicsfuzz.common.ast.expr.ArrayIndexExpr;
 import com.graphicsfuzz.common.ast.expr.BoolConstantExpr;
@@ -18,6 +17,7 @@ import com.graphicsfuzz.common.util.ZeroCannedRandom;
 import com.graphicsfuzz.config.ParameterConfiguration;
 import com.graphicsfuzz.random.MokeRandomTypeGenerator;
 import com.graphicsfuzz.scope.UnifiedTypeProxy;
+import com.graphicsfuzz.util.TestHelper;
 import java.util.Collections;
 import java.util.Optional;
 import org.junit.Assert;

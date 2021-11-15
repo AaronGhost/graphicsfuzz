@@ -31,7 +31,7 @@ public class ProgramGenerator {
   public String generateProgram(StatePrinter printer) {
     shaderGenerator.generateShader();
     ProgramState programState = shaderGenerator.getProgramState();
-    return printer.printWrapper(programState);
+    return printer.printHarness(programState);
   }
 
 }

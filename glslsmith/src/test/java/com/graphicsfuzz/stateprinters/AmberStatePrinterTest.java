@@ -2,7 +2,6 @@ package com.graphicsfuzz.stateprinters;
 
 import com.graphicsfuzz.Buffer;
 import com.graphicsfuzz.ProgramState;
-import com.graphicsfuzz.TestHelper;
 import com.graphicsfuzz.common.ast.decl.ArrayInfo;
 import com.graphicsfuzz.common.ast.expr.IntConstantExpr;
 import com.graphicsfuzz.common.ast.type.ArrayType;
@@ -13,6 +12,7 @@ import com.graphicsfuzz.common.ast.type.LayoutQualifierSequence;
 import com.graphicsfuzz.common.ast.type.Std430LayoutQualifier;
 import com.graphicsfuzz.common.ast.type.Type;
 import com.graphicsfuzz.common.ast.type.TypeQualifier;
+import com.graphicsfuzz.util.TestHelper;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -72,6 +72,30 @@ public class AmberStatePrinterTest {
       + "\n"
       + "RUN computePipeline 1 1 1";
 
+  static String bufferIdText = "BUFFER buffer_id DATA_TYPE int32 DATA\n"
+      + " # DATA_SIZE 3\n"
+      + " 0 0 0\n"
+      + "END\n";
+
+  static String programWithIdBuffer = "#!amber\n"
+      + "SHADER compute computeShader GLSL\n"
+      + minimalShaderText
+      + "END\n"
+      + bufferIdText
+      + buffer2Text
+      + buffer3Text
+      + buffer4Text
+      + "\n"
+      + "PIPELINE compute computePipeline\n"
+      + "  ATTACH computeShader\n"
+      + "  BIND BUFFER buffer_id AS storage DESCRIPTOR_SET 0 BINDING 0\n"
+      + "  BIND BUFFER buffer_2 AS storage DESCRIPTOR_SET 0 BINDING 2\n"
+      + "  BIND BUFFER buffer_3 AS storage DESCRIPTOR_SET 0 BINDING 3\n"
+      + "  BIND BUFFER buffer_4 AS storage DESCRIPTOR_SET 0 BINDING 4\n"
+      + "END\n"
+      + "\n"
+      + "RUN computePipeline 1 1 1";
+
 
   @BeforeClass
   public static void setup() {
@@ -114,7 +138,7 @@ public class AmberStatePrinterTest {
   @Test
   public void testPrintWrapperWithEmptyProgram() {
     ProgramState programState = TestHelper.generateProgramStateForCode(minimalShaderText);
-    Assert.assertEquals(new AmberStatePrinter().printWrapper(programState),
+    Assert.assertEquals(new AmberStatePrinter().printHarness(programState),
         minimalProgramText);
   }
 
@@ -122,7 +146,7 @@ public class AmberStatePrinterTest {
   public void testPrintWrapperWithEmptyProgramAndBuffers() {
     ProgramState programState = TestHelper.generateProgramStateForCode(minimalShaderText,
         Arrays.asList(buffer2, buffer3, buffer4));
-    Assert.assertEquals(new AmberStatePrinter().printWrapper(programState),
+    Assert.assertEquals(new AmberStatePrinter().printHarness(programState),
         programWithBuffers);
   }
 
@@ -137,6 +161,23 @@ public class AmberStatePrinterTest {
   public void testGetShaderCodeFromHarness() {
     Assert.assertEquals(new AmberStatePrinter().getShaderCodeFromHarness(minimalProgramText),
         minimalShaderText);
+  }
+
+  @Test
+  public void testAddBufferToHarness() {
+    // Buffer id
+    List<? extends Number> valueList = Arrays.asList(0, 0, 0);
+    ArrayInfo arrayInfoId = new ArrayInfo(Collections.singletonList(Optional.of(
+        new IntConstantExpr(String.valueOf(3)))));
+    arrayInfoId.setConstantSizeExpr(0, 3);
+    Buffer bufferId = new Buffer("buffer_id",
+        new LayoutQualifierSequence(new BindingLayoutQualifier(0)),
+        valueList, Collections.singletonList(TypeQualifier.BUFFER),
+        Collections.singletonList("ids"),
+        Collections.singletonList(new ArrayType(BasicType.INT, arrayInfoId)), "", false, 0);
+
+    Assert.assertEquals(new AmberStatePrinter().addBufferToHarness(programWithBuffers, bufferId),
+        programWithIdBuffer);
   }
 
   @Test

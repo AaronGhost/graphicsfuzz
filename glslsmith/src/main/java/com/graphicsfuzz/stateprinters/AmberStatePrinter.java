@@ -12,6 +12,9 @@ import com.graphicsfuzz.common.ast.type.Std430LayoutQualifier;
 import com.graphicsfuzz.common.ast.type.Type;
 import com.graphicsfuzz.common.ast.type.TypeQualifier;
 import com.graphicsfuzz.common.util.ShaderKind;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -37,7 +40,56 @@ public class AmberStatePrinter implements StatePrinter {
   }
 
   @Override
-  public String printWrapper(ProgramState programState) {
+  public String addBufferToHarness(String fileContent, Buffer buffer) {
+    // Locate the first buffer declaration instruction and add the special buffer in front
+    Pattern bufferPattern = Pattern.compile("BUFFER ([^ ]+) DATA_TYPE (int32|uint32|float) DATA\n("
+            + ".*?)END\n",
+        Pattern.DOTALL);
+    Matcher bufferMatcher = bufferPattern.matcher(fileContent);
+    // Locate the first binding instruction and add the special buffer in front
+    Pattern bindingPattern = Pattern.compile("BIND BUFFER ([^ ]+) AS storage DESCRIPTOR_SET "
+        + "([0-9]+) BINDING ([0-9]+)");
+    Matcher bindingMatcher = bindingPattern.matcher(fileContent);
+
+    if (bufferMatcher.find() && bindingMatcher.find()) {
+      // Adding buffer declaration
+      fileContent = fileContent.replace(bufferMatcher.group(),
+          printBufferWrapper(buffer) + bufferMatcher.group());
+      // Adding binding
+      fileContent = fileContent.replace(bindingMatcher.group(), "BIND BUFFER "
+          + buffer.getName() + " AS storage DESCRIPTOR_SET 0 BINDING " + buffer.getBinding()
+          + "\n  " + bindingMatcher.group());
+    } else {
+      throw new RuntimeException("No output to the initial program, verify the underlying shader");
+    }
+    return fileContent;
+  }
+
+  @Override
+  public ArrayList<Boolean> parseIdsBuffer(String idsBufferName) {
+    try {
+      ArrayList<Boolean> result = new ArrayList<>();
+      // Index regex
+      Pattern intPattern = Pattern.compile(" [0-9a-f][0-9a-f]");
+
+      Matcher matcher = intPattern.matcher(Files.readString(Path.of(idsBufferName)));
+      // Match integers with booleans (ids should be used in order from 0)
+      while (matcher.find()) {
+        if (Integer.parseInt(matcher.group(), 16) > 0) {
+          result.add(true);
+        } else {
+          result.add(false);
+        }
+      }
+      return result;
+    } catch (IOException e) {
+      e.printStackTrace();
+      return null;
+    }
+  }
+
+  @Override
+  public String printHarness(ProgramState programState) {
     if (programState.getShaderKind() == ShaderKind.COMPUTE) {
       // Dump the shader code
       final String amberPrefix = "#!amber\n"
@@ -54,7 +106,7 @@ public class AmberStatePrinter implements StatePrinter {
           + "  ATTACH computeShader\n");
       for (Buffer buffer : programState.getBuffers()) {
         amberSuffix.append("  BIND BUFFER ").append(buffer.getName()).append(" AS storage "
-            + "DESCRIPTOR_SET 0 ").append("BINDING ").append(buffer.getBinding()).append("\n");
+            + "DESCRIPTOR_SET 0 BINDING ").append(buffer.getBinding()).append("\n");
       }
       amberSuffix.append("END\n\nRUN computePipeline 1 1 1");
       return amberPrefix + programState.getShaderCode() + amberSuffix;
@@ -139,9 +191,9 @@ public class AmberStatePrinter implements StatePrinter {
       }
 
       // Produce inner members
-      List<Integer> memberValues = new ArrayList<>();
-      List<String> memberNames = new ArrayList<>();
-      List<Type> memberTypes = new ArrayList<>();
+      final List<Integer> memberValues = new ArrayList<>();
+      final List<String> memberNames = new ArrayList<>();
+      final List<Type> memberTypes = new ArrayList<>();
 
       // Parse the comment with the inner size
       Matcher innerMatcher = innerPattern.matcher(matcher.group(3));

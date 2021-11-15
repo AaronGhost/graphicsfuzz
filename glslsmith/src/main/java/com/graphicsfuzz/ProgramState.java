@@ -1,7 +1,14 @@
 package com.graphicsfuzz;
 
 import com.graphicsfuzz.common.ast.TranslationUnit;
+import com.graphicsfuzz.common.ast.decl.ArrayInfo;
+import com.graphicsfuzz.common.ast.expr.IntConstantExpr;
+import com.graphicsfuzz.common.ast.type.ArrayType;
 import com.graphicsfuzz.common.ast.type.BasicType;
+import com.graphicsfuzz.common.ast.type.BindingLayoutQualifier;
+import com.graphicsfuzz.common.ast.type.LayoutQualifierSequence;
+import com.graphicsfuzz.common.ast.type.Std430LayoutQualifier;
+import com.graphicsfuzz.common.ast.type.TypeQualifier;
 import com.graphicsfuzz.common.tool.PrettyPrinterVisitor;
 import com.graphicsfuzz.common.util.ShaderKind;
 import com.graphicsfuzz.config.ConfigInterface;
@@ -13,10 +20,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.Stack;
 import java.util.function.Predicate;
@@ -25,19 +34,19 @@ import org.apache.commons.lang3.tuple.ImmutableTriple;
 
 
 public class ProgramState {
-  //General attributes
+  // General attributes
   private TranslationUnit translationUnit;
   private final ConfigInterface configInterface;
 
-  //Scope management
+  // Scope management
   private FuzzerScope currentScope = new FuzzerScope();
   private int scopeDepth = 0;
 
-  //Indices management for variables
+  // Indices management for variables
   private int bindingOffset = 0;
   private int bufferAndUniformOffset = 0;
 
-  //Variable to query the shader generation states
+  // Variable to query the shader generation states
   private int exprDepth = 0;
   private boolean lvalue = false;
   private boolean constant = true;
@@ -59,12 +68,16 @@ public class ProgramState {
   private final Stack<Set<FuzzerScopeEntry>> seenFunCallEntries = new Stack<>();
   private final Set<FuzzerScopeEntry> seenInFunCallArg = new HashSet<>();
 
-  //Referencing the necessary safe wrappers for later generation
+  // Referencing the necessary safe wrappers for later generation
   private final Set<ImmutableTriple<Wrapper, BasicType, BasicType>> necessaryWrappers =
       new HashSet<>();
 
-  //API populated uniforms and buffer
+  // API populated uniforms and buffer
   private final Map<String, Buffer> bufferTable = new LinkedHashMap<>();
+
+  // unique ID counter for wrapper calls generation
+  private int wrapperCounter = 0;
+  private ArrayList<Boolean> ids = new ArrayList<>();
 
   public ProgramState(ConfigInterface configInterface) {
     this.configInterface = configInterface;
@@ -74,6 +87,10 @@ public class ProgramState {
 
   public ConfigInterface getConfigInterface() {
     return configInterface;
+  }
+
+  public ConfigInterface.RunType getRunType() {
+    return configInterface.getRunType();
   }
 
   public int getLoopDepth() {
@@ -412,5 +429,36 @@ public class ProgramState {
                                                bufferPredicate) {
     return bufferTable.entrySet().stream().filter(bufferPredicate).map(
         Map.Entry::getValue).collect(Collectors.toList());
+  }
+
+  // Wrapper counter
+  public Buffer getIdsBuffer() {
+    int idsBufferBinding = getBindingOffset();
+    int nbIds = wrapperCounter;
+    ArrayInfo idsInfo = new ArrayInfo(
+        Collections.singletonList(Optional.of(new IntConstantExpr(String.valueOf(nbIds)))));
+    idsInfo.setConstantSizeExpr(0, nbIds);
+    return new Buffer("buffer_ids",
+        new LayoutQualifierSequence(new BindingLayoutQualifier(idsBufferBinding),
+            new Std430LayoutQualifier()),
+        new ArrayList<>(Collections.nCopies(nbIds, 0)),
+        Collections.singletonList(TypeQualifier.BUFFER), Collections.singletonList("ids"),
+        Collections.singletonList(new ArrayType(BasicType.INT, idsInfo)),
+        "", false, getBindingOffset());
+  }
+
+  public int wrapperCounterPostIncrement() {
+    wrapperCounter++;
+    return wrapperCounter - 1;
+  }
+
+  public void setIds(ArrayList<Boolean> ids) {
+    this.ids = ids;
+  }
+
+  public boolean lookupIds(int index) {
+    assert getRunType() == ConfigInterface.RunType.REDUCED_WRAPPERS;
+    assert ids.size() != 0;
+    return ids.get(index);
   }
 }

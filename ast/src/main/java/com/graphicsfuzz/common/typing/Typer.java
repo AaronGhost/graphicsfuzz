@@ -361,6 +361,9 @@ public class Typer extends ScopeTrackingVisitor {
   public void visitBinaryExpr(BinaryExpr binaryExpr) {
     super.visitBinaryExpr(binaryExpr);
     Type lhsType = types.get(binaryExpr.getLhs()).getWithoutQualifiers();
+    if (types.get(binaryExpr.getRhs()) == null) {
+      System.out.println("test");
+    }
     Type rhsType = types.get(binaryExpr.getRhs()).getWithoutQualifiers();
     switch (binaryExpr.getOp()) {
       case MUL: {

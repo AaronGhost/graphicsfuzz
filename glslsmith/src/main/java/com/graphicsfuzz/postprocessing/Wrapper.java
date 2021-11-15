@@ -2,7 +2,8 @@ package com.graphicsfuzz.postprocessing;
 
 import com.graphicsfuzz.common.ast.decl.Declaration;
 import com.graphicsfuzz.common.ast.type.BasicType;
-import java.util.function.BiFunction;
+import com.graphicsfuzz.config.ConfigInterface;
+import com.graphicsfuzz.util.TriFunction;
 
 public enum Wrapper {
   SAFE_ABS(WrapperGenerator::generateAbsWrapper, "SAFE_ABS", false, 1, 0),
@@ -34,13 +35,14 @@ public enum Wrapper {
   SAFE_POST_DEC(WrapperGenerator::generatePostDecWrapper, "SAFE_POST_DEC", true, 1, 0),
   SAFE_FLOAT_RESULT(WrapperGenerator::generateFloatResultWrapper, "SAFE_FLOAT_RESULT", false, 1, 0);
 
-  public final BiFunction<BasicType, BasicType, Declaration> generator;
+  public final TriFunction<BasicType, BasicType, ConfigInterface.RunType, Declaration> generator;
   public final String name;
   public final boolean inoutA;
   public final int nbA;
   public final int nbB;
 
-  Wrapper(BiFunction<BasicType, BasicType, Declaration> generator, String name,
+  Wrapper(TriFunction<BasicType, BasicType, ConfigInterface.RunType, Declaration> generator,
+          String name,
           boolean inoutA, int nbA, int nbB) {
     this.generator = generator;
     this.name = name;

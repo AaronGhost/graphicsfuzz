@@ -2,8 +2,8 @@ package com.graphicsfuzz.postprocessing;
 
 
 import com.graphicsfuzz.ProgramState;
-import com.graphicsfuzz.TestHelper;
 import com.graphicsfuzz.common.ast.type.BasicType;
+import com.graphicsfuzz.util.TestHelper;
 import java.util.Arrays;
 import java.util.List;
 import org.apache.commons.lang3.tuple.ImmutableTriple;

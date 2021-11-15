@@ -2,7 +2,6 @@ package com.graphicsfuzz.postprocessing;
 
 import com.graphicsfuzz.Buffer;
 import com.graphicsfuzz.ProgramState;
-import com.graphicsfuzz.TestHelper;
 import com.graphicsfuzz.common.ast.decl.ArrayInfo;
 import com.graphicsfuzz.common.ast.expr.IntConstantExpr;
 import com.graphicsfuzz.common.ast.type.ArrayType;
@@ -11,6 +10,7 @@ import com.graphicsfuzz.common.ast.type.BindingLayoutQualifier;
 import com.graphicsfuzz.common.ast.type.LayoutQualifierSequence;
 import com.graphicsfuzz.common.ast.type.Std430LayoutQualifier;
 import com.graphicsfuzz.common.ast.type.TypeQualifier;
+import com.graphicsfuzz.util.TestHelper;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;

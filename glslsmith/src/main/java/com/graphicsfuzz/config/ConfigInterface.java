@@ -4,6 +4,12 @@ import com.graphicsfuzz.common.glslversion.ShadingLanguageVersion;
 import com.graphicsfuzz.common.util.ShaderKind;
 
 public interface ConfigInterface {
+  enum RunType {
+    STANDARD, ADDED_ID, REDUCED_WRAPPERS
+  }
+
+  RunType getRunType();
+
   boolean allowEmptySwitch();
 
   boolean enforceSingleTypePerBuffer();
@@ -20,7 +26,7 @@ public interface ConfigInterface {
 
   int getMaxExprDepth();
 
-  Long getMaxForIncrement();
+  long getMaxForIncrement();
 
   int getMaxForLength();
 
@@ -55,4 +61,5 @@ public interface ConfigInterface {
   ShadingLanguageVersion getShadingLanguageVersion();
 
   ShaderKind getShaderKind();
+
 }
