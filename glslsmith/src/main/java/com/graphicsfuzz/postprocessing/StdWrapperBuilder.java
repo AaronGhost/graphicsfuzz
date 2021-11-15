@@ -56,6 +56,9 @@ public class StdWrapperBuilder extends BaseWrapperBuilder {
   @Override
   public void visitFunctionCallExpr(FunctionCallExpr functionCallExpr) {
     String callee = functionCallExpr.getCallee();
+    if (typer.lookupType(functionCallExpr) == null) {
+      System.out.println(functionCallExpr.getCallee());
+    }
     Type funCallType = typer.lookupType(functionCallExpr).getWithoutQualifiers();
 
     // Look up for the return type of the function to decide the correct thing to look at

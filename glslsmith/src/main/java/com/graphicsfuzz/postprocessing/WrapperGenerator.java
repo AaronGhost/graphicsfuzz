@@ -270,16 +270,53 @@ public abstract class WrapperGenerator {
         new BinaryExpr(new VariableIdentifierExpr("B"), generateConstant(typeB, "0"), BinOp.EQ);
   }
 
+  private static List<Stmt> generateIdInternalStmts(BasicType typeA, BasicType typeB,
+                                                 RunType runType) {
+
+    // Test on A and B depends on their effective type (vectors or not)
+    Expr paramAComp = typeA.isVector() ? generateVectorComparison(typeA, "A", "0",
+        "greaterThanEqual") :
+        new BinaryExpr(new VariableIdentifierExpr("A"), new IntConstantExpr("0"), BinOp.GE);
+    Expr paramBComp = typeB.isVector() ? generateVectorComparison(typeB, "B", "0",
+        "greaterThan") :
+        new BinaryExpr(new VariableIdentifierExpr("B"), new IntConstantExpr("0"), BinOp.GT);
+    return Arrays.asList(
+        //"typeA" tmpA = SAFE_ABS(A, id);
+        new DeclarationStmt(new VariablesDeclaration(typeA,
+            Collections.singletonList(new VariableDeclInfo("tmpA", null,
+                new Initializer(generateSafeAbsCall("A", runType)))))),
+        // "typeB" tmpB = SAFE_ABS(B, id);
+        new DeclarationStmt(new VariablesDeclaration(typeB,
+        Collections.singletonList(new VariableDeclInfo("tmpB", null,
+            new Initializer(generateSafeAbsCall("B", runType)))))),
+        // ids[id] = A >=0 && B > 0 ? 1 : 0;
+        new ExprStmt(new BinaryExpr(
+            new ArrayIndexExpr(
+                new VariableIdentifierExpr("ids"), new VariableIdentifierExpr("id")),
+            new TernaryExpr(new BinaryExpr(paramAComp, paramBComp, BinOp.LAND),
+                new IntConstantExpr("1"), new IntConstantExpr("0")),
+            BinOp.ASSIGN)));
+  }
+
   public static Declaration generateModWrapper(BasicType typeA, BasicType typeB, RunType runType) {
-    BasicType functionReturnType = typeB.isVector() ? typeB : typeA;
+    final BasicType functionReturnType = typeB.isVector() ? typeB : typeA;
     TernaryExpr modExpr;
     if (typeA.getElementType() == BasicType.INT) {
-      modExpr = new TernaryExpr(generateModTestExpr(typeB),
-          new BinaryExpr(generateSafeAbsCall("A", runType),
-              generateConstant(typeB, String.valueOf(FuzzerConstants.MAX_INT_VALUE - 1)),
-                  BinOp.MOD),
-          generateRightExpr(new BinaryExpr(generateSafeAbsCall("A", runType),
-              generateSafeAbsCall("B", runType), BinOp.MOD), runType));
+      if (runType == RunType.ADDED_ID) {
+        modExpr = new TernaryExpr(generateModTestExpr(typeB),
+            new BinaryExpr(new VariableIdentifierExpr("tmpA"),
+                generateConstant(typeB, String.valueOf(FuzzerConstants.MAX_INT_VALUE - 1)),
+                BinOp.MOD),
+            new BinaryExpr(new VariableIdentifierExpr("tmpA"),
+                new VariableIdentifierExpr("tmpB"), BinOp.MOD));
+      } else {
+        modExpr = new TernaryExpr(generateModTestExpr(typeB),
+            new BinaryExpr(generateSafeAbsCall("A", runType),
+                generateConstant(typeB, String.valueOf(FuzzerConstants.MAX_INT_VALUE - 1)),
+                BinOp.MOD),
+            generateRightExpr(new BinaryExpr(generateSafeAbsCall("A", runType),
+                generateSafeAbsCall("B", runType), BinOp.MOD), runType));
+      }
     } else {
       modExpr = new TernaryExpr(generateModTestExpr(typeB),
           new BinaryExpr(new VariableIdentifierExpr("A"), generateConstant(typeB,
@@ -288,31 +325,46 @@ public abstract class WrapperGenerator {
               new VariableIdentifierExpr("A"), new VariableIdentifierExpr("B"),
               BinOp.MOD), runType));
     }
+    List<Stmt> stmts = new ArrayList<>();
+    if (runType == RunType.ADDED_ID && typeA.getElementType() == BasicType.INT) {
+      stmts.addAll(generateIdInternalStmts(typeA, typeB, runType));
+    }
+    stmts.add(new ReturnStmt(modExpr));
 
     return new FunctionDefinition(new FunctionPrototype("SAFE_MOD", functionReturnType,
         generateCommonParamDecls(typeA, typeB, false, runType)),
-        new BlockStmt(Collections.singletonList(new ReturnStmt(modExpr)), true));
+        new BlockStmt(stmts, true));
   }
 
   public static Declaration generateModAssignWrapper(BasicType typeA, BasicType typeB,
                                                      RunType runType) {
     List<Stmt> stmts;
     if (typeA.getElementType() == BasicType.INT) {
-      stmts = Arrays.asList(new ExprStmt(new BinaryExpr(new VariableIdentifierExpr("A"),
-          generateSafeAbsCall("A", runType), BinOp.ASSIGN)),
-          new ReturnStmt(new TernaryExpr(generateModTestExpr(typeB),
-              new ParenExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
-                  generateConstant(typeB, String.valueOf(FuzzerConstants.MAX_INT_VALUE - 1)),
-                      BinOp.MOD_ASSIGN)),
-              generateRightExpr(new ParenExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
-              generateSafeAbsCall("B", runType), BinOp.MOD_ASSIGN)), runType))));
+      stmts = new ArrayList<>();
+      stmts.add(new ExprStmt(new BinaryExpr(new VariableIdentifierExpr("A"),
+          generateSafeAbsCall("A", runType), BinOp.ASSIGN)));
+      if (runType == RunType.ADDED_ID) {
+        stmts.addAll(generateIdInternalStmts(typeA, typeB, runType));
+      } else {
+        stmts.add(new DeclarationStmt(
+            new VariablesDeclaration(typeB, new VariableDeclInfo("tmpB", null,
+                new Initializer(generateSafeAbsCall("B", runType))))));
+      }
+      stmts.add(new ReturnStmt(new TernaryExpr(generateModTestExpr(typeB),
+          new ParenExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
+              generateConstant(typeB, String.valueOf(FuzzerConstants.MAX_INT_VALUE - 1)),
+              BinOp.MOD_ASSIGN)),
+          generateRightExpr(new ParenExpr(new BinaryExpr(
+              new VariableIdentifierExpr("A"),
+              new VariableIdentifierExpr("tmpB"),
+              BinOp.MOD_ASSIGN)), runType))));
     } else {
       stmts = Collections.singletonList(new ReturnStmt(new TernaryExpr(generateModTestExpr(typeB),
-          new ParenExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
-          generateConstant(typeB, String.valueOf(FuzzerConstants.MAX_INT_VALUE - 1)),
-              BinOp.MOD_ASSIGN)),
-          generateRightExpr(new ParenExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
-              new VariableIdentifierExpr("B"), BinOp.MOD_ASSIGN)), runType))));
+            new ParenExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
+            generateConstant(typeB, String.valueOf(FuzzerConstants.MAX_INT_VALUE - 1)),
+                BinOp.MOD_ASSIGN)),
+            generateRightExpr(new ParenExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
+                new VariableIdentifierExpr("B"), BinOp.MOD_ASSIGN)), runType))));
     }
 
     return new FunctionDefinition(new FunctionPrototype("SAFE_MOD_ASSIGN", typeA,
@@ -392,6 +444,12 @@ public abstract class WrapperGenerator {
                 new ParenExpr(new BinaryExpr(new IntConstantExpr("32"),
                     new VariableIdentifierExpr("safe_offset"), BinOp.SUB)), BinOp.MOD)))));
     declarationList.add(new DeclarationStmt(bitsDeclaration));
+    if (runType == RunType.ADDED_ID) {
+      declarationList.add(new ExprStmt(new BinaryExpr(
+          new ArrayIndexExpr(
+              new VariableIdentifierExpr("ids"), new VariableIdentifierExpr("id")),
+          new IntConstantExpr("0"), BinOp.ASSIGN)));
+    }
     return declarationList;
   }
 

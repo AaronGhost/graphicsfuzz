@@ -281,7 +281,8 @@ public class WrapperGeneratorTest {
     String intModAssignText = "int SAFE_MOD_ASSIGN(inout int A, int B)\n"
         + "{\n"
         + " A = SAFE_ABS(A);\n"
-        + " return B == 0 ? (A %= 2147483646) : (A %= SAFE_ABS(B));\n"
+        + " int tmpB = SAFE_ABS(B);\n"
+        + " return B == 0 ? (A %= 2147483646) : (A %= tmpB);\n"
         + "}\n";
     String uintModAssignText = "uint SAFE_MOD_ASSIGN(inout uint A, uint B)\n"
         + "{\n"
