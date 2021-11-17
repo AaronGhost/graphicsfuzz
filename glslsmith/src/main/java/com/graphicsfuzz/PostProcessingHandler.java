@@ -78,7 +78,7 @@ public class PostProcessingHandler {
       //Replace the glsl code from the shadertrap
       String newGlslCode = programState.getShaderCode();
       String newHarnessText = shaderPrinter.changeShaderFromHarness(harnessText, newGlslCode);
-      if (addIds) {
+      if (addIds && programState.hasIdsBuffer()) {
         newHarnessText = shaderPrinter.addBufferToHarness(newHarnessText,
             programState.getIdsBuffer());
       }

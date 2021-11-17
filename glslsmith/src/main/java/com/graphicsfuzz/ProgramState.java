@@ -446,7 +446,7 @@ public class ProgramState {
     return new Buffer("buffer_ids",
         new LayoutQualifierSequence(new BindingLayoutQualifier(idsBufferBinding),
             new Std430LayoutQualifier()),
-        new ArrayList<>(Collections.nCopies(nbIds, 0)),
+        new ArrayList<>(Collections.nCopies(nbIds, 1)),
         Collections.singletonList(TypeQualifier.BUFFER), Collections.singletonList("ids"),
         Collections.singletonList(new ArrayType(BasicType.INT, idsInfo)),
         "", false, getBindingOffset());

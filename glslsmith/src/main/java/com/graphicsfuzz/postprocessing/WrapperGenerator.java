@@ -71,11 +71,19 @@ public abstract class WrapperGenerator {
     return new FunctionPrototype(wrapper.name, returnType, parameterDecls);
   }
 
+  public static Expr generateLeftExpr(Expr originalExpr, RunType runType) {
+    return runType == RunType.ADDED_ID ? new ParenExpr(
+        new BinaryExpr(new BinaryExpr(new ArrayIndexExpr(
+            new VariableIdentifierExpr("ids"),
+            new VariableIdentifierExpr("id")), new IntConstantExpr("0"), BinOp.ASSIGN),
+            originalExpr, BinOp.COMMA)) : originalExpr;
+  }
+
   public static Expr generateRightExpr(Expr originalExpr, RunType runType) {
     return runType == RunType.ADDED_ID ? new ParenExpr(
         new BinaryExpr(new BinaryExpr(new ArrayIndexExpr(
             new VariableIdentifierExpr("ids"),
-            new VariableIdentifierExpr("id")), new IntConstantExpr("1"), BinOp.ASSIGN),
+            new VariableIdentifierExpr("id")), new IntConstantExpr("2"), BinOp.MUL_ASSIGN),
         originalExpr, BinOp.COMMA)) : originalExpr;
   }
 
@@ -140,14 +148,14 @@ public abstract class WrapperGenerator {
     }
 
     Expr returnExpr = new TernaryExpr(comparisonExpr,
-        new FunctionCallExpr("clamp",
+        generateLeftExpr(new FunctionCallExpr("clamp",
             new VariableIdentifierExpr("value"),
             new FunctionCallExpr("min",
                 new VariableIdentifierExpr("minVal"),
                 new VariableIdentifierExpr("maxVal")),
             new FunctionCallExpr("max",
                 new VariableIdentifierExpr("minVal"),
-                new VariableIdentifierExpr("maxVal"))),
+                new VariableIdentifierExpr("maxVal"))), runType),
         generateRightExpr(
             new FunctionCallExpr("clamp",
                 new VariableIdentifierExpr("value"), new VariableIdentifierExpr("minVal"),
@@ -186,8 +194,8 @@ public abstract class WrapperGenerator {
     BasicType functionReturnType = typeB.isVector() ? typeB : typeA;
     String intText = "2";
     Expr divExpr = new TernaryExpr(generateDivTestExpr(typeA, typeB),
-        new BinaryExpr(new VariableIdentifierExpr("A"), generateConstant(typeB,
-            intText), BinOp.DIV),
+        generateLeftExpr(new BinaryExpr(new VariableIdentifierExpr("A"), generateConstant(typeB,
+            intText), BinOp.DIV), runType),
         generateRightExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
             new VariableIdentifierExpr("B"), BinOp.DIV), runType));
     return new FunctionDefinition(new FunctionPrototype("SAFE_DIV", functionReturnType,
@@ -199,8 +207,8 @@ public abstract class WrapperGenerator {
                                                      RunType runType) {
     String intText = "2";
     Expr divAssignExpr = new TernaryExpr(generateDivTestExpr(typeA, typeB),
-        new ParenExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
-            generateConstant(typeB, intText), BinOp.DIV_ASSIGN)),
+        generateLeftExpr(new ParenExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
+            generateConstant(typeB, intText), BinOp.DIV_ASSIGN)), runType),
         generateRightExpr(new ParenExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
             new VariableIdentifierExpr("B"), BinOp.DIV_ASSIGN)), runType));
     return new FunctionDefinition(new FunctionPrototype("SAFE_DIV_ASSIGN", typeA,
@@ -221,8 +229,8 @@ public abstract class WrapperGenerator {
   private static Declaration generateShiftWrapper(BasicType typeA, BasicType typeB, BinOp op,
                                                   String funName, RunType runType) {
     Expr shiftExpr = new TernaryExpr(generateShiftTestExpr(typeB),
-        new BinaryExpr(new VariableIdentifierExpr("A"), generateConstant(typeB,
-            "16"), op),
+        generateLeftExpr(new BinaryExpr(new VariableIdentifierExpr("A"), generateConstant(typeB,
+            "16"), op), runType),
         generateRightExpr(new BinaryExpr(
             new VariableIdentifierExpr("A"),
             new VariableIdentifierExpr("B"), op), runType));
@@ -234,8 +242,8 @@ public abstract class WrapperGenerator {
   private static Declaration generateShiftAssignWrapper(BasicType typeA, BasicType typeB,
                                                         BinOp op, String funName, RunType runType) {
     Expr shiftAssignExpr = new TernaryExpr(generateShiftTestExpr(typeB),
-        new ParenExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
-            generateConstant(typeB, "16"), op)),
+        generateLeftExpr(new ParenExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
+            generateConstant(typeB, "16"), op)), runType),
         generateRightExpr(new ParenExpr(new BinaryExpr(
             new VariableIdentifierExpr("A"), new VariableIdentifierExpr("B"), op)), runType));
     return new FunctionDefinition(new FunctionPrototype(funName, typeA,
@@ -294,8 +302,8 @@ public abstract class WrapperGenerator {
             new ArrayIndexExpr(
                 new VariableIdentifierExpr("ids"), new VariableIdentifierExpr("id")),
             new TernaryExpr(new BinaryExpr(paramAComp, paramBComp, BinOp.LAND),
-                new IntConstantExpr("1"), new IntConstantExpr("0")),
-            BinOp.ASSIGN)));
+                new IntConstantExpr("2"), new IntConstantExpr("0")),
+            BinOp.MUL_ASSIGN)));
   }
 
   public static Declaration generateModWrapper(BasicType typeA, BasicType typeB, RunType runType) {
@@ -311,16 +319,16 @@ public abstract class WrapperGenerator {
                 new VariableIdentifierExpr("tmpB"), BinOp.MOD));
       } else {
         modExpr = new TernaryExpr(generateModTestExpr(typeB),
-            new BinaryExpr(generateSafeAbsCall("A", runType),
+            generateLeftExpr(new BinaryExpr(generateSafeAbsCall("A", runType),
                 generateConstant(typeB, String.valueOf(FuzzerConstants.MAX_INT_VALUE - 1)),
-                BinOp.MOD),
+                BinOp.MOD), runType),
             generateRightExpr(new BinaryExpr(generateSafeAbsCall("A", runType),
                 generateSafeAbsCall("B", runType), BinOp.MOD), runType));
       }
     } else {
       modExpr = new TernaryExpr(generateModTestExpr(typeB),
-          new BinaryExpr(new VariableIdentifierExpr("A"), generateConstant(typeB,
-              String.valueOf(FuzzerConstants.MAX_INT_VALUE - 1)), BinOp.MOD),
+          generateLeftExpr(new BinaryExpr(new VariableIdentifierExpr("A"), generateConstant(typeB,
+              String.valueOf(FuzzerConstants.MAX_INT_VALUE - 1)), BinOp.MOD), runType),
           generateRightExpr(new BinaryExpr(
               new VariableIdentifierExpr("A"), new VariableIdentifierExpr("B"),
               BinOp.MOD), runType));
@@ -341,8 +349,6 @@ public abstract class WrapperGenerator {
     List<Stmt> stmts;
     if (typeA.getElementType() == BasicType.INT) {
       stmts = new ArrayList<>();
-      stmts.add(new ExprStmt(new BinaryExpr(new VariableIdentifierExpr("A"),
-          generateSafeAbsCall("A", runType), BinOp.ASSIGN)));
       if (runType == RunType.ADDED_ID) {
         stmts.addAll(generateIdInternalStmts(typeA, typeB, runType));
       } else {
@@ -350,19 +356,21 @@ public abstract class WrapperGenerator {
             new VariablesDeclaration(typeB, new VariableDeclInfo("tmpB", null,
                 new Initializer(generateSafeAbsCall("B", runType))))));
       }
+      stmts.add(new ExprStmt(new BinaryExpr(new VariableIdentifierExpr("A"),
+          generateSafeAbsCall("A", runType), BinOp.ASSIGN)));
       stmts.add(new ReturnStmt(new TernaryExpr(generateModTestExpr(typeB),
-          new ParenExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
+          generateLeftExpr(new ParenExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
               generateConstant(typeB, String.valueOf(FuzzerConstants.MAX_INT_VALUE - 1)),
-              BinOp.MOD_ASSIGN)),
+              BinOp.MOD_ASSIGN)), runType),
           generateRightExpr(new ParenExpr(new BinaryExpr(
               new VariableIdentifierExpr("A"),
               new VariableIdentifierExpr("tmpB"),
               BinOp.MOD_ASSIGN)), runType))));
     } else {
       stmts = Collections.singletonList(new ReturnStmt(new TernaryExpr(generateModTestExpr(typeB),
-            new ParenExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
+            generateLeftExpr(new ParenExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
             generateConstant(typeB, String.valueOf(FuzzerConstants.MAX_INT_VALUE - 1)),
-                BinOp.MOD_ASSIGN)),
+                BinOp.MOD_ASSIGN)), runType),
             generateRightExpr(new ParenExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
                 new VariableIdentifierExpr("B"), BinOp.MOD_ASSIGN)), runType))));
     }
@@ -381,14 +389,14 @@ public abstract class WrapperGenerator {
         stmts.add(new IfStmt(new BinaryExpr(new VariableIdentifierExpr("A"),
             new IntConstantExpr("0"), BinOp.GE),
             new ExprStmt(new BinaryExpr(new ArrayIndexExpr(new VariableIdentifierExpr("ids"),
-                new VariableIdentifierExpr("id")), new IntConstantExpr("1"), BinOp.ASSIGN)),
+                new VariableIdentifierExpr("id")), new IntConstantExpr("2"), BinOp.MUL_ASSIGN)),
             null));
       } else {
         stmts.add(new IfStmt(new FunctionCallExpr("any", new FunctionCallExpr(
             "lessThan", new VariableIdentifierExpr("A"), new TypeConstructorExpr(
                 type.getWithoutQualifiers().getText(), new IntConstantExpr("0")))),
             new ExprStmt(new BinaryExpr(new ArrayIndexExpr(new VariableIdentifierExpr("ids"),
-                new VariableIdentifierExpr("id")), new IntConstantExpr("1"), BinOp.ASSIGN)),
+                new VariableIdentifierExpr("id")), new IntConstantExpr("2"), BinOp.MUL_ASSIGN)),
             null));
       }
     }
@@ -503,8 +511,8 @@ public abstract class WrapperGenerator {
     Expr addAssignExpr =
         new TernaryExpr(generateFloatTestExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
             new VariableIdentifierExpr("B"), BinOp.ADD), leftType),
-            new BinaryExpr(new VariableIdentifierExpr("A"),
-                generateConstant(leftType, "8.0"), BinOp.ASSIGN),
+            generateLeftExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
+                generateConstant(leftType, "8.0"), BinOp.ASSIGN), runType),
             generateRightExpr(new ParenExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
                 new VariableIdentifierExpr("B"), BinOp.ADD_ASSIGN)), runType));
     return new FunctionDefinition(new FunctionPrototype("SAFE_ADD_ASSIGN", leftType,
@@ -517,8 +525,8 @@ public abstract class WrapperGenerator {
     Expr subAssignExpr =
         new TernaryExpr(generateFloatTestExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
             new VariableIdentifierExpr("B"), BinOp.SUB), leftType),
-            new BinaryExpr(new VariableIdentifierExpr("A"),
-                generateConstant(leftType, "5.0"), BinOp.ASSIGN),
+            generateLeftExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
+                generateConstant(leftType, "5.0"), BinOp.ASSIGN), runType),
             generateRightExpr(new ParenExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
                 new VariableIdentifierExpr("B"), BinOp.SUB_ASSIGN)), runType));
     return new FunctionDefinition(new FunctionPrototype("SAFE_SUB_ASSIGN", leftType,
@@ -531,8 +539,8 @@ public abstract class WrapperGenerator {
     Expr mulAssignExpr =
         new TernaryExpr(generateFloatTestExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
             new VariableIdentifierExpr("B"), BinOp.MUL), leftType),
-            new BinaryExpr(new VariableIdentifierExpr("A"),
-                generateConstant(leftType, "12.0"), BinOp.ASSIGN),
+            generateLeftExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
+                generateConstant(leftType, "12.0"), BinOp.ASSIGN), runType),
             generateRightExpr(new ParenExpr(new BinaryExpr(new VariableIdentifierExpr("A"),
                 new VariableIdentifierExpr("B"), BinOp.MUL_ASSIGN)), runType));
     return new FunctionDefinition(new FunctionPrototype("SAFE_MUL_ASSIGN", leftType,
@@ -545,8 +553,8 @@ public abstract class WrapperGenerator {
                                                         Expr defaultOperand, Expr correctReturn,
                                                         RunType runType) {
     Expr unaryExpr = new TernaryExpr(generateFloatTestExpr(testOperand, operandType),
-        new BinaryExpr(new VariableIdentifierExpr("A"), defaultOperand,
-            BinOp.ASSIGN), generateRightExpr(correctReturn, runType));
+        generateLeftExpr(new BinaryExpr(new VariableIdentifierExpr("A"), defaultOperand,
+            BinOp.ASSIGN), runType), generateRightExpr(correctReturn, runType));
     List<ParameterDecl> parameterDecls = new ArrayList<>();
     parameterDecls.add(new ParameterDecl("A", new QualifiedType(operandType,
         Collections.singletonList(TypeQualifier.INOUT_PARAM)), null));
@@ -593,7 +601,7 @@ public abstract class WrapperGenerator {
   public static Declaration generateFloatResultWrapper(BasicType basicType, BasicType useless,
                                                        RunType runType) {
     Expr assignExpr = new TernaryExpr(generateFloatTestExpr(new VariableIdentifierExpr("A"),
-        basicType), generateConstant(basicType, "10.0"),
+        basicType), generateLeftExpr(generateConstant(basicType, "10.0"), runType),
         generateRightExpr(new VariableIdentifierExpr("A"), runType));
     List<ParameterDecl> parameterDecls = new ArrayList<>();
     parameterDecls.add(new ParameterDecl("A", basicType, null));

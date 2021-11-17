@@ -68,7 +68,7 @@ public class ShaderTrapStatePrinter implements StatePrinter {
       Matcher matcher = intPattern.matcher(Files.readString(Path.of(idsBufferName)));
       // Match integers with booleans (ids should be used in order from 0)
       while (matcher.find()) {
-        if (Integer.parseInt(matcher.group()) > 0) {
+        if (Integer.parseInt(matcher.group()) >= 2) {
           result.add(true);
         } else {
           result.add(false);

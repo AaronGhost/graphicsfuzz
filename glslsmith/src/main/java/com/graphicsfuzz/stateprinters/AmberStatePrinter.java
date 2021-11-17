@@ -75,7 +75,7 @@ public class AmberStatePrinter implements StatePrinter {
       Matcher matcher = intPattern.matcher(Files.readString(Path.of(idsBufferName)));
       // Match integers with booleans (ids should be used in order from 0)
       while (matcher.find()) {
-        if (Integer.parseInt(matcher.group(), 16) > 0) {
+        if (Integer.parseInt(matcher.group(), 16) >= 2) {
           result.add(true);
         } else {
           result.add(false);

@@ -7,6 +7,7 @@ import com.graphicsfuzz.common.ast.expr.Expr;
 import com.graphicsfuzz.common.ast.expr.FunctionCallExpr;
 import com.graphicsfuzz.common.ast.expr.IntConstantExpr;
 import com.graphicsfuzz.common.ast.expr.LengthExpr;
+import com.graphicsfuzz.common.ast.expr.ParenExpr;
 import com.graphicsfuzz.common.ast.expr.VariableIdentifierExpr;
 import com.graphicsfuzz.common.ast.type.ArrayType;
 import com.graphicsfuzz.common.ast.type.BasicType;
@@ -36,7 +37,9 @@ public class ArrayIndexBuilder extends BaseWrapperBuilder {
         // No necessary wrappers on that case
         if (programState.getRunType() == ConfigInterface.RunType.REDUCED_WRAPPERS
             && programState.lookupIds(id)) {
-          arrayIndexExpr.setIndex(new BinaryExpr(indexExpr, new LengthExpr(arrayExpr), BinOp.MOD));
+          arrayIndexExpr.setIndex(new BinaryExpr(new ParenExpr(indexExpr),
+              new LengthExpr(arrayExpr),
+              BinOp.MOD));
           // Abs wrapper with id
         } else if (programState.getRunType() == ConfigInterface.RunType.ADDED_ID) {
           programState.registerWrapper(Wrapper.SAFE_ABS, BasicType.INT, null);
