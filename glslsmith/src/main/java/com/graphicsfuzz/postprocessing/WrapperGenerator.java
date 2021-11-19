@@ -384,20 +384,24 @@ public abstract class WrapperGenerator {
 
     assert type.getElementType() == BasicType.INT;
 
+    //TODO refactor the two left right expressions
+    //TODO can be reformated as a ternary operator once NVIDIA lexer is fixed
     if (runType == RunType.ADDED_ID) {
       if (type.isScalar()) {
         stmts.add(new IfStmt(new BinaryExpr(new VariableIdentifierExpr("A"),
             new IntConstantExpr("0"), BinOp.GE),
             new ExprStmt(new BinaryExpr(new ArrayIndexExpr(new VariableIdentifierExpr("ids"),
                 new VariableIdentifierExpr("id")), new IntConstantExpr("2"), BinOp.MUL_ASSIGN)),
-            null));
+            new ExprStmt(new BinaryExpr(new ArrayIndexExpr(new VariableIdentifierExpr("ids"),
+                new VariableIdentifierExpr("id")), new IntConstantExpr("0"), BinOp.ASSIGN))));
       } else {
         stmts.add(new IfStmt(new FunctionCallExpr("any", new FunctionCallExpr(
             "lessThan", new VariableIdentifierExpr("A"), new TypeConstructorExpr(
                 type.getWithoutQualifiers().getText(), new IntConstantExpr("0")))),
             new ExprStmt(new BinaryExpr(new ArrayIndexExpr(new VariableIdentifierExpr("ids"),
                 new VariableIdentifierExpr("id")), new IntConstantExpr("2"), BinOp.MUL_ASSIGN)),
-            null));
+            new ExprStmt(new BinaryExpr(new ArrayIndexExpr(new VariableIdentifierExpr("ids"),
+                new VariableIdentifierExpr("id")), new IntConstantExpr("0"), BinOp.ASSIGN))));
       }
     }
 

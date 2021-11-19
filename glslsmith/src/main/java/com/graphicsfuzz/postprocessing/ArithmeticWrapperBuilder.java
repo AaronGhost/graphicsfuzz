@@ -4,6 +4,7 @@ import com.graphicsfuzz.common.ast.IAstNode;
 import com.graphicsfuzz.common.ast.expr.BinOp;
 import com.graphicsfuzz.common.ast.expr.BinaryExpr;
 import com.graphicsfuzz.common.ast.expr.Expr;
+import com.graphicsfuzz.common.ast.expr.FloatConstantExpr;
 import com.graphicsfuzz.common.ast.expr.FunctionCallExpr;
 import com.graphicsfuzz.common.ast.expr.IntConstantExpr;
 import com.graphicsfuzz.common.ast.expr.Op;
@@ -65,6 +66,14 @@ public class ArithmeticWrapperBuilder extends BaseWrapperBuilder {
     // expression
     parentMap.put(replacementExpr, parentMap.get(expr));
     parentMap.replace(expr, replacementExpr);
+  }
+
+  @Override
+  public void visitFloatConstantExpr(FloatConstantExpr floatConstantExpr) {
+    if (Math.abs(Float.parseFloat(floatConstantExpr.getValue())) > 16777216.0) {
+      floatConstantExpr.setValue("1.0");
+    }
+    super.visitFloatConstantExpr(floatConstantExpr);
   }
 
   @Override

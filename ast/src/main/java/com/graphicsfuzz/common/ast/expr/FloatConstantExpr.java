@@ -36,6 +36,10 @@ public class FloatConstantExpr extends ConstantExpr {
     return value;
   }
 
+  public void setValue(String value) {
+    this.value = value;
+  }
+
   @Override
   public void accept(IAstVisitor visitor) {
     visitor.visitFloatConstantExpr(this);

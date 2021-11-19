@@ -22,6 +22,12 @@ public class WrapperGeneratorTest {
   }
 
   @Test
+  public void testGenerateAbsWrapper() {
+    System.out.println(TestHelper.getText(WrapperGenerator.generateDivWrapper(BasicType.INT,
+        BasicType.INT, ConfigInterface.RunType.STANDARD)));
+  }
+
+  @Test
   public void testGenerateDivWrapper() {
     String intDivText = "int SAFE_DIV(int A, int B)\n"
         + "{\n"
