@@ -20,6 +20,7 @@ limitations under the License.
   <modelVersion>4.0.0</modelVersion>
   <artifactId>glslsmith</artifactId>
   <name>glslsmith</name>
+  <packaging>jar</packaging>
   <build>
     <plugins>
       <plugin>
@@ -64,5 +65,4 @@ limitations under the License.
       <artifactId>common</artifactId>
     </dependency>
   </dependencies>
-  <packaging>jar</packaging>
 </project>
