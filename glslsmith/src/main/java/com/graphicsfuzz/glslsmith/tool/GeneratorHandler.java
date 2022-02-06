@@ -90,8 +90,9 @@ public class GeneratorHandler {
         ProgramGenerator generator = new ProgramGenerator(randomWrapper,
             builder.getConfig());
         String program = generator.generateProgram(wrapper);
-        FileWriter outputFile = new FileWriter(ns.getString("directory") + "test_" + i
-            + fileExtension);
+        FileWriter outputFile =
+            new FileWriter(ns.getString("directory") + "test_"
+                + (ns.getLong("seed") + i) + fileExtension);
         outputFile.write(program);
         outputFile.close();
       }
@@ -99,6 +100,5 @@ public class GeneratorHandler {
     } catch (IOException e) {
       e.printStackTrace();
     }
-
   }
 }
