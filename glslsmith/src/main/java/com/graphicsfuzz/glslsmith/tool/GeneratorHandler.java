@@ -95,6 +95,7 @@ public class GeneratorHandler {
         outputFile.write(program);
         outputFile.close();
       }
+      System.out.println("SUCCESS");
     } catch (IOException e) {
       e.printStackTrace();
     }
