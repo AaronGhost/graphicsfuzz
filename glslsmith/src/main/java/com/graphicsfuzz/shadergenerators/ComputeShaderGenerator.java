@@ -40,6 +40,8 @@ public class ComputeShaderGenerator extends ShaderGenerator {
     generateOutputBuffers();
     //TODO add random uniform
     List<Declaration> globalDecls = generateGlobalDecls();
+    // TODO add user-defined functions
+    globalDecls.addAll(generateFunctions());
     List<Stmt> statements = generateShaderMain();
     generateShaderSkeleton(globalDecls, statements);
   }
@@ -151,6 +153,12 @@ public class ComputeShaderGenerator extends ShaderGenerator {
           true));
     }
     return globalDecls;
+  }
+
+  protected List<Declaration> generateFunctions(){
+    List<Declaration> functions = new ArrayList<>();
+
+    return functions;
   }
 
   protected List<Stmt> generateShaderMain() {

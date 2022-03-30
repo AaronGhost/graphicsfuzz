@@ -37,6 +37,12 @@ public class PostProcessingHandler {
       new StdWrapperBuilder(),
       new ArrayIndexBuilder(false)
   );
+  // new InitializerEnforcer(),
+  // new CallingOrderCleaner(),
+  // new LoopLimiter(false, 10),
+  // new ArithmeticWrapperBuilder(),
+  // new StdWrapperBuilder(),
+  // new ArrayIndexBuilder(false)
 
   public static void updateFile(String src, String dest, boolean addIds, String reduceWrappers) {
     try {
@@ -62,7 +68,7 @@ public class PostProcessingHandler {
       }
       ConfigInterface configInterface = builder.getConfig();
       ProgramState programState = new ProgramState(configInterface);
-      for (Buffer buffer: buffers) {
+      for (Buffer buffer : buffers) {
         programState.addBuffer(buffer);
       }
       TranslationUnit unit = ParseHelper.parse(glslCode, configInterface.getShaderKind());

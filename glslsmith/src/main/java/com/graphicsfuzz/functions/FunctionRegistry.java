@@ -18,6 +18,7 @@ public class FunctionRegistry {
   private final IRandom randGen;
   private final Map<UnifiedTypeProxy, List<FunctionStruct>> stdFunctions = new HashMap<>();
   private final Map<UnifiedTypeProxy, List<FunctionStruct>> userDefinedFunctions = new HashMap<>();
+  private final Map<String, List<UnifiedTypeProxy>> userFunctionsReturnTypes = new HashMap<>();
   private final ShaderKind shaderKind;
 
   public FunctionRegistry(IRandom randGen, ShaderKind shaderKind) {
@@ -64,17 +65,17 @@ public class FunctionRegistry {
     List<BasicType> allScalar = BasicType.allScalarTypes();
     for (BasicType elementOne : allScalar) {
       for (BasicType elementTwo : allTypesExceptMatrices) {
-        ivec2ReturnFunctions.add(new FunctionStruct("ivec2", new UnifiedTypeProxy(BasicType.IVEC2),
-            new UnifiedTypeProxy(elementOne), new UnifiedTypeProxy(elementTwo)));
+        ivec2ReturnFunctions.add(new FunctionStruct("ivec2",
+            new UnifiedTypeProxy(BasicType.IVEC2), new UnifiedTypeProxy(elementOne),
+            new UnifiedTypeProxy(elementTwo)));
         uvec2ReturnFunctions.add(new FunctionStruct("uvec2",
             new UnifiedTypeProxy(BasicType.UVEC2), new UnifiedTypeProxy(elementOne),
             new UnifiedTypeProxy(elementTwo)));
         bvec2ReturnFunctions.add(new FunctionStruct("bvec2",
             new UnifiedTypeProxy(BasicType.BVEC2), new UnifiedTypeProxy(elementOne),
             new UnifiedTypeProxy(elementTwo)));
-        vec2ReturnFunctions.add(new FunctionStruct("vec2",
-            new UnifiedTypeProxy(BasicType.VEC2), new UnifiedTypeProxy(elementOne),
-            new UnifiedTypeProxy(elementTwo)));
+        vec2ReturnFunctions.add(new FunctionStruct("vec2", new UnifiedTypeProxy(BasicType.VEC2),
+            new UnifiedTypeProxy(elementOne), new UnifiedTypeProxy(elementTwo)));
       }
     }
 
@@ -104,15 +105,15 @@ public class FunctionRegistry {
           bvec3ReturnFunctions.add(new FunctionStruct("bvec3",
               new UnifiedTypeProxy(BasicType.BVEC3), new UnifiedTypeProxy(parameterOne),
               new UnifiedTypeProxy(parameterTwo), new UnifiedTypeProxy(parameterThree)));
-          vec3ReturnFunctions.add(new FunctionStruct("vec3",
-              new UnifiedTypeProxy(BasicType.VEC3), new UnifiedTypeProxy(parameterOne),
-              new UnifiedTypeProxy(parameterTwo), new UnifiedTypeProxy(parameterThree)));
+          vec3ReturnFunctions.add(new FunctionStruct("vec3", new UnifiedTypeProxy(BasicType.VEC3)
+              , new UnifiedTypeProxy(parameterOne), new UnifiedTypeProxy(parameterTwo),
+              new UnifiedTypeProxy(parameterThree)));
         }
       }
     }
 
-    List<BasicType> xvec2 = Arrays.asList(BasicType.IVEC2, BasicType.UVEC2,
-        BasicType.BVEC2, BasicType.VEC2);
+    List<BasicType> xvec2 = Arrays.asList(BasicType.IVEC2, BasicType.UVEC2, BasicType.BVEC2,
+        BasicType.VEC2);
 
     List<BasicType> xvec3AndXvec4 = Arrays.asList(BasicType.IVEC3, BasicType.UVEC3,
         BasicType.BVEC3, BasicType.IVEC4, BasicType.UVEC4, BasicType.BVEC4, BasicType.VEC3,
@@ -129,9 +130,8 @@ public class FunctionRegistry {
         bvec3ReturnFunctions.add(new FunctionStruct("bvec3",
             new UnifiedTypeProxy(BasicType.BVEC3), new UnifiedTypeProxy(parameterOne),
             new UnifiedTypeProxy(parameterTwo)));
-        vec3ReturnFunctions.add(new FunctionStruct("vec3",
-            new UnifiedTypeProxy(BasicType.VEC3), new UnifiedTypeProxy(parameterOne),
-            new UnifiedTypeProxy(parameterTwo)));
+        vec3ReturnFunctions.add(new FunctionStruct("vec3", new UnifiedTypeProxy(BasicType.VEC3),
+            new UnifiedTypeProxy(parameterOne), new UnifiedTypeProxy(parameterTwo)));
       }
     }
 
@@ -148,9 +148,8 @@ public class FunctionRegistry {
         bvec3ReturnFunctions.add(new FunctionStruct("bvec3",
             new UnifiedTypeProxy(BasicType.BVEC3), new UnifiedTypeProxy(parameterOne),
             new UnifiedTypeProxy(parameterTwo)));
-        vec3ReturnFunctions.add(new FunctionStruct("vec3",
-            new UnifiedTypeProxy(BasicType.VEC3), new UnifiedTypeProxy(parameterOne),
-            new UnifiedTypeProxy(parameterTwo)));
+        vec3ReturnFunctions.add(new FunctionStruct("vec3", new UnifiedTypeProxy(BasicType.VEC3),
+            new UnifiedTypeProxy(parameterOne), new UnifiedTypeProxy(parameterTwo)));
       }
     }
 
@@ -205,9 +204,9 @@ public class FunctionRegistry {
           bvec4ReturnFunctions.add(new FunctionStruct("bvec4",
               new UnifiedTypeProxy(BasicType.BVEC4), new UnifiedTypeProxy(parameterOne),
               new UnifiedTypeProxy(parameterTwo), new UnifiedTypeProxy(parameterThree)));
-          vec4ReturnFunctions.add(new FunctionStruct("vec4",
-              new UnifiedTypeProxy(BasicType.VEC4), new UnifiedTypeProxy(parameterOne),
-              new UnifiedTypeProxy(parameterTwo), new UnifiedTypeProxy(parameterThree)));
+          vec4ReturnFunctions.add(new FunctionStruct("vec4", new UnifiedTypeProxy(BasicType.VEC4)
+              , new UnifiedTypeProxy(parameterOne), new UnifiedTypeProxy(parameterTwo),
+              new UnifiedTypeProxy(parameterThree)));
         }
       }
     }
@@ -226,9 +225,9 @@ public class FunctionRegistry {
           bvec4ReturnFunctions.add(new FunctionStruct("bvec4",
               new UnifiedTypeProxy(BasicType.BVEC4), new UnifiedTypeProxy(parameterOne),
               new UnifiedTypeProxy(parameterTwo), new UnifiedTypeProxy(parameterThree)));
-          vec4ReturnFunctions.add(new FunctionStruct("vec4",
-              new UnifiedTypeProxy(BasicType.VEC4), new UnifiedTypeProxy(parameterOne),
-              new UnifiedTypeProxy(parameterTwo), new UnifiedTypeProxy(parameterThree)));
+          vec4ReturnFunctions.add(new FunctionStruct("vec4", new UnifiedTypeProxy(BasicType.VEC4)
+              , new UnifiedTypeProxy(parameterOne), new UnifiedTypeProxy(parameterTwo),
+              new UnifiedTypeProxy(parameterThree)));
           // 2-vec + Scalar + something
           ivec4ReturnFunctions.add(new FunctionStruct("ivec4",
               new UnifiedTypeProxy(BasicType.IVEC4), new UnifiedTypeProxy(parameterTwo),
@@ -239,9 +238,9 @@ public class FunctionRegistry {
           bvec4ReturnFunctions.add(new FunctionStruct("bvec4",
               new UnifiedTypeProxy(BasicType.BVEC4), new UnifiedTypeProxy(parameterTwo),
               new UnifiedTypeProxy(parameterOne), new UnifiedTypeProxy(parameterThree)));
-          vec4ReturnFunctions.add(new FunctionStruct("vec4",
-              new UnifiedTypeProxy(BasicType.VEC4), new UnifiedTypeProxy(parameterTwo),
-              new UnifiedTypeProxy(parameterOne), new UnifiedTypeProxy(parameterThree)));
+          vec4ReturnFunctions.add(new FunctionStruct("vec4", new UnifiedTypeProxy(BasicType.VEC4)
+              , new UnifiedTypeProxy(parameterTwo), new UnifiedTypeProxy(parameterOne),
+              new UnifiedTypeProxy(parameterThree)));
         }
       }
     }
@@ -258,13 +257,12 @@ public class FunctionRegistry {
         bvec4ReturnFunctions.add(new FunctionStruct("bvec4",
             new UnifiedTypeProxy(BasicType.BVEC4), new UnifiedTypeProxy(parameterOne),
             new UnifiedTypeProxy(parameterTwo)));
-        vec4ReturnFunctions.add(new FunctionStruct("vec4",
-            new UnifiedTypeProxy(BasicType.VEC4), new UnifiedTypeProxy(parameterOne),
-            new UnifiedTypeProxy(parameterTwo)));
+        vec4ReturnFunctions.add(new FunctionStruct("vec4", new UnifiedTypeProxy(BasicType.VEC4),
+            new UnifiedTypeProxy(parameterOne), new UnifiedTypeProxy(parameterTwo)));
       }
     }
-    List<BasicType> xvec3 = Arrays.asList(BasicType.IVEC3, BasicType.UVEC3,
-        BasicType.BVEC3, BasicType.VEC3);
+    List<BasicType> xvec3 = Arrays.asList(BasicType.IVEC3, BasicType.UVEC3, BasicType.BVEC3,
+        BasicType.VEC3);
 
     // Conversion to a 4 elements vector from a 3 elements vector + something
     for (BasicType parameterOne : xvec3) {
@@ -278,9 +276,8 @@ public class FunctionRegistry {
         bvec4ReturnFunctions.add(new FunctionStruct("bvec4",
             new UnifiedTypeProxy(BasicType.BVEC4), new UnifiedTypeProxy(parameterOne),
             new UnifiedTypeProxy(parameterTwo)));
-        vec4ReturnFunctions.add(new FunctionStruct("vec4",
-            new UnifiedTypeProxy(BasicType.VEC4), new UnifiedTypeProxy(parameterOne),
-            new UnifiedTypeProxy(parameterTwo)));
+        vec4ReturnFunctions.add(new FunctionStruct("vec4", new UnifiedTypeProxy(BasicType.VEC4),
+            new UnifiedTypeProxy(parameterOne), new UnifiedTypeProxy(parameterTwo)));
       }
     }
 
@@ -296,14 +293,13 @@ public class FunctionRegistry {
         bvec4ReturnFunctions.add(new FunctionStruct("bvec4",
             new UnifiedTypeProxy(BasicType.BVEC4), new UnifiedTypeProxy(parameterOne),
             new UnifiedTypeProxy(parameterTwo)));
-        vec4ReturnFunctions.add(new FunctionStruct("vec4",
-            new UnifiedTypeProxy(BasicType.VEC4), new UnifiedTypeProxy(parameterOne),
-            new UnifiedTypeProxy(parameterTwo)));
+        vec4ReturnFunctions.add(new FunctionStruct("vec4", new UnifiedTypeProxy(BasicType.VEC4),
+            new UnifiedTypeProxy(parameterOne), new UnifiedTypeProxy(parameterTwo)));
       }
     }
 
-    List<BasicType> xvec4 = Arrays.asList(BasicType.IVEC4, BasicType.UVEC4,
-        BasicType.BVEC4, BasicType.VEC4);
+    List<BasicType> xvec4 = Arrays.asList(BasicType.IVEC4, BasicType.UVEC4, BasicType.BVEC4,
+        BasicType.VEC4);
     // Conversion to a 4 elements vector from another 4 elements vector
     for (BasicType parameter : xvec4) {
       ivec4ReturnFunctions.add(new FunctionStruct("ivec4", new UnifiedTypeProxy(BasicType.IVEC4),
@@ -347,70 +343,50 @@ public class FunctionRegistry {
     intReturnFunctions.add(new FunctionStruct("min", new UnifiedTypeProxy(BasicType.INT),
         new UnifiedTypeProxy(BasicType.INT), new UnifiedTypeProxy(BasicType.INT)));
     ivec2ReturnFunctions.add(new FunctionStruct("min", new UnifiedTypeProxy(BasicType.IVEC2),
-        new UnifiedTypeProxy(BasicType.IVEC2),
-        new UnifiedTypeProxy(BasicType.IVEC2)));
+        new UnifiedTypeProxy(BasicType.IVEC2), new UnifiedTypeProxy(BasicType.IVEC2)));
     ivec2ReturnFunctions.add(new FunctionStruct("min", new UnifiedTypeProxy(BasicType.IVEC2),
-        new UnifiedTypeProxy(BasicType.IVEC2),
-        new UnifiedTypeProxy(BasicType.INT)));
+        new UnifiedTypeProxy(BasicType.IVEC2), new UnifiedTypeProxy(BasicType.INT)));
     ivec3ReturnFunctions.add(new FunctionStruct("min", new UnifiedTypeProxy(BasicType.IVEC3),
-        new UnifiedTypeProxy(BasicType.IVEC3),
-        new UnifiedTypeProxy(BasicType.IVEC3)));
+        new UnifiedTypeProxy(BasicType.IVEC3), new UnifiedTypeProxy(BasicType.IVEC3)));
     ivec3ReturnFunctions.add(new FunctionStruct("min", new UnifiedTypeProxy(BasicType.IVEC3),
-        new UnifiedTypeProxy(BasicType.IVEC3),
-        new UnifiedTypeProxy(BasicType.INT)));
+        new UnifiedTypeProxy(BasicType.IVEC3), new UnifiedTypeProxy(BasicType.INT)));
     ivec4ReturnFunctions.add(new FunctionStruct("min", new UnifiedTypeProxy(BasicType.IVEC4),
-        new UnifiedTypeProxy(BasicType.IVEC4),
-        new UnifiedTypeProxy(BasicType.IVEC4)));
+        new UnifiedTypeProxy(BasicType.IVEC4), new UnifiedTypeProxy(BasicType.IVEC4)));
     ivec4ReturnFunctions.add(new FunctionStruct("min", new UnifiedTypeProxy(BasicType.IVEC4),
-        new UnifiedTypeProxy(BasicType.IVEC4),
-        new UnifiedTypeProxy(BasicType.INT)));
+        new UnifiedTypeProxy(BasicType.IVEC4), new UnifiedTypeProxy(BasicType.INT)));
 
     // Min, Max functions for unsigned integers
     for (String callee : Arrays.asList("min", "max")) {
       uintReturnFunctions.add(new FunctionStruct(callee, new UnifiedTypeProxy(BasicType.UINT),
-          new UnifiedTypeProxy(BasicType.UINT),
-          new UnifiedTypeProxy(BasicType.UINT)));
+          new UnifiedTypeProxy(BasicType.UINT), new UnifiedTypeProxy(BasicType.UINT)));
       uvec2ReturnFunctions.add(new FunctionStruct(callee, new UnifiedTypeProxy(BasicType.UVEC2),
-          new UnifiedTypeProxy(BasicType.UVEC2),
-          new UnifiedTypeProxy(BasicType.UVEC2)));
+          new UnifiedTypeProxy(BasicType.UVEC2), new UnifiedTypeProxy(BasicType.UVEC2)));
       uvec2ReturnFunctions.add(new FunctionStruct(callee, new UnifiedTypeProxy(BasicType.UVEC2),
-          new UnifiedTypeProxy(BasicType.UVEC2),
-          new UnifiedTypeProxy(BasicType.UINT)));
+          new UnifiedTypeProxy(BasicType.UVEC2), new UnifiedTypeProxy(BasicType.UINT)));
       uvec3ReturnFunctions.add(new FunctionStruct(callee, new UnifiedTypeProxy(BasicType.UVEC3),
-          new UnifiedTypeProxy(BasicType.UVEC3),
-          new UnifiedTypeProxy(BasicType.UVEC3)));
+          new UnifiedTypeProxy(BasicType.UVEC3), new UnifiedTypeProxy(BasicType.UVEC3)));
       uvec3ReturnFunctions.add(new FunctionStruct(callee, new UnifiedTypeProxy(BasicType.UVEC3),
-          new UnifiedTypeProxy(BasicType.UVEC3),
-          new UnifiedTypeProxy(BasicType.UINT)));
+          new UnifiedTypeProxy(BasicType.UVEC3), new UnifiedTypeProxy(BasicType.UINT)));
       uvec4ReturnFunctions.add(new FunctionStruct(callee, new UnifiedTypeProxy(BasicType.UVEC4),
-          new UnifiedTypeProxy(BasicType.UVEC4),
-          new UnifiedTypeProxy(BasicType.UVEC4)));
+          new UnifiedTypeProxy(BasicType.UVEC4), new UnifiedTypeProxy(BasicType.UVEC4)));
       uvec4ReturnFunctions.add(new FunctionStruct(callee, new UnifiedTypeProxy(BasicType.UVEC4),
-          new UnifiedTypeProxy(BasicType.UVEC4),
-          new UnifiedTypeProxy(BasicType.UINT)));
+          new UnifiedTypeProxy(BasicType.UVEC4), new UnifiedTypeProxy(BasicType.UINT)));
 
       // Min, Max functions for floats
       floatReturnFunctions.add(new FunctionStruct(callee, new UnifiedTypeProxy(BasicType.FLOAT),
-          new UnifiedTypeProxy(BasicType.FLOAT),
-          new UnifiedTypeProxy(BasicType.FLOAT)));
+          new UnifiedTypeProxy(BasicType.FLOAT), new UnifiedTypeProxy(BasicType.FLOAT)));
       vec2ReturnFunctions.add(new FunctionStruct(callee, new UnifiedTypeProxy(BasicType.VEC2),
-          new UnifiedTypeProxy(BasicType.VEC2),
-          new UnifiedTypeProxy(BasicType.VEC2)));
+          new UnifiedTypeProxy(BasicType.VEC2), new UnifiedTypeProxy(BasicType.VEC2)));
       vec2ReturnFunctions.add(new FunctionStruct(callee, new UnifiedTypeProxy(BasicType.VEC2),
-          new UnifiedTypeProxy(BasicType.VEC2),
-          new UnifiedTypeProxy(BasicType.FLOAT)));
+          new UnifiedTypeProxy(BasicType.VEC2), new UnifiedTypeProxy(BasicType.FLOAT)));
       vec3ReturnFunctions.add(new FunctionStruct(callee, new UnifiedTypeProxy(BasicType.VEC3),
-          new UnifiedTypeProxy(BasicType.VEC3),
-          new UnifiedTypeProxy(BasicType.VEC3)));
+          new UnifiedTypeProxy(BasicType.VEC3), new UnifiedTypeProxy(BasicType.VEC3)));
       vec3ReturnFunctions.add(new FunctionStruct(callee, new UnifiedTypeProxy(BasicType.VEC3),
-          new UnifiedTypeProxy(BasicType.VEC3),
-          new UnifiedTypeProxy(BasicType.FLOAT)));
+          new UnifiedTypeProxy(BasicType.VEC3), new UnifiedTypeProxy(BasicType.FLOAT)));
       vec4ReturnFunctions.add(new FunctionStruct(callee, new UnifiedTypeProxy(BasicType.VEC4),
-          new UnifiedTypeProxy(BasicType.VEC4),
-          new UnifiedTypeProxy(BasicType.VEC4)));
+          new UnifiedTypeProxy(BasicType.VEC4), new UnifiedTypeProxy(BasicType.VEC4)));
       vec4ReturnFunctions.add(new FunctionStruct(callee, new UnifiedTypeProxy(BasicType.VEC4),
-          new UnifiedTypeProxy(BasicType.VEC4),
-          new UnifiedTypeProxy(BasicType.FLOAT)));
+          new UnifiedTypeProxy(BasicType.VEC4), new UnifiedTypeProxy(BasicType.FLOAT)));
     }
 
     // Clamp functions for signed integers
@@ -545,29 +521,21 @@ public class FunctionRegistry {
 
     // floatBitsToInt and floatBitsToUint functions
     intReturnFunctions.add(new FunctionStruct("floatBitsToInt",
-        new UnifiedTypeProxy(BasicType.INT),
-        new UnifiedTypeProxy(BasicType.FLOAT)));
+        new UnifiedTypeProxy(BasicType.INT), new UnifiedTypeProxy(BasicType.FLOAT)));
     ivec2ReturnFunctions.add(new FunctionStruct("floatBitsToInt",
-        new UnifiedTypeProxy(BasicType.IVEC2),
-        new UnifiedTypeProxy(BasicType.VEC2)));
+        new UnifiedTypeProxy(BasicType.IVEC2), new UnifiedTypeProxy(BasicType.VEC2)));
     ivec3ReturnFunctions.add(new FunctionStruct("floatBitsToInt",
-        new UnifiedTypeProxy(BasicType.IVEC3),
-        new UnifiedTypeProxy(BasicType.VEC3)));
+        new UnifiedTypeProxy(BasicType.IVEC3), new UnifiedTypeProxy(BasicType.VEC3)));
     ivec4ReturnFunctions.add(new FunctionStruct("floatBitsToInt",
-        new UnifiedTypeProxy(BasicType.IVEC4),
-        new UnifiedTypeProxy(BasicType.VEC4)));
+        new UnifiedTypeProxy(BasicType.IVEC4), new UnifiedTypeProxy(BasicType.VEC4)));
     uintReturnFunctions.add(new FunctionStruct("floatBitsToUint",
-        new UnifiedTypeProxy(BasicType.UINT),
-        new UnifiedTypeProxy(BasicType.FLOAT)));
+        new UnifiedTypeProxy(BasicType.UINT), new UnifiedTypeProxy(BasicType.FLOAT)));
     uvec2ReturnFunctions.add(new FunctionStruct("floatBitsToUint",
-        new UnifiedTypeProxy(BasicType.UVEC2),
-        new UnifiedTypeProxy(BasicType.VEC2)));
+        new UnifiedTypeProxy(BasicType.UVEC2), new UnifiedTypeProxy(BasicType.VEC2)));
     uvec3ReturnFunctions.add(new FunctionStruct("floatBitsToUint",
-        new UnifiedTypeProxy(BasicType.UVEC3),
-        new UnifiedTypeProxy(BasicType.VEC3)));
+        new UnifiedTypeProxy(BasicType.UVEC3), new UnifiedTypeProxy(BasicType.VEC3)));
     uvec4ReturnFunctions.add(new FunctionStruct("floatBitsToUint",
-        new UnifiedTypeProxy(BasicType.UVEC4),
-        new UnifiedTypeProxy(BasicType.VEC4)));
+        new UnifiedTypeProxy(BasicType.UVEC4), new UnifiedTypeProxy(BasicType.VEC4)));
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // Geometric functions
@@ -591,49 +559,49 @@ public class FunctionRegistry {
         "greaterThanEqual", "equal", "notEqual")) {
       // Comparison functions for integers
       bvec2ReturnFunctions.add(new FunctionStruct(functionText,
-          new UnifiedTypeProxy(BasicType.BVEC2),
-          new UnifiedTypeProxy(BasicType.IVEC2), new UnifiedTypeProxy(BasicType.IVEC2)));
+          new UnifiedTypeProxy(BasicType.BVEC2), new UnifiedTypeProxy(BasicType.IVEC2),
+          new UnifiedTypeProxy(BasicType.IVEC2)));
       bvec3ReturnFunctions.add(new FunctionStruct(functionText,
-          new UnifiedTypeProxy(BasicType.BVEC3),
-          new UnifiedTypeProxy(BasicType.IVEC3), new UnifiedTypeProxy(BasicType.IVEC3)));
+          new UnifiedTypeProxy(BasicType.BVEC3), new UnifiedTypeProxy(BasicType.IVEC3),
+          new UnifiedTypeProxy(BasicType.IVEC3)));
       bvec4ReturnFunctions.add(new FunctionStruct(functionText,
-          new UnifiedTypeProxy(BasicType.BVEC4),
-          new UnifiedTypeProxy(BasicType.IVEC4), new UnifiedTypeProxy(BasicType.IVEC4)));
+          new UnifiedTypeProxy(BasicType.BVEC4), new UnifiedTypeProxy(BasicType.IVEC4),
+          new UnifiedTypeProxy(BasicType.IVEC4)));
 
       // Comparison functions for unsigned integers
       bvec2ReturnFunctions.add(new FunctionStruct(functionText,
-          new UnifiedTypeProxy(BasicType.BVEC2),
-          new UnifiedTypeProxy(BasicType.UVEC2), new UnifiedTypeProxy(BasicType.UVEC2)));
+          new UnifiedTypeProxy(BasicType.BVEC2), new UnifiedTypeProxy(BasicType.UVEC2),
+          new UnifiedTypeProxy(BasicType.UVEC2)));
       bvec3ReturnFunctions.add(new FunctionStruct(functionText,
-          new UnifiedTypeProxy(BasicType.BVEC3),
-          new UnifiedTypeProxy(BasicType.UVEC3), new UnifiedTypeProxy(BasicType.UVEC3)));
+          new UnifiedTypeProxy(BasicType.BVEC3), new UnifiedTypeProxy(BasicType.UVEC3),
+          new UnifiedTypeProxy(BasicType.UVEC3)));
       bvec4ReturnFunctions.add(new FunctionStruct(functionText,
-          new UnifiedTypeProxy(BasicType.BVEC4),
-          new UnifiedTypeProxy(BasicType.UVEC4), new UnifiedTypeProxy(BasicType.UVEC4)));
+          new UnifiedTypeProxy(BasicType.BVEC4), new UnifiedTypeProxy(BasicType.UVEC4),
+          new UnifiedTypeProxy(BasicType.UVEC4)));
 
       // Comparison functions for floats
       bvec2ReturnFunctions.add(new FunctionStruct(functionText,
-          new UnifiedTypeProxy(BasicType.BVEC2),
-          new UnifiedTypeProxy(BasicType.VEC2), new UnifiedTypeProxy(BasicType.VEC2)));
+          new UnifiedTypeProxy(BasicType.BVEC2), new UnifiedTypeProxy(BasicType.VEC2),
+          new UnifiedTypeProxy(BasicType.VEC2)));
       bvec3ReturnFunctions.add(new FunctionStruct(functionText,
-          new UnifiedTypeProxy(BasicType.BVEC3),
-          new UnifiedTypeProxy(BasicType.VEC3), new UnifiedTypeProxy(BasicType.VEC3)));
+          new UnifiedTypeProxy(BasicType.BVEC3), new UnifiedTypeProxy(BasicType.VEC3),
+          new UnifiedTypeProxy(BasicType.VEC3)));
       bvec4ReturnFunctions.add(new FunctionStruct(functionText,
-          new UnifiedTypeProxy(BasicType.BVEC4),
-          new UnifiedTypeProxy(BasicType.VEC4), new UnifiedTypeProxy(BasicType.VEC4)));
+          new UnifiedTypeProxy(BasicType.BVEC4), new UnifiedTypeProxy(BasicType.VEC4),
+          new UnifiedTypeProxy(BasicType.VEC4)));
     }
 
     // Comparison functions on booleans
     for (String functionText : Arrays.asList("equal", "notEqual")) {
       bvec2ReturnFunctions.add(new FunctionStruct(functionText,
-          new UnifiedTypeProxy(BasicType.BVEC2),
-          new UnifiedTypeProxy(BasicType.BVEC2), new UnifiedTypeProxy(BasicType.BVEC2)));
+          new UnifiedTypeProxy(BasicType.BVEC2), new UnifiedTypeProxy(BasicType.BVEC2),
+          new UnifiedTypeProxy(BasicType.BVEC2)));
       bvec3ReturnFunctions.add(new FunctionStruct(functionText,
-          new UnifiedTypeProxy(BasicType.BVEC3),
-          new UnifiedTypeProxy(BasicType.BVEC3), new UnifiedTypeProxy(BasicType.BVEC3)));
+          new UnifiedTypeProxy(BasicType.BVEC3), new UnifiedTypeProxy(BasicType.BVEC3),
+          new UnifiedTypeProxy(BasicType.BVEC3)));
       bvec4ReturnFunctions.add(new FunctionStruct(functionText,
-          new UnifiedTypeProxy(BasicType.BVEC4),
-          new UnifiedTypeProxy(BasicType.BVEC4), new UnifiedTypeProxy(BasicType.BVEC4)));
+          new UnifiedTypeProxy(BasicType.BVEC4), new UnifiedTypeProxy(BasicType.BVEC4),
+          new UnifiedTypeProxy(BasicType.BVEC4)));
     }
 
     // Any functions for booleans
@@ -667,59 +635,58 @@ public class FunctionRegistry {
 
     // UmulExtended
     voidReturnFunctions.add(new FunctionStruct("umulExtended",
-        new UnifiedTypeProxy(VoidType.VOID),
-        new UnifiedTypeProxy(BasicType.UINT), new UnifiedTypeProxy(BasicType.UINT),
+        new UnifiedTypeProxy(VoidType.VOID), new UnifiedTypeProxy(BasicType.UINT),
+        new UnifiedTypeProxy(BasicType.UINT),
         new UnifiedTypeProxy(new QualifiedType(BasicType.UINT,
             Collections.singletonList(TypeQualifier.OUT_PARAM))),
         new UnifiedTypeProxy(new QualifiedType(BasicType.UINT,
             Collections.singletonList(TypeQualifier.OUT_PARAM)))));
     voidReturnFunctions.add(new FunctionStruct("umulExtended",
-        new UnifiedTypeProxy(VoidType.VOID),
-        new UnifiedTypeProxy(BasicType.UVEC2), new UnifiedTypeProxy(BasicType.UVEC2),
+        new UnifiedTypeProxy(VoidType.VOID), new UnifiedTypeProxy(BasicType.UVEC2),
+        new UnifiedTypeProxy(BasicType.UVEC2),
         new UnifiedTypeProxy(new QualifiedType(BasicType.UVEC2,
             Collections.singletonList(TypeQualifier.OUT_PARAM))),
         new UnifiedTypeProxy(new QualifiedType(BasicType.UVEC2,
             Collections.singletonList(TypeQualifier.OUT_PARAM)))));
     voidReturnFunctions.add(new FunctionStruct("umulExtended",
-        new UnifiedTypeProxy(VoidType.VOID),
-        new UnifiedTypeProxy(BasicType.UVEC3), new UnifiedTypeProxy(BasicType.UVEC3),
+        new UnifiedTypeProxy(VoidType.VOID), new UnifiedTypeProxy(BasicType.UVEC3),
+        new UnifiedTypeProxy(BasicType.UVEC3),
         new UnifiedTypeProxy(new QualifiedType(BasicType.UVEC3,
             Collections.singletonList(TypeQualifier.OUT_PARAM))),
         new UnifiedTypeProxy(new QualifiedType(BasicType.UVEC3,
             Collections.singletonList(TypeQualifier.OUT_PARAM)))));
     voidReturnFunctions.add(new FunctionStruct("umulExtended",
-        new UnifiedTypeProxy(VoidType.VOID),
-        new UnifiedTypeProxy(BasicType.UVEC4), new UnifiedTypeProxy(BasicType.UVEC4),
+        new UnifiedTypeProxy(VoidType.VOID), new UnifiedTypeProxy(BasicType.UVEC4),
+        new UnifiedTypeProxy(BasicType.UVEC4),
         new UnifiedTypeProxy(new QualifiedType(BasicType.UVEC4,
             Collections.singletonList(TypeQualifier.OUT_PARAM))),
         new UnifiedTypeProxy(new QualifiedType(BasicType.UVEC4,
-          Collections.singletonList(TypeQualifier.OUT_PARAM)))));
+            Collections.singletonList(TypeQualifier.OUT_PARAM)))));
 
     // ImulExtended
     voidReturnFunctions.add(new FunctionStruct("imulExtended",
-        new UnifiedTypeProxy(VoidType.VOID),
-        new UnifiedTypeProxy(BasicType.INT), new UnifiedTypeProxy(BasicType.INT),
-        new UnifiedTypeProxy(new QualifiedType(BasicType.INT,
-            Collections.singletonList(TypeQualifier.OUT_PARAM))),
+        new UnifiedTypeProxy(VoidType.VOID), new UnifiedTypeProxy(BasicType.INT),
+        new UnifiedTypeProxy(BasicType.INT), new UnifiedTypeProxy(new QualifiedType(BasicType.INT
+        , Collections.singletonList(TypeQualifier.OUT_PARAM))),
         new UnifiedTypeProxy(new QualifiedType(BasicType.INT,
             Collections.singletonList(TypeQualifier.OUT_PARAM)))));
     voidReturnFunctions.add(new FunctionStruct("imulExtended",
-        new UnifiedTypeProxy(VoidType.VOID),
-        new UnifiedTypeProxy(BasicType.IVEC2), new UnifiedTypeProxy(BasicType.IVEC2),
+        new UnifiedTypeProxy(VoidType.VOID), new UnifiedTypeProxy(BasicType.IVEC2),
+        new UnifiedTypeProxy(BasicType.IVEC2),
         new UnifiedTypeProxy(new QualifiedType(BasicType.IVEC2,
             Collections.singletonList(TypeQualifier.OUT_PARAM))),
         new UnifiedTypeProxy(new QualifiedType(BasicType.IVEC2,
             Collections.singletonList(TypeQualifier.OUT_PARAM)))));
     voidReturnFunctions.add(new FunctionStruct("imulExtended",
-        new UnifiedTypeProxy(VoidType.VOID),
-        new UnifiedTypeProxy(BasicType.IVEC3), new UnifiedTypeProxy(BasicType.IVEC3),
+        new UnifiedTypeProxy(VoidType.VOID), new UnifiedTypeProxy(BasicType.IVEC3),
+        new UnifiedTypeProxy(BasicType.IVEC3),
         new UnifiedTypeProxy(new QualifiedType(BasicType.IVEC3,
             Collections.singletonList(TypeQualifier.OUT_PARAM))),
         new UnifiedTypeProxy(new QualifiedType(BasicType.IVEC3,
             Collections.singletonList(TypeQualifier.OUT_PARAM)))));
     voidReturnFunctions.add(new FunctionStruct("imulExtended",
-        new UnifiedTypeProxy(VoidType.VOID),
-        new UnifiedTypeProxy(BasicType.IVEC4), new UnifiedTypeProxy(BasicType.IVEC4),
+        new UnifiedTypeProxy(VoidType.VOID), new UnifiedTypeProxy(BasicType.IVEC4),
+        new UnifiedTypeProxy(BasicType.IVEC4),
         new UnifiedTypeProxy(new QualifiedType(BasicType.IVEC4,
             Collections.singletonList(TypeQualifier.OUT_PARAM))),
         new UnifiedTypeProxy(new QualifiedType(BasicType.IVEC4,
@@ -727,103 +694,88 @@ public class FunctionRegistry {
 
     // Bitfield Extract functions for integers
     intReturnFunctions.add(new FunctionStruct("bitfieldExtract",
-        new UnifiedTypeProxy(BasicType.INT),
-        new UnifiedTypeProxy(BasicType.INT), new UnifiedTypeProxy(BasicType.INT),
-        new UnifiedTypeProxy(BasicType.INT)));
-    ivec2ReturnFunctions.add(new FunctionStruct("bitfieldExtract",
-        new UnifiedTypeProxy(BasicType.IVEC2),
-        new UnifiedTypeProxy(BasicType.IVEC2), new UnifiedTypeProxy(BasicType.INT),
-        new UnifiedTypeProxy(BasicType.INT)));
-    ivec3ReturnFunctions.add(new FunctionStruct("bitfieldExtract",
-        new UnifiedTypeProxy(BasicType.IVEC3),
-        new UnifiedTypeProxy(BasicType.IVEC3), new UnifiedTypeProxy(BasicType.INT),
-        new UnifiedTypeProxy(BasicType.INT)));
-    ivec4ReturnFunctions.add(new FunctionStruct("bitfieldExtract",
-        new UnifiedTypeProxy(BasicType.IVEC4),
-        new UnifiedTypeProxy(BasicType.IVEC4), new UnifiedTypeProxy(BasicType.INT),
-        new UnifiedTypeProxy(BasicType.INT)));
-
-    // Bitfield Extract functions for unsigned integers
-    uintReturnFunctions.add(new FunctionStruct("bitfieldExtract",
-        new UnifiedTypeProxy(BasicType.UINT),
-        new UnifiedTypeProxy(BasicType.UINT), new UnifiedTypeProxy(BasicType.INT),
-        new UnifiedTypeProxy(BasicType.INT)));
-    uvec2ReturnFunctions.add(new FunctionStruct("bitfieldExtract",
-        new UnifiedTypeProxy(BasicType.UVEC2),
-        new UnifiedTypeProxy(BasicType.UVEC2), new UnifiedTypeProxy(BasicType.INT),
-        new UnifiedTypeProxy(BasicType.INT)));
-    uvec3ReturnFunctions.add(new FunctionStruct("bitfieldExtract",
-        new UnifiedTypeProxy(BasicType.UVEC3),
-        new UnifiedTypeProxy(BasicType.UVEC3), new UnifiedTypeProxy(BasicType.INT),
-        new UnifiedTypeProxy(BasicType.INT)));
-    uvec4ReturnFunctions.add(new FunctionStruct("bitfieldExtract",
-        new UnifiedTypeProxy(BasicType.UVEC4),
-        new UnifiedTypeProxy(BasicType.UVEC4), new UnifiedTypeProxy(BasicType.INT),
-        new UnifiedTypeProxy(BasicType.INT)));
-
-    // Bitfield Insert functions for integers
-    intReturnFunctions.add(new FunctionStruct("bitfieldInsert", new UnifiedTypeProxy(BasicType.INT),
         new UnifiedTypeProxy(BasicType.INT), new UnifiedTypeProxy(BasicType.INT),
         new UnifiedTypeProxy(BasicType.INT), new UnifiedTypeProxy(BasicType.INT)));
-    ivec2ReturnFunctions.add(new FunctionStruct("bitfieldInsert",
-        new UnifiedTypeProxy(BasicType.IVEC2),
+    ivec2ReturnFunctions.add(new FunctionStruct("bitfieldExtract",
         new UnifiedTypeProxy(BasicType.IVEC2), new UnifiedTypeProxy(BasicType.IVEC2),
         new UnifiedTypeProxy(BasicType.INT), new UnifiedTypeProxy(BasicType.INT)));
-    ivec3ReturnFunctions.add(new FunctionStruct("bitfieldInsert",
-        new UnifiedTypeProxy(BasicType.IVEC3),
+    ivec3ReturnFunctions.add(new FunctionStruct("bitfieldExtract",
         new UnifiedTypeProxy(BasicType.IVEC3), new UnifiedTypeProxy(BasicType.IVEC3),
         new UnifiedTypeProxy(BasicType.INT), new UnifiedTypeProxy(BasicType.INT)));
-    ivec4ReturnFunctions.add(new FunctionStruct("bitfieldInsert",
-        new UnifiedTypeProxy(BasicType.IVEC4),
+    ivec4ReturnFunctions.add(new FunctionStruct("bitfieldExtract",
         new UnifiedTypeProxy(BasicType.IVEC4), new UnifiedTypeProxy(BasicType.IVEC4),
         new UnifiedTypeProxy(BasicType.INT), new UnifiedTypeProxy(BasicType.INT)));
 
-    // Bitfield Insert functions for unsigned integers
-    uintReturnFunctions.add(new FunctionStruct("bitfieldInsert",
-        new UnifiedTypeProxy(BasicType.UINT),
+    // Bitfield Extract functions for unsigned integers
+    uintReturnFunctions.add(new FunctionStruct("bitfieldExtract",
         new UnifiedTypeProxy(BasicType.UINT), new UnifiedTypeProxy(BasicType.UINT),
         new UnifiedTypeProxy(BasicType.INT), new UnifiedTypeProxy(BasicType.INT)));
-    uvec2ReturnFunctions.add(new FunctionStruct("bitfieldInsert",
-        new UnifiedTypeProxy(BasicType.UVEC2),
+    uvec2ReturnFunctions.add(new FunctionStruct("bitfieldExtract",
         new UnifiedTypeProxy(BasicType.UVEC2), new UnifiedTypeProxy(BasicType.UVEC2),
         new UnifiedTypeProxy(BasicType.INT), new UnifiedTypeProxy(BasicType.INT)));
-    uvec3ReturnFunctions.add(new FunctionStruct("bitfieldInsert",
-        new UnifiedTypeProxy(BasicType.UVEC3),
+    uvec3ReturnFunctions.add(new FunctionStruct("bitfieldExtract",
         new UnifiedTypeProxy(BasicType.UVEC3), new UnifiedTypeProxy(BasicType.UVEC3),
         new UnifiedTypeProxy(BasicType.INT), new UnifiedTypeProxy(BasicType.INT)));
-    uvec4ReturnFunctions.add(new FunctionStruct("bitfieldInsert",
-        new UnifiedTypeProxy(BasicType.UVEC4),
+    uvec4ReturnFunctions.add(new FunctionStruct("bitfieldExtract",
         new UnifiedTypeProxy(BasicType.UVEC4), new UnifiedTypeProxy(BasicType.UVEC4),
         new UnifiedTypeProxy(BasicType.INT), new UnifiedTypeProxy(BasicType.INT)));
+
+    // Bitfield Insert functions for integers
+    intReturnFunctions.add(new FunctionStruct("bitfieldInsert",
+        new UnifiedTypeProxy(BasicType.INT), new UnifiedTypeProxy(BasicType.INT),
+        new UnifiedTypeProxy(BasicType.INT), new UnifiedTypeProxy(BasicType.INT),
+        new UnifiedTypeProxy(BasicType.INT)));
+    ivec2ReturnFunctions.add(new FunctionStruct("bitfieldInsert",
+        new UnifiedTypeProxy(BasicType.IVEC2), new UnifiedTypeProxy(BasicType.IVEC2),
+        new UnifiedTypeProxy(BasicType.IVEC2), new UnifiedTypeProxy(BasicType.INT),
+        new UnifiedTypeProxy(BasicType.INT)));
+    ivec3ReturnFunctions.add(new FunctionStruct("bitfieldInsert",
+        new UnifiedTypeProxy(BasicType.IVEC3), new UnifiedTypeProxy(BasicType.IVEC3),
+        new UnifiedTypeProxy(BasicType.IVEC3), new UnifiedTypeProxy(BasicType.INT),
+        new UnifiedTypeProxy(BasicType.INT)));
+    ivec4ReturnFunctions.add(new FunctionStruct("bitfieldInsert",
+        new UnifiedTypeProxy(BasicType.IVEC4), new UnifiedTypeProxy(BasicType.IVEC4),
+        new UnifiedTypeProxy(BasicType.IVEC4), new UnifiedTypeProxy(BasicType.INT),
+        new UnifiedTypeProxy(BasicType.INT)));
+
+    // Bitfield Insert functions for unsigned integers
+    uintReturnFunctions.add(new FunctionStruct("bitfieldInsert",
+        new UnifiedTypeProxy(BasicType.UINT), new UnifiedTypeProxy(BasicType.UINT),
+        new UnifiedTypeProxy(BasicType.UINT), new UnifiedTypeProxy(BasicType.INT),
+        new UnifiedTypeProxy(BasicType.INT)));
+    uvec2ReturnFunctions.add(new FunctionStruct("bitfieldInsert",
+        new UnifiedTypeProxy(BasicType.UVEC2), new UnifiedTypeProxy(BasicType.UVEC2),
+        new UnifiedTypeProxy(BasicType.UVEC2), new UnifiedTypeProxy(BasicType.INT),
+        new UnifiedTypeProxy(BasicType.INT)));
+    uvec3ReturnFunctions.add(new FunctionStruct("bitfieldInsert",
+        new UnifiedTypeProxy(BasicType.UVEC3), new UnifiedTypeProxy(BasicType.UVEC3),
+        new UnifiedTypeProxy(BasicType.UVEC3), new UnifiedTypeProxy(BasicType.INT),
+        new UnifiedTypeProxy(BasicType.INT)));
+    uvec4ReturnFunctions.add(new FunctionStruct("bitfieldInsert",
+        new UnifiedTypeProxy(BasicType.UVEC4), new UnifiedTypeProxy(BasicType.UVEC4),
+        new UnifiedTypeProxy(BasicType.UVEC4), new UnifiedTypeProxy(BasicType.INT),
+        new UnifiedTypeProxy(BasicType.INT)));
 
 
     // Bitfield reverse for integers
     intReturnFunctions.add(new FunctionStruct("bitfieldReverse",
-        new UnifiedTypeProxy(BasicType.INT),
-        new UnifiedTypeProxy(BasicType.INT)));
+        new UnifiedTypeProxy(BasicType.INT), new UnifiedTypeProxy(BasicType.INT)));
     ivec2ReturnFunctions.add(new FunctionStruct("bitfieldReverse",
-        new UnifiedTypeProxy(BasicType.IVEC2),
-        new UnifiedTypeProxy(BasicType.IVEC2)));
+        new UnifiedTypeProxy(BasicType.IVEC2), new UnifiedTypeProxy(BasicType.IVEC2)));
     ivec3ReturnFunctions.add(new FunctionStruct("bitfieldReverse",
-        new UnifiedTypeProxy(BasicType.IVEC3),
-        new UnifiedTypeProxy(BasicType.IVEC3)));
+        new UnifiedTypeProxy(BasicType.IVEC3), new UnifiedTypeProxy(BasicType.IVEC3)));
     ivec4ReturnFunctions.add(new FunctionStruct("bitfieldReverse",
-        new UnifiedTypeProxy(BasicType.IVEC4),
-        new UnifiedTypeProxy(BasicType.IVEC4)));
+        new UnifiedTypeProxy(BasicType.IVEC4), new UnifiedTypeProxy(BasicType.IVEC4)));
 
     // Bitfield reverse for unsigned integers
     uintReturnFunctions.add(new FunctionStruct("bitfieldReverse",
-        new UnifiedTypeProxy(BasicType.UINT),
-        new UnifiedTypeProxy(BasicType.UINT)));
+        new UnifiedTypeProxy(BasicType.UINT), new UnifiedTypeProxy(BasicType.UINT)));
     uvec2ReturnFunctions.add(new FunctionStruct("bitfieldReverse",
-        new UnifiedTypeProxy(BasicType.UVEC2),
-        new UnifiedTypeProxy(BasicType.UVEC2)));
+        new UnifiedTypeProxy(BasicType.UVEC2), new UnifiedTypeProxy(BasicType.UVEC2)));
     uvec3ReturnFunctions.add(new FunctionStruct("bitfieldReverse",
-        new UnifiedTypeProxy(BasicType.UVEC3),
-        new UnifiedTypeProxy(BasicType.UVEC3)));
+        new UnifiedTypeProxy(BasicType.UVEC3), new UnifiedTypeProxy(BasicType.UVEC3)));
     uvec4ReturnFunctions.add(new FunctionStruct("bitfieldReverse",
-        new UnifiedTypeProxy(BasicType.UVEC4),
-        new UnifiedTypeProxy(BasicType.UVEC4)));
+        new UnifiedTypeProxy(BasicType.UVEC4), new UnifiedTypeProxy(BasicType.UVEC4)));
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // Shader invocation Control and Shader memory control
@@ -871,14 +823,13 @@ public class FunctionRegistry {
       List<FunctionStruct> availableFunctions = stdFunctions.get(returnType);
       return availableFunctions.get(randGen.nextInt(availableFunctions.size()));
     } else {
-      throw new UnsupportedOperationException("No function exists for the given return type: "
-          + returnType);
+      throw new UnsupportedOperationException("No function exists for the given return type: " + returnType);
     }
   }
 
   public FunctionStruct getRandomFunctionStruct(UnifiedTypeProxy returnType) {
-    if (userDefinedFunctions.containsKey(returnType)
-        && !userDefinedFunctions.get(returnType).isEmpty() && randGen.nextBoolean()) {
+    // Check if at least one user-defined function exists with the selected return type
+    if (userDefinedFunctions.containsKey(returnType) && !userDefinedFunctions.get(returnType).isEmpty() && randGen.nextBoolean()) {
       List<FunctionStruct> availableFunctions = userDefinedFunctions.get(returnType);
       return availableFunctions.get(randGen.nextInt(availableFunctions.size()));
     } else {
@@ -886,10 +837,40 @@ public class FunctionRegistry {
     }
   }
 
+  public boolean checkIfUserFunctionExist(FunctionStruct functionStruct) {
+    if (userFunctionsReturnTypes.containsKey(functionStruct.name)) {
+      // If at least one function with the same name exists, obtain the list of return types
+      // which have at least one function of given name registered
+      for (UnifiedTypeProxy possibleReturnType :
+          userFunctionsReturnTypes.get(functionStruct.name)) {
+        // Check in a function in the list matches in names and parameter types (with the current
+        // return type)
+        for (FunctionStruct functionOfGivenReturnType :
+            userDefinedFunctions.get(possibleReturnType)) {
+          if (functionOfGivenReturnType.name.equals(functionStruct.name)
+              && functionOfGivenReturnType.parameterTypes.equals(functionStruct.parameterTypes)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
   public void addUserDefinedFunction(FunctionStruct newFunc) {
+    // Check if at least a function has the same return type as the new function
     if (!userDefinedFunctions.containsKey(newFunc.returnType)) {
       userDefinedFunctions.put(newFunc.returnType, new ArrayList<>());
     }
+    assert !checkIfUserFunctionExist(newFunc);
+
+    // Add the new function into the list of functions
     userDefinedFunctions.get(newFunc.returnType).add(newFunc);
+
+    // Add the function with its associated return type to the defined functions
+    if (!userFunctionsReturnTypes.containsKey(newFunc.name)) {
+      userFunctionsReturnTypes.put(newFunc.name, new ArrayList<>());
+    }
+    userFunctionsReturnTypes.get(newFunc.name).add(newFunc.returnType);
   }
 }
