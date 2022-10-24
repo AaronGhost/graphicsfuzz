@@ -21,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
 import net.sourceforge.argparse4j.inf.ArgumentParser;
@@ -30,7 +31,7 @@ import net.sourceforge.argparse4j.inf.Namespace;
 public class PostProcessingHandler {
 
   // post-processors need to be registered here
-  private static final List<PostProcessorInterface> postProcessors = Arrays.asList(
+  private static final List<PostProcessorInterface> allProcessors = Arrays.asList(
       new BufferFormatEnforcer(),
       new InitializerEnforcer(),
       new CallingOrderCleaner(),
@@ -40,7 +41,21 @@ public class PostProcessingHandler {
       new ArrayIndexBuilder(false)
   );
 
-  public static void updateFile(String src, String dest, boolean addIds, String reduceWrappers) {
+  private static final List<PostProcessorInterface> coreProcessors = Arrays.asList(
+      new LoopLimiter(false, 10),
+      new ArrayIndexBuilder(true)
+  );
+
+  private static final List<PostProcessorInterface> extraProcessors = Arrays.asList(
+      new BufferFormatEnforcer(),
+      new InitializerEnforcer(),
+      new CallingOrderCleaner(),
+      new ArithmeticWrapperBuilder(),
+      new StdWrapperBuilder()
+  );
+
+  public static void updateFile(String src, String dest, boolean addIds, String reduceWrappers,
+                                String extent) {
     try {
       // Recognize the format of the code based on the extension
       String[] shaderFileExtensions = src.split("\\.");
@@ -73,7 +88,16 @@ public class PostProcessingHandler {
         programState.setIds(shaderPrinter.parseIdsBuffer(reduceWrappers));
       }
       programState.programInitialization(unit);
-      //Pipeline post-processing
+
+      //Pipeline post-processing using presets of postprocessors (for experiments)
+      // TODO add a way to call a single processing step
+      List<PostProcessorInterface> postProcessors = allProcessors;
+      if (extent.equals("core")) {
+        postProcessors = coreProcessors;
+      } else if (extent.equals("extra")) {
+        postProcessors = extraProcessors;
+      }
+
       for (PostProcessorInterface postProcessorInterface : postProcessors) {
         programState = postProcessorInterface.process(programState);
       }
@@ -94,7 +118,6 @@ public class PostProcessingHandler {
     }
   }
 
-  //TODO specifically call a post-processing step
   public static void main(String[] args) throws ArgumentParserException {
     //Parse Arguments to know what to look at
     ArgumentParser parser = ArgumentParsers.newArgumentParser("GLSLsmith postprocessing")
@@ -118,8 +141,12 @@ public class PostProcessingHandler {
         .setConst("ids.txt")
         .setDefault("")
         .help("Name of the buffer containing the function ids");
+    parser.addArgument("--extent")
+        .dest("extent")
+        .type(String.class)
+        .setDefault("full");
     Namespace ns = parser.parseArgs(args);
     updateFile(ns.getString("src"), ns.getString("dest"),
-        ns.getBoolean("id_wrappers"), ns.getString("reduce"));
+        ns.getBoolean("id_wrappers"), ns.getString("reduce"), ns.getString("extent"));
   }
 }
