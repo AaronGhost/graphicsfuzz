@@ -41,12 +41,12 @@ public class PostProcessingHandler {
   );
 
   private static final List<PostProcessorInterface> coreProcessors = Arrays.asList(
+      new BufferFormatEnforcer(),
       new LoopLimiter(false, 10),
       new ArrayIndexBuilder(true)
   );
 
   private static final List<PostProcessorInterface> extraProcessors = Arrays.asList(
-      new BufferFormatEnforcer(),
       new InitializerEnforcer(),
       new CallingOrderCleaner(),
       new ArithmeticWrapperBuilder(),
